@@ -1,0 +1,228 @@
+{
+  "_comment": "kpk client treasuries: ens, nexus, cow, balancer. Edit here, never in scripts. strategy_api_name is the clientName the KPK Strategy API (ops-tools-backend.kpk) expects; syncrone_org is the Syncrone v2 org id; safes are the Zodiac avatar (treasury) and manager Safes. policy is null for pure-yield mandates.",
+  "strategy_api_base": "http://ops-tools-backend.kpk/api",
+  "syncrone_api_base": "https://api-v2.syncrone.fi/api/kpk",
+  "safe_tx_service": {
+    "1": {
+      "legacy": "https://safe-transaction-mainnet.safe.global/api/v1",
+      "gateway": "https://api.safe.global/tx-service/eth/api/v1"
+    },
+    "100": {
+      "legacy": "https://safe-transaction-gnosis-chain.safe.global/api/v1",
+      "gateway": "https://api.safe.global/tx-service/gno/api/v1"
+    },
+    "42161": {
+      "legacy": "https://safe-transaction-arbitrum.safe.global/api/v1",
+      "gateway": "https://api.safe.global/tx-service/arb1/api/v1"
+    },
+    "8453": {
+      "legacy": "https://safe-transaction-base.safe.global/api/v1",
+      "gateway": "https://api.safe.global/tx-service/base/api/v1"
+    }
+  },
+  "strategy_api_chain_names": {
+    "1": "mainnet",
+    "100": "gnosis",
+    "42161": "arbitrum",
+    "8453": "base"
+  },
+  "clients": {
+    "ens": {
+      "display_name": "ENS DAO Endowment",
+      "strategy_api_name": "ens-dao",
+      "syncrone_org": "org_34eB39jCLvLojeuTCK4NXSh4L0F",
+      "chains": [
+        1
+      ],
+      "safes": {
+        "1": {
+          "avatar": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
+          "manager": "0xb423e0f6E7430fa29500c5cC9bd83D28c8BD8978",
+          "roles_modifier": "0x703806e61847984346d2d7ddd853049627e50a40"
+        }
+      },
+      "policy": {
+        "name": "ENS Endowment IPS 2026 (EP 6.46)",
+        "policy_skill": "ens-ips-2026",
+        "stable_floor_usd": 49340000,
+        "target_stable_pct": 40,
+        "target_volatile_pct": 60,
+        "protocol_cap_pct_nav": 30,
+        "low_risk_min_pct": 90,
+        "rwa_cap_pct": 5,
+        "permissioned_cap_pct": 10,
+        "eurc_cap_pct_of_stables": 5,
+        "networks": [
+          "mainnet"
+        ],
+        "rebalance_tranche_eth": 1500,
+        "emergency_tranche_eth": 3000,
+        "allowed_stables": [
+          "USDC",
+          "USDT",
+          "DAI",
+          "USDS",
+          "GHO",
+          "EURC"
+        ],
+        "allowed_eth": [
+          "ETH",
+          "WETH",
+          "stETH",
+          "wstETH",
+          "rETH",
+          "eETH",
+          "weETH",
+          "osETH",
+          "ETHx",
+          "OETH"
+        ]
+      }
+    },
+    "nexus": {
+      "display_name": "Nexus Mutual DAO Treasury",
+      "strategy_api_name": "nexus-mutual",
+      "syncrone_org": "org_34cOJg43aqibRcz4WJhqrOF0psQ",
+      "chains": [
+        1
+      ],
+      "safes": {
+        "1": {
+          "avatar": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
+          "manager": "0x0F035E7ff8A21159F10994aA0186449fc852A9E7",
+          "roles_modifier": "0x24Fc0B9414Bb8e99a822a45BdE3A398BcfC85A58"
+        }
+      },
+      "policy": null
+    },
+    "cow": {
+      "display_name": "CoW DAO Treasury",
+      "strategy_api_name": "cow",
+      "syncrone_org": "org_34cm1hoHUEzzkcA4PsSVpTdBxac",
+      "chains": [
+        1,
+        100
+      ],
+      "safes": {
+        "1": {
+          "avatar": "0x616dE58c011F8736fa20c7Ae5352F7f6FB9F0669",
+          "manager": "0xfABCA7957D67c680d3ab2C28b8dC003A5852123a",
+          "roles_modifier": "0xaF65eec285e2999e8f7bFEc57E83e88A9525F1E6"
+        },
+        "100": {
+          "avatar": "0x616dE58c011F8736fa20c7Ae5352F7f6FB9F0669",
+          "manager": "0xfABCA7957D67c680d3ab2C28b8dC003A5852123a",
+          "roles_modifier": "0xaF65eec285e2999e8f7bFEc57E83e88A9525F1E6"
+        }
+      },
+      "policy": null,
+      "extra_safes": {
+        "defence_1": {
+          "chain": 1,
+          "avatar": "0x7F8987D6A8bee31bD7bE80E877732579E2582a28",
+          "roles_modifier": "0xF3eDA195de9d0262a1A5177F5c663930e53E1c5c",
+          "manager": "0xfABCA7957D67c680d3ab2C28b8dC003A5852123a",
+          "note": "CoW defence reserve; not in the Strategy API client, Syncrone may book it under the same org"
+        }
+      }
+    },
+    "balancer": {
+      "display_name": "Balancer DAO Treasury",
+      "strategy_api_name": "balancer-dao",
+      "syncrone_org": "org_34W0MirWNy9YCenIu0aVHDpWn4l",
+      "chains": [
+        1,
+        100
+      ],
+      "safes": {
+        "1": {
+          "avatar": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
+          "manager": "0x60716991aCDA9E990bFB3b1224f1f0fB81538267",
+          "roles_modifier": "0x13c61a25DB73e7a94a244bD2205aDba8b4a60F4a"
+        },
+        "100": {
+          "avatar": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
+          "manager": "0x60716991aCDA9E990bFB3b1224f1f0fB81538267",
+          "roles_modifier": "0x13c61a25DB73e7a94a244bD2205aDba8b4a60F4a"
+        }
+      },
+      "policy": null
+    }
+  },
+  "protocol_aliases": {
+    "_comment": "Syncrone protocol_name (lowercased) -> Strategy API protocol key",
+    "stakewise": "stakewise_v3",
+    "etherfi": "ether_fi",
+    "aave": "aave_v3",
+    "compound": "compound_v3",
+    "lido": "lido",
+    "morpho": "morphoVaults",
+    "sky": "sky",
+    "stader": "stader",
+    "fluid": "fluid",
+    "gearbox": "gearbox",
+    "rocketpool": "rocket_pool",
+    "rocket_pool": "rocket_pool",
+    "spark": "spark",
+    "merkl": "merkl",
+    "balancer": "balancer_v2",
+    "aura": "aura",
+    "curve": "curve",
+    "convex": "convex"
+  },
+  "asset_groups": {
+    "USD": [
+      "USDC",
+      "USDT",
+      "DAI",
+      "USDS",
+      "sUSDS",
+      "GHO",
+      "PYUSD",
+      "RLUSD",
+      "aEthUSDC",
+      "aEthUSDT",
+      "cUSDCv3",
+      "cUSDTv3",
+      "cUSDSv3",
+      "fUSDC",
+      "fUSDT",
+      "fGHO",
+      "KPK_USDC_Prime",
+      "KPK_USDT_Prime",
+      "KPK_USDC_Yield"
+    ],
+    "ETH": [
+      "ETH",
+      "WETH",
+      "stETH",
+      "wstETH",
+      "rETH",
+      "eETH",
+      "weETH",
+      "osETH",
+      "ETHx",
+      "OETH",
+      "aEthWETH",
+      "KPK_ETH_Prime",
+      "KPK_ETH_Yield"
+    ],
+    "EURO": [
+      "EURC",
+      "aEthEURC",
+      "KPK_EURC_Yield"
+    ]
+  },
+  "spam_dust_usd": 50,
+  "roles_permissions_ground_truth": {
+    "_comment": "On-chain scrape of each Roles Modifier, refreshed by SafeAgent. The Strategy API permissions are the yield-priced view; this JSON is the authoritative allow-list when the two disagree.",
+    "path_template": "Codex/SafeAgentAll/<client folder>/Data/live_permissions.json",
+    "client_folders": {
+      "ens": "ens",
+      "nexus": "nexus",
+      "cow": "cow dao",
+      "balancer": "karpatkey_balancer"
+    },
+    "matrix_report": "Codex/SafeAgentAll/<client folder>/onchain_matrix_report.md"
+  }
+}

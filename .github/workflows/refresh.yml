@@ -1,0 +1,50 @@
+name: Refresh live holdings
+
+# Hourly and on demand. Pulls Syncrone v2 + Safe Transaction Service + Etherscan for every client
+# and commits data/<client>.live.json; GitHub Pages redeploys from the branch automatically.
+# The KPK Strategy API is on the office network and is NOT reachable here: permissions, APYs and
+# the stored snapshot (data/<client>.json) refresh when someone types `run` locally and pushes.
+#
+# Secrets required (Settings -> Secrets and variables -> Actions):
+#   SYNCRONE_API_KEY   ETHERSCAN_API_KEY   SAFE_API_KEY (optional)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'      # hourly, off the top of the hour
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Pull live holdings
+        env:
+          SYNCRONE_API_KEY: ${{ secrets.SYNCRONE_API_KEY }}
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+          SAFE_API_KEY: ${{ secrets.SAFE_API_KEY }}
+        run: python scripts/refresh_holdings.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/*.live.json
+          if git diff --staged --quiet; then
+            echo "no change"
+          else
+            git commit -m "data: refresh live holdings"
+            git push
+          fi

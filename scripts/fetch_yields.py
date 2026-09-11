@@ -1,0 +1,125 @@
+"""Pull the permitted yield universe for a kpk client and the ops-tools optimizer's suggestion.
+
+    python fetch_yields.py --client ens --out <dir> [--period 7day] [--chain 1] [--tvl-cap 10]
+
+Sources:
+  1. KPK Strategy API /clients/permissions   -> every protocol/asset/action the client's Roles
+     permissions allow, enriched with vaults.fyi APY (1h/1day/7day/30day) and TVL where vaults.fyi
+     tracks the venue. Entries with apy == null are permitted but unpriced (Spark, Balancer pools,
+     Morpho markets, some Morpho vaults): the assessment lists them as "permitted, yield unknown".
+  2. KPK Strategy API /clients/best-strategy -> the ops-tools optimizer output for reference.
+     WARNING: it optimises APY under a per-venue TVL cap only. It ignores client policy caps
+     (e.g. the ENS 30% single-protocol cap and the stablecoin floor) and excludes swap-only
+     venues (ether.fi eETH) from the universe. Never forward it as the recommendation.
+  3. vaults.fyi direct (optional, needs VAULTS_FYI_API_KEY): benchmark APY for USD and ETH, and
+     APY for any permitted vault the Strategy API returned without APY.
+
+Writes <out>/yields.json.
+"""
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+from common import client, fnum, http_json, key, load_env, registry, write_json
+
+PERMITTED_ACTIONS = {"deposit", "stake", "swap"}
+
+
+def fetch(reg, c, chain_id, period, tvl_cap):
+    base = reg["strategy_api_base"]
+    chain = reg["strategy_api_chain_names"][str(chain_id)]
+    name = c["strategy_api_name"]
+    perms = http_json(f"{base}/clients/permissions", data={"clientName": name, "chain": chain}, timeout=240)
+    best = None
+    try:
+        best = http_json(f"{base}/clients/best-strategy",
+                         data={"clientName": name, "period": period, "chain": chain,
+                               "assetGroupConstraints": {}, "tvlCapPercent": tvl_cap}, timeout=300)
+    except Exception as e:
+        print("  best-strategy unavailable:", str(e)[:150])
+    return perms, best
+
+
+def flatten_permissions(perms: dict, period: str, reg: dict) -> list[dict]:
+    from common import asset_group_of
+    rows = []
+    for proto, entries in (perms.get("permissions") or {}).items():
+        for e in entries:
+            apy = e.get("apy") or {}
+            sel = apy.get(period) or {}
+            vf = e.get("vaultsfyiInfo") or {}
+            rows.append(dict(protocol=proto, asset=e.get("asset"), action=e.get("action"),
+                             chain=e.get("chain"), vault=(vf.get("vault") or "").lower() or None,
+                             apy_total=sel.get("total"), apy_base=sel.get("base"), apy_reward=sel.get("reward"),
+                             apy_30d=(apy.get("30day") or {}).get("total"),
+                             apy_all=apy or None,
+                             tvl_usd=fnum((e.get("tvl") or {}).get("usd")) if e.get("tvl") else None,
+                             asset_group=asset_group_of(e.get("asset") or "", reg),
+                             priced=sel.get("total") is not None,
+                             sell_assets=e.get("sellAssets"), buy_assets=e.get("buyAssets")))
+    return rows
+
+
+def vaults_fyi_benchmarks(chain_name: str) -> dict | None:
+    k = key("VAULTS_FYI_API_KEY")
+    if not k:
+        return None
+    out = {}
+    for code in ("usd", "eth"):
+        try:
+            out[code] = http_json(f"https://api.vaults.fyi/v2/benchmarks?network={chain_name}&code={code}",
+                                  headers={"x-api-key": k})
+        except Exception as e:
+            out[code] = {"error": str(e)[:150]}
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--client", required=True)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--period", default="7day", choices=["1h", "1day", "7day", "30day"])
+    ap.add_argument("--chain", type=int, default=None)
+    ap.add_argument("--tvl-cap", type=float, default=10.0, help="ops-tools optimizer per-venue TVL cap %%")
+    a = ap.parse_args()
+    load_env()
+    reg = registry()
+    c = client(a.client)
+    if not c.get("strategy_api_name"):
+        sys.exit(f"ERROR: {a.client} has no Strategy API client; permissions must come from the Roles config.")
+    chain_id = a.chain or c["chains"][0]
+    out = Path(a.out)
+    out.mkdir(parents=True, exist_ok=True)
+
+    perms, best = fetch(reg, c, chain_id, a.period, a.tvl_cap)
+    write_json(out / "raw_permissions.json", perms)
+    if best:
+        write_json(out / "raw_best_strategy.json", best)
+    rows = flatten_permissions(perms, a.period, reg)
+    priced = [r for r in rows if r["priced"]]
+    print(f"[{a.client}] permissions: {len(rows)} permitted entries across {len(perms.get('permissions') or {})} protocols; "
+          f"{len(priced)} priced by vaults.fyi; vault data at {perms.get('vaultDataFetchedAt')}")
+    for grp in ("USD", "ETH", "EURO"):
+        top = sorted([r for r in priced if r["asset_group"] == grp], key=lambda r: -fnum(r["apy_total"]))[:6]
+        if top:
+            print(f"  {grp}: " + ", ".join(f"{r['protocol']}/{r['asset']} {fnum(r['apy_total'])*100:.2f}%" for r in top))
+    unpriced = sorted({f"{r['protocol']}/{r['asset']}" for r in rows if not r['priced'] and r['action'] != 'swap'})
+    if unpriced:
+        print(f"  permitted but unpriced ({len(unpriced)}): {', '.join(unpriced[:12])}{' ...' if len(unpriced) > 12 else ''}")
+
+    bench = vaults_fyi_benchmarks(reg["strategy_api_chain_names"][str(chain_id)])
+    write_json(out / "yields.json", dict(
+        client=a.client, chain_id=chain_id, period=a.period,
+        vault_data_fetched_at=perms.get("vaultDataFetchedAt"),
+        permitted=rows,
+        all_permissions_protocols=sorted((perms.get("allPermissions") or {}).keys()),
+        ops_tools_best_strategy=best,
+        ops_tools_caveat="Optimizer respects only tvlCapPercent per venue. It ignores policy caps/floors and swap-only venues. Reference only.",
+        vaults_fyi_benchmarks=bench))
+    print(f"DONE -> {out / 'yields.json'}")
+
+
+if __name__ == "__main__":
+    main()

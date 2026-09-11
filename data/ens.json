@@ -1,0 +1,822 @@
+{
+  "client": "ens",
+  "display_name": "ENS DAO Endowment",
+  "chain_id": 1,
+  "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
+  "as_of": "2026-09-11T12:43:10+00:00",
+  "period": "7day",
+  "vault_data_fetched_at": "2026-09-11T01:51:07.597Z",
+  "run_folder": "2026-09-11",
+  "nav_usd": 92633190,
+  "reconciliation": {
+    "syncrone_nav_usd": 92556860,
+    "bridge_usd": 92633190,
+    "diff": 0.0008240017675141165,
+    "in_flight_usd": 1349001,
+    "idle_usd": 1723352,
+    "untracked_usd": 617,
+    "strategy_api_usd": 89560219,
+    "tokens_checked": 13,
+    "tokens_disagree": 0,
+    "other_wallets": {}
+  },
+  "flags": [
+    "NOTE: $1,349,001 is in-flight (withdrawal queues) per Syncrone and invisible to Safe/Etherscan/Strategy API: 500.00 ETHx in stader.",
+    "NOTE: positions the Strategy API / vaults.fyi does not price (kept in the book with APY unknown): merkl/USD $448, compound_v3/OTHER $169."
+  ],
+  "policy": {
+    "name": "ENS Endowment IPS 2026 (EP 6.46)",
+    "policy_skill": "ens-ips-2026",
+    "stable_floor_usd": 49340000,
+    "target_stable_pct": 40,
+    "target_volatile_pct": 60,
+    "protocol_cap_pct_nav": 30,
+    "low_risk_min_pct": 90,
+    "rwa_cap_pct": 5,
+    "permissioned_cap_pct": 10,
+    "eurc_cap_pct_of_stables": 5,
+    "networks": [
+      "mainnet"
+    ],
+    "rebalance_tranche_eth": 1500,
+    "emergency_tranche_eth": 3000,
+    "allowed_stables": [
+      "USDC",
+      "USDT",
+      "DAI",
+      "USDS",
+      "GHO",
+      "EURC"
+    ],
+    "allowed_eth": [
+      "ETH",
+      "WETH",
+      "stETH",
+      "wstETH",
+      "rETH",
+      "eETH",
+      "weETH",
+      "osETH",
+      "ETHx",
+      "OETH"
+    ]
+  },
+  "policy_checks": [
+    {
+      "check": "Stablecoin floor (unconditional, senior to the split)",
+      "status": "breached",
+      "value": "stables $33,420,546 vs floor $49,340,000 (short $15,919,454)",
+      "effective_stable_target_pct": 53.3
+    },
+    {
+      "check": "Target allocation (stables vs volatile, by market value)",
+      "status": "breached",
+      "value": "stables 36.1% / volatile 63.9% vs effective stable target 53.3% (nominal 40%); drift -17.2 pts"
+    },
+    {
+      "check": "Single-protocol cap 30% of NAV: ether_fi",
+      "status": "in-bounds",
+      "value": "21.7% ($20,121,293); headroom $7,668,664"
+    },
+    {
+      "check": "Single-protocol cap 30% of NAV: stader",
+      "status": "in-bounds",
+      "value": "18.8% ($17,448,133); headroom $10,341,824"
+    },
+    {
+      "check": "Single-protocol cap 30% of NAV: stakewise_v3",
+      "status": "in-bounds",
+      "value": "18.8% ($17,405,569); headroom $10,384,388"
+    },
+    {
+      "check": "Single-protocol cap 30% of NAV: fluid",
+      "status": "in-bounds",
+      "value": "17.0% ($15,743,827); headroom $12,046,130"
+    },
+    {
+      "check": "Single-protocol cap 30% of NAV: morphoVaults",
+      "status": "in-bounds",
+      "value": "8.6% ($7,921,639); headroom $19,868,318"
+    },
+    {
+      "check": "Single-protocol cap 30% of NAV: aave_v3",
+      "status": "in-bounds",
+      "value": "5.4% ($4,990,493); headroom $22,799,464"
+    },
+    {
+      "check": "Single-protocol cap 30% of NAV: sky",
+      "status": "in-bounds",
+      "value": "3.5% ($3,257,803); headroom $24,532,154"
+    },
+    {
+      "check": "Single-protocol cap 30% of NAV: lido",
+      "status": "in-bounds",
+      "value": "2.7% ($2,514,129); headroom $25,275,828"
+    },
+    {
+      "check": "Single-protocol cap 30% of NAV: compound_v3",
+      "status": "in-bounds",
+      "value": "1.6% ($1,506,506); headroom $26,283,451"
+    },
+    {
+      "check": "Single-protocol cap 30% of NAV: merkl",
+      "status": "in-bounds",
+      "value": "0.0% ($448); headroom $27,789,509"
+    },
+    {
+      "check": "Network whitelist",
+      "status": "in-bounds",
+      "value": "book read on mainnet only; other chains not pulled"
+    },
+    {
+      "check": "Asset whitelist (idle wallet tokens)",
+      "status": "in-bounds",
+      "value": "all idle tokens on the allowed list"
+    }
+  ],
+  "thresholds": {
+    "min_pickup_bps": 50.0,
+    "min_move_usd": 250000.0,
+    "venue_tvl_cap_pct": 10.0,
+    "exclude": []
+  },
+  "book": [
+    {
+      "kind": "position",
+      "protocol": "aave_v3",
+      "venue": "Aave v3 USDC",
+      "symbol": "USDC",
+      "asset_group": "USD",
+      "usd": 4990492.59,
+      "apy": 0.0389,
+      "venue_tvl_usd": 2365358321.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "compound_v3",
+      "venue": "Compound v3 USDC",
+      "symbol": "cUSDCv3",
+      "asset_group": "USD",
+      "usd": 1506336.54,
+      "apy": 0.0489,
+      "venue_tvl_usd": 375485697.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "fluid",
+      "venue": "Fluid GHO",
+      "symbol": "GHO",
+      "asset_group": "USD",
+      "usd": 2525206.06,
+      "apy": 0.0531,
+      "venue_tvl_usd": 20022640.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "fluid",
+      "venue": "Fluid USDC",
+      "symbol": "USDC",
+      "asset_group": "USD",
+      "usd": 12199451.92,
+      "apy": 0.048,
+      "venue_tvl_usd": 154915207.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "fluid",
+      "venue": "Fluid USDT",
+      "symbol": "USDT",
+      "asset_group": "USD",
+      "usd": 1019169.06,
+      "apy": 0.0484,
+      "venue_tvl_usd": 132582902.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "morphoVaults",
+      "venue": "kpk USDC",
+      "symbol": "kpk USDC Prime v2",
+      "asset_group": "USD",
+      "usd": 7921638.27,
+      "apy": 0.0452,
+      "venue_tvl_usd": 20614804.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "sky",
+      "venue": "Savings USDS",
+      "symbol": "USDS",
+      "asset_group": "USD",
+      "usd": 3257803.14,
+      "apy": 0.036,
+      "venue_tvl_usd": 4596893293.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "ether_fi",
+      "venue": "ether.fi eETH",
+      "symbol": "eETH",
+      "asset_group": "ETH",
+      "usd": 20121292.56,
+      "apy": 0.0235,
+      "venue_tvl_usd": 5429295767.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "stakewise_v3",
+      "venue": "StakeWise V3 Genesis",
+      "symbol": "osETH",
+      "asset_group": "ETH",
+      "usd": 17405568.84,
+      "apy": 0.0244,
+      "venue_tvl_usd": 384924510.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "lido",
+      "venue": "Lido stETH",
+      "symbol": "stETH",
+      "asset_group": "ETH",
+      "usd": 2514128.61,
+      "apy": 0.0228,
+      "venue_tvl_usd": 23652485521.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "stader",
+      "venue": "Stader ETHx",
+      "symbol": "ETHx",
+      "asset_group": "ETH",
+      "usd": 16099131.54,
+      "apy": 0.0225,
+      "venue_tvl_usd": 209367099.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "idle",
+      "protocol": "(wallet)",
+      "venue": "idle in Safe",
+      "symbol": "ETH",
+      "asset_group": "ETH",
+      "usd": 1723352.1,
+      "apy": 0.0,
+      "venue_tvl_usd": null,
+      "untracked": false,
+      "balance": 705.639849490177
+    },
+    {
+      "kind": "in_flight",
+      "protocol": "stader",
+      "venue": "Stader Staked on Ethereum (withdrawal queue)",
+      "symbol": "ETHx",
+      "asset_group": "ETH",
+      "usd": 1349001.02,
+      "apy": 0.0,
+      "venue_tvl_usd": null,
+      "untracked": false,
+      "balance": 500.0
+    },
+    {
+      "kind": "position",
+      "protocol": "compound_v3",
+      "venue": "Compound v3 Lending on Ethereum [COMP]",
+      "symbol": "COMP",
+      "asset_group": "OTHER",
+      "usd": 169.26,
+      "apy": null,
+      "venue_tvl_usd": null,
+      "untracked": true,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "merkl",
+      "venue": "Merkl Merkl Reward on Ethereum [GHO]",
+      "symbol": "GHO",
+      "asset_group": "USD",
+      "usd": 448.13,
+      "apy": null,
+      "venue_tvl_usd": null,
+      "untracked": true,
+      "balance": null
+    }
+  ],
+  "permitted": [
+    {
+      "protocol": "aave_v3",
+      "asset": "DAI",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.0308,
+      "apy_30d": 0.028,
+      "tvl_usd": 133023494.0,
+      "priced": true,
+      "vault": "0x018008bfb33d285247a21d44e50697654f754e63"
+    },
+    {
+      "protocol": "aave_v3",
+      "asset": "ETH",
+      "action": "deposit",
+      "asset_group": "ETH",
+      "apy": null,
+      "apy_30d": null,
+      "tvl_usd": null,
+      "priced": false,
+      "vault": null
+    },
+    {
+      "protocol": "aave_v3",
+      "asset": "ETHx",
+      "action": "deposit",
+      "asset_group": "ETH",
+      "apy": 0.022499999999999964,
+      "apy_30d": 0.02289999999999992,
+      "tvl_usd": 195196.0,
+      "priced": true,
+      "vault": "0x1c0e06a0b1a4c160c17545ff2a951bfca57c0002"
+    },
+    {
+      "protocol": "aave_v3",
+      "asset": "osETH",
+      "action": "deposit",
+      "asset_group": "ETH",
+      "apy": 0.021600000000000064,
+      "apy_30d": 0.02200000000000002,
+      "tvl_usd": 311994780.0,
+      "priced": true,
+      "vault": "0x927709711794f3de5ddbf1d176bee2d55ba13c21"
+    },
+    {
+      "protocol": "aave_v3",
+      "asset": "USDC",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.0389,
+      "apy_30d": 0.0369,
+      "tvl_usd": 2365358321.0,
+      "priced": true,
+      "vault": "0x98c23e9d8f34fefb1b7bd6a91b7ff122f4e16f5c"
+    },
+    {
+      "protocol": "aave_v3",
+      "asset": "USDS",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.0015,
+      "apy_30d": 0.0013,
+      "tvl_usd": 9388524.0,
+      "priced": true,
+      "vault": "0x32a6268f9ba3642dda7892add74f1d34469a4259"
+    },
+    {
+      "protocol": "aave_v3",
+      "asset": "USDT",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.0372,
+      "apy_30d": 0.0337,
+      "tvl_usd": 3035597765.0,
+      "priced": true,
+      "vault": "0x23878914efe38d27c4d67ab83ed1b93a74d4086a"
+    },
+    {
+      "protocol": "aave_v3",
+      "asset": "WETH",
+      "action": "deposit",
+      "asset_group": "ETH",
+      "apy": 0.0143,
+      "apy_30d": 0.0147,
+      "tvl_usd": 5177495852.0,
+      "priced": true,
+      "vault": "0x4d5f47fa6a74757f35c14fd3a6ef8e3c9bc514e8"
+    },
+    {
+      "protocol": "compound_v3",
+      "asset": "cUSDCv3",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.0489,
+      "apy_30d": 0.0476,
+      "tvl_usd": 375485697.0,
+      "priced": true,
+      "vault": "0xc3d688b66703497daa19211eedff47f25384cdc3"
+    },
+    {
+      "protocol": "compound_v3",
+      "asset": "cUSDSv3",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.0311,
+      "apy_30d": 0.0378,
+      "tvl_usd": 1884575.0,
+      "priced": true,
+      "vault": "0x5d409e56d886231adaf00c8775665ad0f9897b56"
+    },
+    {
+      "protocol": "compound_v3",
+      "asset": "cUSDTv3",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.0307,
+      "apy_30d": 0.031,
+      "tvl_usd": 180192102.0,
+      "priced": true,
+      "vault": "0x3afdc9bca9213a35503b077a6072f3d0d5ab0840"
+    },
+    {
+      "protocol": "ether_fi",
+      "asset": "eETH",
+      "action": "swap",
+      "asset_group": "ETH",
+      "apy": 0.0235,
+      "apy_30d": 0.0238,
+      "tvl_usd": 5429295767.0,
+      "priced": true,
+      "vault": "0x35fa164735182de50811e8e2e824cfb9b6118ac2"
+    },
+    {
+      "protocol": "stakewise_v3",
+      "asset": "osETH",
+      "action": "swap",
+      "asset_group": "ETH",
+      "apy": 0.0244,
+      "apy_30d": 0.0235,
+      "tvl_usd": 384924510.0,
+      "priced": true,
+      "vault": "0xac0f906e433d58fa868f936e8a43230473652885"
+    },
+    {
+      "protocol": "spark",
+      "asset": "sUSDS",
+      "action": "swap",
+      "asset_group": "USD",
+      "apy": null,
+      "apy_30d": null,
+      "tvl_usd": null,
+      "priced": false,
+      "vault": null
+    },
+    {
+      "protocol": "spark",
+      "asset": "ETH",
+      "action": "stake",
+      "asset_group": "ETH",
+      "apy": null,
+      "apy_30d": null,
+      "tvl_usd": null,
+      "priced": false,
+      "vault": null
+    },
+    {
+      "protocol": "spark",
+      "asset": "ETH",
+      "action": "deposit",
+      "asset_group": "ETH",
+      "apy": null,
+      "apy_30d": null,
+      "tvl_usd": null,
+      "priced": false,
+      "vault": null
+    },
+    {
+      "protocol": "spark",
+      "asset": "USDC",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.036,
+      "apy_30d": 0.0354,
+      "tvl_usd": 211309158.0,
+      "priced": true,
+      "vault": "0xbc65ad17c5c0a2a4d159fa5a503f4992c7b545fe"
+    },
+    {
+      "protocol": "spark",
+      "asset": "USDS",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": null,
+      "apy_30d": null,
+      "tvl_usd": null,
+      "priced": false,
+      "vault": null
+    },
+    {
+      "protocol": "spark",
+      "asset": "USDT",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.0349,
+      "apy_30d": 0.0341,
+      "tvl_usd": 327409844.0,
+      "priced": true,
+      "vault": "0xe7df13b8e3d6740fe17cbe928c7334243d86c92f"
+    },
+    {
+      "protocol": "spark",
+      "asset": "WETH",
+      "action": "deposit",
+      "asset_group": "ETH",
+      "apy": 0.0154,
+      "apy_30d": 0.0166,
+      "tvl_usd": 1333041571.0,
+      "priced": true,
+      "vault": "0x59cd1c87501baa753d0b5b5ab5d8416a45cd71db"
+    },
+    {
+      "protocol": "spark",
+      "asset": "wstETH",
+      "action": "deposit",
+      "asset_group": "ETH",
+      "apy": null,
+      "apy_30d": null,
+      "tvl_usd": null,
+      "priced": false,
+      "vault": null
+    },
+    {
+      "protocol": "fluid",
+      "asset": "GHO",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.0531,
+      "apy_30d": 0.0577,
+      "tvl_usd": 20022640.0,
+      "priced": true,
+      "vault": "0x6a29a46e21c730dca1d8b23d637c101cec605c5b"
+    },
+    {
+      "protocol": "fluid",
+      "asset": "USDC",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.048,
+      "apy_30d": 0.0508,
+      "tvl_usd": 154915207.0,
+      "priced": true,
+      "vault": "0x9fb7b4477576fe5b32be4c1843afb1e55f251b33"
+    },
+    {
+      "protocol": "fluid",
+      "asset": "USDT",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.0484,
+      "apy_30d": 0.049,
+      "tvl_usd": 132582902.0,
+      "priced": true,
+      "vault": "0x5c20b550819128074fd538edf79791733ccedd18"
+    },
+    {
+      "protocol": "lido",
+      "asset": "stETH",
+      "action": "deposit",
+      "asset_group": "ETH",
+      "apy": 0.0228,
+      "apy_30d": 0.0225,
+      "tvl_usd": 23652485521.0,
+      "priced": true,
+      "vault": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset": "kpk ETH Prime v1",
+      "action": "deposit",
+      "asset_group": "ETH",
+      "apy": null,
+      "apy_30d": null,
+      "tvl_usd": null,
+      "priced": false,
+      "vault": null
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset": "kpk ETH Prime v2",
+      "action": "deposit",
+      "asset_group": "ETH",
+      "apy": 0.0186,
+      "apy_30d": 0.0191,
+      "tvl_usd": 2609948.0,
+      "priced": true,
+      "vault": "0xbb50a5341368751024ddf33385ba8cf61fe65ff9"
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset": "kpk USDC Prime v1",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": null,
+      "apy_30d": null,
+      "tvl_usd": null,
+      "priced": false,
+      "vault": null
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset": "kpk USDC Prime v2",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.0452,
+      "apy_30d": 0.0444,
+      "tvl_usd": 20614804.0,
+      "priced": true,
+      "vault": "0x4ef53d2caa51c447fdfeeedee8f07fd1962c9ee6"
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset": "kpk USDT Prime v1",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": null,
+      "apy_30d": null,
+      "tvl_usd": null,
+      "priced": false,
+      "vault": null
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset": "kpk USDT Prime v2",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.0344,
+      "apy_30d": 0.0324,
+      "tvl_usd": 1127387.0,
+      "priced": true,
+      "vault": "0x870f0bf29a25a40e7cc087cd5c53e70c11f2c8a8"
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset": "kpk ETH Yield v2",
+      "action": "deposit",
+      "asset_group": "ETH",
+      "apy": 0.0306,
+      "apy_30d": 0.0299,
+      "tvl_usd": 2652986.0,
+      "priced": true,
+      "vault": "0x5dbf760b4fd0cddde0366b33aeb338b2a6d77725"
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset": "kpk USDC Yield v2",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.0687,
+      "apy_30d": 0.0691,
+      "tvl_usd": 9901520.0,
+      "priced": true,
+      "vault": "0xd5cce260e7a755ddf0fb9cdf06443d593aaeaa13"
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset": "morpho.sentoraPyusdMain",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": null,
+      "apy_30d": null,
+      "tvl_usd": null,
+      "priced": false,
+      "vault": null
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset": "morpho.sentoraRlusdMain",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": null,
+      "apy_30d": null,
+      "tvl_usd": null,
+      "priced": false,
+      "vault": null
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset": "morpho.bbqUsdc",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": null,
+      "apy_30d": null,
+      "tvl_usd": null,
+      "priced": false,
+      "vault": null
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset": "morpho.steakhouseHighYieldUsdc",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": null,
+      "apy_30d": null,
+      "tvl_usd": null,
+      "priced": false,
+      "vault": null
+    },
+    {
+      "protocol": "rocket_pool",
+      "asset": "rETH",
+      "action": "deposit",
+      "asset_group": "ETH",
+      "apy": 0.022,
+      "apy_30d": 0.0219,
+      "tvl_usd": 909040156.0,
+      "priced": true,
+      "vault": "0xae78736cd615f374d3085123a210448e74fc6393"
+    },
+    {
+      "protocol": "sky",
+      "asset": "USDS",
+      "action": "deposit",
+      "asset_group": "USD",
+      "apy": 0.036,
+      "apy_30d": 0.0354,
+      "tvl_usd": 4596893293.0,
+      "priced": true,
+      "vault": "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd"
+    },
+    {
+      "protocol": "stader",
+      "asset": "ETHx",
+      "action": "deposit",
+      "asset_group": "ETH",
+      "apy": 0.0225,
+      "apy_30d": 0.0229,
+      "tvl_usd": 209367099.0,
+      "priced": true,
+      "vault": "0xa35b1b31ce002fbf2058d22f30f95d405200a15b"
+    }
+  ],
+  "ops_tools": [
+    {
+      "asset_group": "USD",
+      "current_apy": 0.045245795414108156,
+      "recommended_apy": 0.04980397327449697,
+      "changed_usd": 29388554.984545518,
+      "allocations": [
+        {
+          "protocol": "morphoVaults",
+          "venue": "kpk USDC Yield V2",
+          "usd": 990152.0,
+          "apy": 0.0687
+        },
+        {
+          "protocol": "fluid",
+          "venue": "Fluid GHO",
+          "usd": 2525206.058701081,
+          "apy": 0.0531
+        },
+        {
+          "protocol": "compound_v3",
+          "venue": "Compound v3 USDC",
+          "usd": 29904739.52477654,
+          "apy": 0.0489
+        }
+      ]
+    },
+    {
+      "asset_group": "ETH",
+      "current_apy": 0.023439093696056745,
+      "recommended_apy": 0.024445666899849085,
+      "changed_usd": 18612889.28858611,
+      "allocations": [
+        {
+          "protocol": "morphoVaults",
+          "venue": "kpk ETH Yield V2",
+          "usd": 265298.60000000003,
+          "apy": 0.0306
+        },
+        {
+          "protocol": "stakewise_v3",
+          "venue": "StakeWise V3 Genesis",
+          "usd": 35753159.526910365,
+          "apy": 0.0244
+        },
+        {
+          "protocol": "ether_fi",
+          "venue": "ether.fi eETH",
+          "usd": 2.44803920026e-15,
+          "apy": 0.0235
+        }
+      ]
+    }
+  ],
+  "ops_tools_caveat": "Optimizer respects only tvlCapPercent per venue. It ignores policy caps/floors and swap-only venues. Reference only."
+}

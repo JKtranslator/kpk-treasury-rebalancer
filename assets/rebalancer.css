@@ -1,0 +1,30 @@
+/* additions on top of the shared KPK styles.css */
+.clients{margin-top:12px;}
+.clients button{padding:5px 13px;}
+.foot{margin-top:34px;padding-top:14px;border-top:1px solid var(--hair);font-size:11.5px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;}
+.foot .sep{color:var(--hair);}
+ul.flags{list-style:none;display:flex;flex-direction:column;gap:6px;}
+ul.flags li{background:var(--card);border-radius:11px;padding:9px 13px;font-size:12.5px;line-height:1.55;}
+ul.flags li.stop{background:var(--bad-bg);color:var(--bad);}
+.grp{background:var(--card);border-radius:14px;padding:14px 16px 15px;margin-top:11px;}
+.grp-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;padding-bottom:9px;margin-bottom:9px;border-bottom:1px solid var(--hair);}
+.grp-h .tot{font-size:12.5px;color:var(--muted);}
+.grp-h .tot b{color:var(--ink);font-weight:600;}
+.bar{height:6px;border-radius:3px;background:#fff;overflow:hidden;display:flex;margin:6px 0 10px;}
+.bar span{display:block;height:100%;}
+td.dim{color:var(--muted);}
+tr.idle td{color:var(--warn);}
+tr.inflight td{color:var(--muted);font-style:italic;}
+.mv{background:#fff;border-radius:11px;padding:10px 13px;margin-top:8px;display:grid;grid-template-columns:1fr auto;gap:6px 14px;align-items:center;}
+.mv .path{font-size:13px;color:var(--ink);}
+.mv .path .arr{color:var(--muted);margin:0 6px;}
+.mv .path small{color:var(--muted);font-size:11.5px;}
+.mv .amt{font-size:17px;color:var(--ink);text-align:right;}
+.mv .amt small{display:block;font-size:11px;color:var(--good);}
+.mv.idle .amt small{color:var(--warn);}
+.empty{font-size:12.5px;color:var(--muted);padding:10px 0;}
+.opsrow{background:var(--card);border-radius:12px;padding:11px 14px;margin-top:8px;font-size:12.5px;}
+.opsrow b{color:var(--ink);font-weight:600;}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:4px;}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:middle;}
+@media (max-width:640px){.mv{grid-template-columns:1fr;} .mv .amt{text-align:left;}}

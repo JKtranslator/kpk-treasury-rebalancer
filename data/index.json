@@ -1,0 +1,37 @@
+{
+  "generated": "2026-09-11T13:31:17+00:00",
+  "clients": [
+    {
+      "client": "ens",
+      "display_name": "ENS DAO Endowment",
+      "as_of": "2026-09-11T12:43:10+00:00",
+      "nav_usd": 92633190,
+      "run_folder": "2026-09-11",
+      "file": "data/ens.json"
+    },
+    {
+      "client": "nexus",
+      "display_name": "Nexus Mutual DAO Treasury",
+      "as_of": "2026-09-11T12:33:40+00:00",
+      "nav_usd": 7393493,
+      "run_folder": "2026-09-11",
+      "file": "data/nexus.json"
+    },
+    {
+      "client": "cow",
+      "display_name": "CoW DAO Treasury",
+      "as_of": "2026-09-11T12:39:53+00:00",
+      "nav_usd": 18392973,
+      "run_folder": "2026-09-11",
+      "file": "data/cow.json"
+    },
+    {
+      "client": "balancer",
+      "display_name": "Balancer DAO Treasury",
+      "as_of": "2026-09-11T12:41:01+00:00",
+      "nav_usd": 6965002,
+      "run_folder": "2026-09-11",
+      "file": "data/balancer.json"
+    }
+  ]
+}
