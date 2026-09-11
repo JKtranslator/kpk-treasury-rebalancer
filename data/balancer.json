@@ -3,20 +3,21 @@
   "display_name": "Balancer DAO Treasury",
   "chain_id": 1,
   "avatar_safe": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
-  "as_of": "2026-09-11T12:41:01+00:00",
+  "as_of": "2026-09-11T21:19:20+00:00",
   "period": "7day",
   "vault_data_fetched_at": "2026-09-11T01:51:07.597Z",
   "run_folder": "2026-09-11",
   "nav_usd": 6965002,
+  "eth_price_usd": 2442.2544,
   "reconciliation": {
     "syncrone_nav_usd": 6961549,
     "bridge_usd": 6965007,
     "diff": 0.0004965171414916368,
     "in_flight_usd": 0,
-    "idle_usd": 1238634,
-    "untracked_usd": 2409483,
+    "idle_usd": 738475,
+    "untracked_usd": 2909642,
     "strategy_api_usd": 3316890,
-    "tokens_checked": 15,
+    "tokens_checked": 20,
     "tokens_disagree": 0,
     "other_wallets": {
       "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 42161": 2142,
@@ -24,7 +25,7 @@
     }
   },
   "flags": [
-    "NOTE: positions the Strategy API / vaults.fyi does not price (kept in the book with APY unknown): aave_v3/OTHER $2,394,240, balancer_v2/ETH $15,150, compound_v3/OTHER $92."
+    "NOTE: positions the Strategy API / vaults.fyi does not price (kept in the book with APY unknown): aave_v3/OTHER $2,394,240, compound_v3/USD/ciUSDCv3 $500,159, balancer_v2/ETH $15,150, compound_v3/OTHER $92."
   ],
   "policy": null,
   "policy_checks": [],
@@ -43,6 +44,7 @@
       "asset_group": "USD",
       "usd": 4823.84,
       "apy": 0.0389,
+      "apy_source": "vaults.fyi",
       "venue_tvl_usd": 2365358321.0,
       "untracked": false,
       "balance": null
@@ -55,6 +57,7 @@
       "asset_group": "USD",
       "usd": 1.59,
       "apy": 0.0489,
+      "apy_source": "vaults.fyi",
       "venue_tvl_usd": 375485697.0,
       "untracked": false,
       "balance": null
@@ -67,6 +70,7 @@
       "asset_group": "USD",
       "usd": 1411956.78,
       "apy": 0.0452,
+      "apy_source": "vaults.fyi",
       "venue_tvl_usd": 20614804.0,
       "untracked": false,
       "balance": null
@@ -79,6 +83,7 @@
       "asset_group": "USD",
       "usd": 641010.09,
       "apy": 0.0687,
+      "apy_source": "vaults.fyi",
       "venue_tvl_usd": 9901520.0,
       "untracked": false,
       "balance": null
@@ -91,6 +96,7 @@
       "asset_group": "ETH",
       "usd": 947628.77,
       "apy": 0.0235,
+      "apy_source": "vaults.fyi",
       "venue_tvl_usd": 5429295767.0,
       "untracked": false,
       "balance": null
@@ -103,6 +109,7 @@
       "asset_group": "ETH",
       "usd": 179790.92,
       "apy": 0.022,
+      "apy_source": "vaults.fyi",
       "venue_tvl_usd": 909040156.0,
       "untracked": false,
       "balance": null
@@ -115,6 +122,7 @@
       "asset_group": "ETH",
       "usd": 131678.37,
       "apy": 0.0244,
+      "apy_source": "vaults.fyi",
       "venue_tvl_usd": 384924510.0,
       "untracked": false,
       "balance": null
@@ -122,11 +130,12 @@
     {
       "kind": "idle",
       "protocol": "(wallet)",
-      "venue": "idle in Safe",
+      "venue": "idle in Safe [HOPR]",
       "symbol": "HOPR",
       "asset_group": "OTHER",
       "usd": 7113.84,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 617205.1496353952
@@ -134,11 +143,12 @@
     {
       "kind": "idle",
       "protocol": "(wallet)",
-      "venue": "idle in Safe",
+      "venue": "idle in Safe [USDC]",
       "symbol": "USDC",
       "asset_group": "USD",
       "usd": 82384.93,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 82385.016635
@@ -146,11 +156,12 @@
     {
       "kind": "idle",
       "protocol": "(wallet)",
-      "venue": "idle in Safe",
+      "venue": "idle in Safe [BAL]",
       "symbol": "BAL",
       "asset_group": "OTHER",
       "usd": 357061.58,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 3327556.6717589125
@@ -158,35 +169,38 @@
     {
       "kind": "idle",
       "protocol": "(wallet)",
-      "venue": "idle in Safe",
+      "venue": "idle in Safe [WETH]",
       "symbol": "WETH",
       "asset_group": "ETH",
       "usd": 65831.92,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 26.955387389731737
     },
     {
-      "kind": "idle",
-      "protocol": "(wallet)",
-      "venue": "idle in Safe",
+      "kind": "position",
+      "protocol": "compound_v3",
+      "venue": "Compound v3 Institutional USDC (ciUSDCv3) [ciUSDCv3]",
       "symbol": "ciUSDCv3",
       "asset_group": "USD",
       "usd": 500159.44,
-      "apy": 0.0,
-      "venue_tvl_usd": null,
-      "untracked": false,
-      "balance": 500009.439122
+      "apy": 0.0424996,
+      "apy_source": "defillama",
+      "venue_tvl_usd": 36672869.0,
+      "untracked": true,
+      "balance": null
     },
     {
       "kind": "idle",
       "protocol": "(wallet)",
-      "venue": "idle in Safe",
+      "venue": "idle in Safe [SAFE]",
       "symbol": "SAFE",
       "asset_group": "OTHER",
       "usd": 80396.73,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 839265.9869857737
@@ -194,11 +208,12 @@
     {
       "kind": "idle",
       "protocol": "(wallet)",
-      "venue": "idle in Safe",
+      "venue": "idle in Safe [COW]",
       "symbol": "COW",
       "asset_group": "OTHER",
       "usd": 145685.84,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 1141738.5472482624
@@ -211,6 +226,7 @@
       "asset_group": "OTHER",
       "usd": 2368.52,
       "apy": null,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": true,
       "balance": null
@@ -222,7 +238,8 @@
       "symbol": "AAVE",
       "asset_group": "OTHER",
       "usd": 2391869.0,
-      "apy": null,
+      "apy": 0.0,
+      "apy_source": "syncrone realised, 10.9d annualised",
       "venue_tvl_usd": null,
       "untracked": true,
       "balance": null
@@ -234,7 +251,8 @@
       "symbol": "B-80BAL-20WETH",
       "asset_group": "ETH",
       "usd": 15150.34,
-      "apy": null,
+      "apy": 0.0,
+      "apy_source": "syncrone realised, 10.9d annualised",
       "venue_tvl_usd": null,
       "untracked": true,
       "balance": null
@@ -247,6 +265,7 @@
       "asset_group": "OTHER",
       "usd": 89.6,
       "apy": null,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": true,
       "balance": null
@@ -682,5 +701,172 @@
       ]
     }
   ],
+  "fallback_apy": {
+    "stakewise_v3/ETH": {
+      "apy": 0.022262499999999998,
+      "apy_base": 0.022262499999999998,
+      "tvl_usd": 404227208.0,
+      "pool": "4d01599c-69ae-41a3-bae1-5fab896f04c8",
+      "project": "stakewise-v3",
+      "symbol": "OSETH",
+      "chain": "Ethereum",
+      "source": "defillama"
+    },
+    "stakewise_v3/OTHER": {
+      "apy": 0.022262499999999998,
+      "apy_base": 0.022262499999999998,
+      "tvl_usd": 404227208.0,
+      "pool": "4d01599c-69ae-41a3-bae1-5fab896f04c8",
+      "project": "stakewise-v3",
+      "symbol": "OSETH",
+      "chain": "Ethereum",
+      "source": "defillama"
+    },
+    "gearbox/ETH/wstETH": {
+      "apy": 0.0067403,
+      "apy_base": 0.0058451,
+      "tvl_usd": 2657828.0,
+      "pool": "aa906e30-64ad-416d-a141-6a2d01a52832",
+      "project": "gearbox",
+      "symbol": "WSTETH",
+      "chain": "Ethereum",
+      "source": "defillama"
+    },
+    "gearbox/ETH": {
+      "apy": 0.0246568,
+      "apy_base": 0.0138415,
+      "tvl_usd": 722779.0,
+      "pool": "5d06dfea-61f8-4807-a148-bff73c059092",
+      "project": "gearbox",
+      "symbol": "WETH",
+      "chain": "Ethereum",
+      "source": "defillama"
+    },
+    "uniswap/ETH": {
+      "apy": 0.1113686,
+      "apy_base": 0.1113686,
+      "tvl_usd": 662162.0,
+      "pool": "9965d9da-c995-4e31-b8de-ba431d88b16c",
+      "project": "uniswap-v3",
+      "symbol": "WNXM-WETH",
+      "chain": "Ethereum",
+      "source": "defillama"
+    },
+    "uniswap/OTHER/RWIV": {
+      "apy": 0.0,
+      "apy_base": 0.0,
+      "tvl_usd": 500102.0,
+      "pool": "206440c7-5614-4afd-bd1a-d9bc4acdcbfe",
+      "project": "uniswap-v3",
+      "symbol": "USDC-RWIV",
+      "chain": "Ethereum",
+      "source": "defillama"
+    },
+    "uniswap/OTHER/COW": {
+      "apy": 0.10019510000000001,
+      "apy_base": 0.10019510000000001,
+      "tvl_usd": 409782.0,
+      "pool": "3dc6640f-d845-45dd-a891-f4dd46d676af",
+      "project": "uniswap-v3",
+      "symbol": "WETH-COW",
+      "chain": "Ethereum",
+      "source": "defillama"
+    },
+    "uniswap/OTHER": {
+      "apy": 0.1113686,
+      "apy_base": 0.1113686,
+      "tvl_usd": 662162.0,
+      "pool": "9965d9da-c995-4e31-b8de-ba431d88b16c",
+      "project": "uniswap-v3",
+      "symbol": "WNXM-WETH",
+      "chain": "Ethereum",
+      "source": "defillama"
+    },
+    "uniswap/USD": {
+      "apy": 0.0,
+      "apy_base": 0.0,
+      "tvl_usd": 500102.0,
+      "pool": "206440c7-5614-4afd-bd1a-d9bc4acdcbfe",
+      "project": "uniswap-v3",
+      "symbol": "USDC-RWIV",
+      "chain": "Ethereum",
+      "source": "defillama"
+    },
+    "gnosis/OTHER": {
+      "apy": 0.0423775,
+      "apy_base": 0.0423775,
+      "tvl_usd": 50231685.0,
+      "pool": "13392973-be6e-4b2f-bce9-4f7dd53d1c3a",
+      "project": "sdai",
+      "symbol": "SDAI",
+      "chain": "Gnosis",
+      "source": "defillama"
+    },
+    "aave_v3/EURO": {
+      "apy": 0.0213337,
+      "apy_base": 0.0213337,
+      "tvl_usd": 6382607.0,
+      "pool": "eb089ddf-77ba-459c-8e87-7a66c7fc3f27",
+      "project": "aave-v3",
+      "symbol": "EURE",
+      "chain": "Gnosis",
+      "source": "defillama"
+    },
+    "aave_v3/USD/GHO": {
+      "apy": 0.0,
+      "apy_base": null,
+      "tvl_usd": 2963953.0,
+      "pool": "bf0660ab-38bf-48a4-9a6c-393ec0e2ff5f",
+      "project": "aave-v3",
+      "symbol": "GHO",
+      "chain": "Ethereum",
+      "source": "defillama"
+    },
+    "aave_v3/OTHER/AAVE": {
+      "apy": 0.0,
+      "apy_base": 0.0,
+      "tvl_usd": 102752024.0,
+      "pool": "7ee6c38b-ac42-4388-88dc-389140276cf8",
+      "project": "aave-v3",
+      "symbol": "AAVE",
+      "chain": "Ethereum",
+      "source": "defillama"
+    },
+    "spark/USD": {
+      "apy": 0.023183699999999998,
+      "apy_base": 0.023183699999999998,
+      "tvl_usd": 362603506.0,
+      "pool": "0ed981dc-b49d-426d-ade5-6014728b1ef9",
+      "project": "sparklend",
+      "symbol": "USDS",
+      "chain": "Ethereum",
+      "source": "defillama"
+    },
+    "compound_v3/USD/ciUSDCv3": {
+      "apy": 0.0424996,
+      "apy_base": 0.0424996,
+      "tvl_usd": 36672869.0,
+      "pool": "7da72d09-56ca-4ec5-a45f-59114353e487",
+      "project": "compound-v3",
+      "symbol": "USDC",
+      "chain": "Ethereum",
+      "source": "defillama"
+    },
+    "compound_v3/USD": {
+      "apy": 0.0424996,
+      "apy_base": 0.0424996,
+      "tvl_usd": 36672869.0,
+      "pool": "7da72d09-56ca-4ec5-a45f-59114353e487",
+      "project": "compound-v3",
+      "symbol": "USDC",
+      "chain": "Ethereum",
+      "source": "defillama"
+    }
+  },
+  "safes": {
+    "avatar": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
+    "manager": "0x60716991aCDA9E990bFB3b1224f1f0fB81538267",
+    "roles_modifier": "0x13c61a25DB73e7a94a244bD2205aDba8b4a60F4a"
+  },
   "ops_tools_caveat": "Optimizer respects only tvlCapPercent per venue. It ignores policy caps/floors and swap-only venues. Reference only."
 }

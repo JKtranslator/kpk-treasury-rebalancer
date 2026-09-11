@@ -221,8 +221,66 @@
       "ens": "ens",
       "nexus": "nexus",
       "cow": "cow dao",
-      "balancer": "karpatkey_balancer"
+      "balancer": "balancer"
     },
     "matrix_report": "Codex/SafeAgentAll/<client folder>/onchain_matrix_report.md"
+  },
+  "receipt_tokens": {
+    "_comment": "Wallet-held receipt tokens that Syncrone books as idle holdings but are positions. address (lowercase) -> protocol key, position label, asset group.",
+    "0x207158a267cbd2598bb3d611d8cbdee2709f2f8c": {
+      "protocol": "compound_v3",
+      "position": "Compound v3 Institutional USDC (ciUSDCv3)",
+      "asset_group": "USD",
+      "symbol": "ciUSDCv3"
+    },
+    "0xc3d688b66703497daa19211eedff47f25384cdc3": {
+      "protocol": "compound_v3",
+      "position": "Compound v3 USDC (cUSDCv3)",
+      "asset_group": "USD",
+      "symbol": "cUSDCv3"
+    },
+    "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd": {
+      "protocol": "sky",
+      "position": "Savings USDS (sUSDS)",
+      "asset_group": "USD",
+      "symbol": "sUSDS"
+    },
+    "0x83f20f44975d03b1b09e64809b757c47f942beea": {
+      "protocol": "spark",
+      "position": "Savings DAI (sDAI)",
+      "asset_group": "USD",
+      "symbol": "sDAI"
+    },
+    "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0": {
+      "protocol": "lido",
+      "position": "Lido wstETH (wallet-held)",
+      "asset_group": "ETH",
+      "symbol": "wstETH"
+    },
+    "0xae78736cd615f374d3085123a210448e74fc6393": {
+      "protocol": "rocket_pool",
+      "position": "Rocket Pool rETH (wallet-held)",
+      "asset_group": "ETH",
+      "symbol": "rETH"
+    }
+  },
+  "defillama_pools": {
+    "_comment": "Fallback APY for sleeves the Strategy API does not price. key = '<protocol>/<asset_group>' or '<protocol>/<asset_group>/<symbol>' ; value = DeFiLlama pool id (yields.llama.fi/pools). Checked 2026-09-11.",
+    "stakewise_v3/ETH": "4d01599c-69ae-41a3-bae1-5fab896f04c8",
+    "stakewise_v3/OTHER": "4d01599c-69ae-41a3-bae1-5fab896f04c8",
+    "gearbox/ETH/wstETH": "aa906e30-64ad-416d-a141-6a2d01a52832",
+    "gearbox/ETH": "5d06dfea-61f8-4807-a148-bff73c059092",
+    "uniswap/ETH": "9965d9da-c995-4e31-b8de-ba431d88b16c",
+    "uniswap/OTHER/RWIV": "206440c7-5614-4afd-bd1a-d9bc4acdcbfe",
+    "uniswap/OTHER/COW": "3dc6640f-d845-45dd-a891-f4dd46d676af",
+    "uniswap/OTHER": "9965d9da-c995-4e31-b8de-ba431d88b16c",
+    "uniswap/USD": "206440c7-5614-4afd-bd1a-d9bc4acdcbfe",
+    "gnosis/OTHER": "13392973-be6e-4b2f-bce9-4f7dd53d1c3a",
+    "aave_v3/EURO": "eb089ddf-77ba-459c-8e87-7a66c7fc3f27",
+    "aave_v3/USD/GHO": "bf0660ab-38bf-48a4-9a6c-393ec0e2ff5f",
+    "aave_v3/OTHER/AAVE": "7ee6c38b-ac42-4388-88dc-389140276cf8",
+    "spark/USD": "0ed981dc-b49d-426d-ade5-6014728b1ef9",
+    "compound_v3/USD/ciUSDCv3": "7da72d09-56ca-4ec5-a45f-59114353e487",
+    "compound_v3/USD": "7da72d09-56ca-4ec5-a45f-59114353e487"
   }
 }

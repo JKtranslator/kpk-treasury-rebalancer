@@ -62,6 +62,27 @@ def flatten_permissions(perms: dict, period: str, reg: dict) -> list[dict]:
     return rows
 
 
+def defillama_fallback(reg: dict) -> dict:
+    """Keyless APYs for sleeves the Strategy API does not price, from yields.llama.fi/pools,
+    keyed as clients.json `defillama_pools` says. Returns {key: {apy, apy_base, tvl_usd, pool, project, symbol}}."""
+    table = {k: v for k, v in reg.get("defillama_pools", {}).items() if not k.startswith("_")}
+    if not table:
+        return {}
+    try:
+        pools = {p["pool"]: p for p in http_json("https://yields.llama.fi/pools", timeout=120)["data"]}
+    except Exception as e:
+        print("  defillama:", str(e)[:120])
+        return {}
+    out = {}
+    for k, pid in table.items():
+        p = pools.get(pid)
+        if p:
+            out[k] = dict(apy=fnum(p.get("apy")) / 100, apy_base=fnum(p.get("apyBase")) / 100 if p.get("apyBase") is not None else None,
+                          tvl_usd=fnum(p.get("tvlUsd")), pool=pid, project=p["project"], symbol=p["symbol"], chain=p["chain"],
+                          source="defillama")
+    return out
+
+
 def vaults_fyi_benchmarks(chain_name: str) -> dict | None:
     k = key("VAULTS_FYI_API_KEY")
     if not k:
@@ -110,10 +131,13 @@ def main():
         print(f"  permitted but unpriced ({len(unpriced)}): {', '.join(unpriced[:12])}{' ...' if len(unpriced) > 12 else ''}")
 
     bench = vaults_fyi_benchmarks(reg["strategy_api_chain_names"][str(chain_id)])
+    fallback = defillama_fallback(reg)
+    if fallback:
+        print(f"  defillama fallback: {len(fallback)} sleeves priced (" + ", ".join(f"{k} {v['apy']*100:.2f}%" for k, v in list(fallback.items())[:6]) + " ...)")
     write_json(out / "yields.json", dict(
         client=a.client, chain_id=chain_id, period=a.period,
         vault_data_fetched_at=perms.get("vaultDataFetchedAt"),
-        permitted=rows,
+        permitted=rows, fallback_apy=fallback,
         all_permissions_protocols=sorted((perms.get("allPermissions") or {}).keys()),
         ops_tools_best_strategy=best,
         ops_tools_caveat="Optimizer respects only tvlCapPercent per venue. It ignores policy caps/floors and swap-only venues. Reference only.",

@@ -1,38 +1,52 @@
-/* Treasury rebalancer page. Loads data/index.json + data/<client>.json (written by scripts/publish.py)
-   and re-runs the move sizing client-side with the user's thresholds. Nothing is sent anywhere. */
+/* Treasury rebalancer page. Loads data/index.json + data/<client>.json (+ .live.json) written by
+   scripts/publish.py / refresh_holdings.py, and re-runs the move sizing client-side. The Execute
+   button talks to the local SafeAgent executor (scripts/executor.py) at EXECUTOR; nothing here signs. */
 (() => {
+  const EXECUTOR = localStorage.getItem('kpk_executor') || 'http://127.0.0.1:8743';
   const $ = (s, el = document) => el.querySelector(s);
   const usd = (v, d = 0) => '$' + Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
   const pct = (v, d = 2) => v == null ? 'n/a' : (Number(v) * 100).toFixed(d) + '%';
   const compact = v => { v = Number(v || 0); return v >= 1e9 ? '$' + (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? '$' + (v / 1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v / 1e3).toFixed(0) + 'k' : usd(v); };
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const GROUP_COLORS = { USD: '#2D8561', ETH: '#1D1D1D', EURO: '#8E6710', OTHER: '#706E66' };
+  const srcTag = b => b.apy == null ? '' : b.apy_source && b.apy_source !== 'vaults.fyi' ? `<span class="src" title="${esc(b.apy_source)}">${b.apy_source.startsWith('defillama') ? 'llama' : 'realised'}</span>` : '';
 
-  let index = null, snap = null, sim = { pickupBps: 50, moveUsd: 250000, tvlCapPct: 10, basis: 'apy', exclude: new Set() };
+  let index = null, snap = null, live = null, moves = [], executorOn = false;
+  let sim = { pickupBps: 50, moveUsd: 250000, tvlCapPct: 10, basis: 'apy', exclude: new Set() };
 
   async function loadJSON(p) { const r = await fetch(p, { cache: 'no-store' }); if (!r.ok) throw new Error(p + ' ' + r.status); return r.json(); }
 
   async function init() {
     try { index = await loadJSON('data/index.json'); }
-    catch (e) { $('#stamp').textContent = 'No snapshot yet. Run `python rebalancer/scripts/publish.py`.'; return; }
+    catch (e) { $('#stamp').textContent = 'No snapshot yet. Run `python scripts/publish.py`.'; return; }
     const tabs = $('#clientTabs');
     tabs.innerHTML = index.clients.map((c, i) => `<button role="tab" data-c="${c.client}" aria-pressed="${i === 0}">${esc(c.display_name)}</button>`).join('');
     tabs.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; [...tabs.children].forEach(x => x.setAttribute('aria-pressed', x === b)); select(b.dataset.c); });
-    const first = new URLSearchParams(location.search).get('client') || index.clients[0]?.client;
-    if (first) { [...tabs.children].forEach(x => x.setAttribute('aria-pressed', x.dataset.c === first)); select(first); }
+    $('#viewTabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; showView(b.dataset.v); });
+    const q = new URLSearchParams(location.search);
+    const first = q.get('client') || index.clients[0]?.client;
+    if (first) { [...tabs.children].forEach(x => x.setAttribute('aria-pressed', x.dataset.c === first)); await select(first); }
+    showView(q.get('view') || 'holdings');
+    pingExecutor();
+    bindModal();
   }
 
-  let live = null;
+  function showView(v) {
+    document.querySelectorAll('.view').forEach(el => el.hidden = el.dataset.view !== v);
+    [...$('#viewTabs').children].forEach(x => x.setAttribute('aria-pressed', x.dataset.v === v));
+    const q = new URLSearchParams(location.search); q.set('view', v); history.replaceState(null, '', '?' + q);
+  }
+
   async function select(slug) {
     snap = await loadJSON('data/' + slug + '.json');
     try { live = await loadJSON('data/' + slug + '.live.json'); } catch (e) { live = null; }
-    history.replaceState(null, '', '?client=' + slug);
+    const q = new URLSearchParams(location.search); q.set('client', slug); history.replaceState(null, '', '?' + q);
     sim.pickupBps = snap.thresholds.min_pickup_bps; sim.moveUsd = snap.thresholds.min_move_usd; sim.tvlCapPct = snap.thresholds.venue_tvl_cap_pct;
     sim.exclude = new Set(snap.thresholds.exclude || []);
-    render();
-    renderLive();
+    render(); renderLive();
   }
 
+  /* ------------------------------------------------------------------ holdings */
   function renderLive() {
     const sec = $('#liveSection');
     if (!live) { sec.hidden = true; return; }
@@ -64,46 +78,55 @@
     $('#app').hidden = false;
     const r = snap.reconciliation;
     $('#stamp').innerHTML = `<b>${esc(snap.display_name)}</b> · chain ${snap.chain_id} · run ${esc(snap.run_folder)}`;
-    $('#stamp2').textContent = `data as of ${new Date(snap.as_of).toUTCString().replace(':00 GMT', ' UTC')} · APY period ${snap.period} · vaults.fyi ${snap.vault_data_fetched_at ? new Date(snap.vault_data_fetched_at).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : 'n/a'}`;
+    $('#stamp2').textContent = `data as of ${new Date(snap.as_of).toISOString().slice(0, 16).replace('T', ' ')} UTC · APY period ${snap.period} · vaults.fyi ${snap.vault_data_fetched_at ? new Date(snap.vault_data_fetched_at).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : 'n/a'}`;
 
-    // NAV cards
     const groups = {}; snap.book.forEach(b => groups[b.asset_group] = (groups[b.asset_group] || 0) + b.usd);
     const nav = snap.nav_usd; const stables = (groups.USD || 0) + (groups.EURO || 0);
-    const blended = weightedApy(snap.book.filter(b => b.kind === 'position' && b.apy != null));
+    const priced = snap.book.filter(b => b.kind === 'position' && b.apy != null);
+    const blended = weightedApy(priced);
     const idle = snap.book.filter(b => b.kind === 'idle').reduce((s, b) => s + b.usd, 0);
     const diffOk = r.diff == null || r.diff <= 0.01;
     $('#navCards').innerHTML = [
       card('NAV (book)', compact(nav), `Syncrone ${compact(r.syncrone_nav_usd)}`),
       card('Stables / volatile', `${(100 * stables / nav).toFixed(1)}<span class="u">/ ${(100 * (groups.ETH || 0) / nav).toFixed(1)}%</span>`, 'by market value'),
-      card('Blended APY (priced positions)', pct(blended), `${snap.book.filter(b => b.kind === 'position' && b.apy != null).length} positions`),
+      card('Blended APY (priced)', pct(blended), `${priced.length} positions priced`),
       card('Idle at 0%', compact(idle), idle > 0 ? 'deployable' : 'none'),
       card('In-flight', compact(r.in_flight_usd), 'withdrawal queues'),
-      card('Untracked by optimizer', compact(r.untracked_usd), 'no APY feed'),
+      card('Untracked by optimizer', compact(r.untracked_usd), 'no vaults.fyi feed'),
       card('Reconciliation', r.diff == null ? 'n/a' : pct(r.diff), `<span class="pill ${diffOk ? 'p-good' : 'p-bad'}">${diffOk ? 'ties' : 'STOP'}</span> · Safe=Etherscan ${r.tokens_checked - r.tokens_disagree}/${r.tokens_checked}`),
     ].join('');
     const others = Object.entries(r.other_wallets || {});
     $('#reconBox').innerHTML = `<b>Bridge.</b> Syncrone NAV ${usd(r.syncrone_nav_usd)} against Strategy API positions ${usd(r.strategy_api_usd)} + untracked ${usd(r.untracked_usd)} + in-flight ${usd(r.in_flight_usd)} + idle ${usd(r.idle_usd)} = ${usd(r.bridge_usd)}. Tolerance 1%.` +
       (others.length ? `<div class="fine" style="margin-top:6px">Other wallets/chains in the same Syncrone org, not in this view: ${others.map(([k, v]) => `${esc(k)} ${compact(v)}`).join(', ')}.</div>` : '');
 
-    // Policy
+    // composition cards: per group, protocol shares
+    $('#composition').innerHTML = `<div class="comp">` + Object.keys(groups).sort().map(g => {
+      const byP = {}; snap.book.filter(b => b.asset_group === g).forEach(b => { const k = b.kind === 'idle' ? 'idle' : b.protocol; byP[k] = (byP[k] || 0) + b.usd; });
+      const rows = Object.entries(byP).sort((a, b) => b[1] - a[1]);
+      return `<div class="card"><div class="t">${g}</div><div class="v sm">${compact(groups[g])} <span class="u">${(100 * groups[g] / nav).toFixed(1)}% of NAV</span></div>
+        <div class="bar">${rows.map(([k, v], i) => `<span title="${esc(k)} ${compact(v)}" style="width:${100 * v / groups[g]}%;background:${k === 'idle' ? 'var(--warn)' : GROUP_COLORS[g] || '#999'};opacity:${k === 'idle' ? 1 : 0.35 + 0.65 * (1 - i / Math.max(1, rows.length))}"></span>`).join('')}</div>
+        <div class="rows">${rows.map(([k, v]) => `<div><span class="${k === 'idle' ? 'dim' : ''}">${esc(k)}</span><span class="num">${usd(v)} · ${(100 * v / nav).toFixed(1)}%</span></div>`).join('')}</div></div>`;
+    }).join('') + `</div>`;
+
+    // policy
     const ps = $('#policySection');
     if (snap.policy) {
       ps.hidden = false; $('#policyTitle').textContent = snap.policy.name;
       $('#policyTable tbody').innerHTML = snap.policy_checks.map(k => `<tr><td class="k">${esc(k.check)}</td><td><span class="pill ${{ breached: 'p-bad', near: 'p-warn', 'in-bounds': 'p-good' }[k.status]}">${k.status}</span></td><td>${esc(k.value)}${k.effective_stable_target_pct ? ` · effective stable target <b>${k.effective_stable_target_pct}%</b>` : ''}</td></tr>`).join('');
-    } else { ps.hidden = true; }
+    } else { ps.hidden = false; $('#policyTitle').textContent = 'No investment policy on file'; $('#policyTable tbody').innerHTML = '<tr><td colspan="3" class="dim">Pure yield optimisation within the Roles permissions. Add a policy block in clients.json to enable checks.</td></tr>'; }
 
-    // Groups / positions
+    $('#flags').innerHTML = snap.flags.length ? snap.flags.map(f => `<li class="${/^NAV:|STOP/.test(f) ? 'stop' : ''}">${esc(f)}</li>`).join('') : '<li>No flags.</li>';
+
+    /* ---------------------------------------------------------------- strategies */
     $('#groups').innerHTML = Object.keys(groups).sort().map(g => {
       const rows = snap.book.filter(b => b.asset_group === g).sort((a, b) => b.usd - a.usd);
       const tot = groups[g]; const ap = weightedApy(rows.filter(b => b.kind === 'position' && b.apy != null));
       return `<div class="grp"><div class="grp-h"><h3>${g}</h3><div class="tot"><b>${compact(tot)}</b> · ${(100 * tot / nav).toFixed(1)}% of NAV${ap != null ? ` · blended <b>${pct(ap)}</b>` : ''}</div></div>
-        <div class="bar">${rows.map(b => `<span title="${esc(b.venue)} ${compact(b.usd)}" style="width:${100 * b.usd / tot}%;background:${b.kind === 'idle' ? 'var(--warn)' : b.kind === 'in_flight' ? 'var(--hair)' : b.untracked ? 'var(--muted)' : GROUP_COLORS[g] || '#999'};opacity:${b.kind === 'position' && !b.untracked ? 0.55 + 0.45 * (rows.indexOf(b) % 2) : 1}"></span>`).join('')}</div>
         <div class="scroll"><table><thead><tr><th>Protocol</th><th>Venue</th><th class="n">Value</th><th class="n">Share</th><th class="n">APY</th><th class="n">30d</th></tr></thead><tbody>
-        ${rows.map(b => `<tr class="${b.kind === 'idle' ? 'idle' : b.kind === 'in_flight' ? 'inflight' : ''}"><td class="k">${esc(b.protocol)}</td><td>${esc(b.venue)}${b.untracked ? ' <span class="pill p-warn">untracked</span>' : ''}</td><td class="n num">${usd(b.usd)}</td><td class="n num">${(100 * b.usd / nav).toFixed(1)}%</td><td class="n num">${b.apy == null ? '<span class="dim">n/a</span>' : pct(b.apy)}</td><td class="n num dim">${apy30(b)}</td></tr>`).join('')}
+        ${rows.map(b => `<tr class="${b.kind === 'idle' ? 'idle' : b.kind === 'in_flight' ? 'inflight' : ''}"><td class="k">${esc(b.protocol)}</td><td>${esc(b.venue)}${b.untracked && b.apy == null ? ' <span class="pill p-warn">untracked</span>' : ''}</td><td class="n num">${usd(b.usd)}</td><td class="n num">${(100 * b.usd / nav).toFixed(1)}%</td><td class="n num">${b.apy == null ? '<span class="dim">n/a</span>' : pct(b.apy) + srcTag(b)}</td><td class="n num dim">${apy30(b)}</td></tr>`).join('')}
         </tbody></table></div></div>`;
     }).join('');
 
-    // Simulator controls
     const protos = [...new Set(snap.permitted.map(p => p.protocol))].sort();
     $('#exclude').innerHTML = protos.map(p => `<button data-p="${esc(p)}" aria-pressed="${sim.exclude.has(p)}">${esc(p)}</button>`).join('');
     $('#exclude').onclick = e => { const b = e.target.closest('button'); if (!b) return; sim.exclude.has(b.dataset.p) ? sim.exclude.delete(b.dataset.p) : sim.exclude.add(b.dataset.p); b.setAttribute('aria-pressed', sim.exclude.has(b.dataset.p)); simulate(); };
@@ -111,12 +134,8 @@
     bindRange('#pickup', 'pickupBps', v => v + ' bps'); bindRange('#move', 'moveUsd', v => compact(v)); bindRange('#tvl', 'tvlCapPct', v => v + '% of venue TVL');
     simulate();
 
-    // ops-tools
     $('#opsCaveat').textContent = snap.ops_tools_caveat || '';
     $('#ops').innerHTML = snap.ops_tools.length ? snap.ops_tools.map(o => `<div class="opsrow"><b>${o.asset_group}</b>: ${pct(o.current_apy)} → ${pct(o.recommended_apy)} by moving ${compact(o.changed_usd)}. ${o.allocations.map(a => `${esc(a.protocol)}/${esc(a.venue)} → ${compact(a.usd)} @ ${pct(a.apy)}`).join('; ')}</div>`).join('') : '<p class="empty">No optimizer output for this client/chain.</p>';
-
-    // flags
-    $('#flags').innerHTML = snap.flags.length ? snap.flags.map(f => `<li class="${/^NAV:|STOP/.test(f) ? 'stop' : ''}">${esc(f)}</li>`).join('') : '<li>No flags.</li>';
   }
 
   function apy30(b) { const p = snap.permitted.find(p => p.protocol === b.protocol && p.priced && p.asset_group === b.asset_group && (p.asset === b.symbol || (p.vault && (b.venue || '').toLowerCase().includes((p.asset || '').toLowerCase())))); return p && p.apy_30d != null ? pct(p.apy_30d) : ''; }
@@ -129,11 +148,10 @@
   function simulate() {
     const nav = snap.nav_usd; const cap = snap.policy?.protocol_cap_pct_nav;
     const byProto = {}; snap.book.forEach(b => { if (b.kind !== 'idle') byProto[b.protocol] = (byProto[b.protocol] || 0) + b.usd; });
-    const minPick = sim.pickupBps / 1e4; const moves = []; let before = 0, after = 0, den = 0, idleDeployed = 0;
+    const minPick = sim.pickupBps / 1e4; moves = []; let before = 0, den = 0, idleDeployed = 0;
     const apyOf = p => sim.basis === 'apy_30d' && p.apy_30d != null ? p.apy_30d : p.apy;
-    const groups = [...new Set(snap.book.map(b => b.asset_group))];
-    for (const g of groups) {
-      const pos = snap.book.filter(b => b.asset_group === g && b.kind === 'position' && b.apy != null);
+    for (const g of [...new Set(snap.book.map(b => b.asset_group))]) {
+      const pos = snap.book.filter(b => b.asset_group === g && b.kind === 'position' && b.apy != null && !b.untracked);
       const idle = snap.book.filter(b => b.asset_group === g && b.kind === 'idle' && b.usd > 1000);
       const venues = snap.permitted.filter(p => p.asset_group === g && p.priced && apyOf(p) != null && !sim.exclude.has(p.protocol)).sort((a, b) => apyOf(b) - apyOf(a));
       pos.forEach(b => { before += b.usd * b.apy; den += b.usd; });
@@ -150,21 +168,103 @@
           if (pick < minPick && src.kind === 'position' && !sim.exclude.has(src.protocol)) break;
           const amt = Math.min(rem, headroom.get(v));
           if (amt < Math.min(sim.moveUsd, rem) || amt <= 0) continue;
-          moves.push({ g, from: src, to: v, amt, pick, forced: sim.exclude.has(src.protocol) });
+          moves.push({ id: moves.length, g, from: src, to: v, amt, pick, toApy: apyOf(v), forced: sim.exclude.has(src.protocol) });
           headroom.set(v, headroom.get(v) - amt); rem -= amt; if (src.kind === 'idle') idleDeployed += amt;
           if (rem <= 0) break;
         }
       }
     }
-    after = before + moves.reduce((s, m) => s + m.amt * m.pick, 0); den += idleDeployed;
-    const pickup = moves.reduce((s, m) => s + m.amt * m.pick, 0);
+    const pickup = moves.reduce((s, m) => s + m.amt * m.pick, 0); const after = before + pickup; den += idleDeployed;
     $('#simOut').innerHTML = [
       ['Candidate moves', moves.length], ['Capital moved', compact(moves.reduce((s, m) => s + m.amt, 0))],
       ['Blended APY before', den ? pct(before / (den - idleDeployed)) : 'n/a'], ['Blended APY after', den ? pct(after / den) : 'n/a'],
       ['Pickup per year', compact(pickup)],
     ].map(([t, v]) => `<div class="o"><div class="t">${t}</div><div class="v num">${v}</div></div>`).join('');
-    $('#simMoves').innerHTML = moves.length ? moves.map(m => `<div class="mv ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path"><b>${m.g}</b> · ${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → ${pct(apyOf(m.to))}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.forced ? ' · excluded venue: exit is mandatory' : ''}</small></div><div class="amt num">${usd(m.amt)}<small>+${usd(m.amt * m.pick)}/yr</small></div></div>`).join('')
+    $('#simMoves').innerHTML = moves.length ? moves.map(m => `<div class="mv ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path"><b>${m.g}</b> · ${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → ${pct(m.toApy)}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.forced ? ' · excluded venue: exit is mandatory' : ''}</small></div><div class="amt num">${usd(m.amt)}<small>+${usd(m.amt * m.pick)}/yr</small></div><button class="btn ${executorOn ? '' : 'ghost'}" data-exec="${m.id}" type="button" title="${executorOn ? 'Build, simulate and propose via the local SafeAgent executor' : 'Start scripts/executor.py to enable'}">Execute</button></div>`).join('')
       : '<p class="empty">No move clears these thresholds. Laggards are noted, not traded.</p>';
+    $('#simMoves').onclick = e => { const b = e.target.closest('button[data-exec]'); if (b) openModal(moves[Number(b.dataset.exec)]); };
+  }
+
+  /* ------------------------------------------------------------------ executor */
+  async function pingExecutor() {
+    const el = $('#execState');
+    try { const r = await fetch(EXECUTOR + '/health', { cache: 'no-store' }); const j = await r.json(); executorOn = !!j.ok; el.textContent = `executor: ${j.ok ? 'connected' : 'error'}${j.clients ? ' · ' + j.clients.join(', ') : ''}${j.propose ? '' : ' · simulate only'}`; el.className = 'exec-state ' + (j.ok ? 'on' : 'off'); }
+    catch (e) { executorOn = false; el.textContent = 'executor: offline (run scripts/executor.py locally to enable Execute)'; el.className = 'exec-state off'; }
+    if (snap) simulate();
+  }
+
+  let cur = null;
+  function bindModal() {
+    const close = () => { $('#modal').hidden = true; cur = null; };
+    $('#mClose').onclick = close; $('#mCancel').onclick = close;
+    $('#modal').addEventListener('click', e => { if (e.target === $('#modal')) close(); });
+    $('#mBuild').onclick = buildAndSimulate;
+    $('#mPropose').onclick = propose;
+  }
+
+  function steps(state) { // state: {build, sim, propose} each: '', 'cur', 'done', 'fail'
+    $('#mSteps').innerHTML = [['build', '1 · Build Roles transaction'], ['sim', '2 · Tenderly simulation'], ['review', '3 · Your approval'], ['propose', '4 · Propose to Safe']]
+      .map(([k, t]) => `<span class="pill ${state[k] || ''}">${t}</span>`).join('');
+  }
+
+  function openModal(m) {
+    cur = { move: m, plan: null };
+    const s = snap.safes || {};
+    $('#mTitle').textContent = `Execute · ${snap.display_name}`;
+    $('#mParams').innerHTML = [
+      ['Client / chain', `${snap.client} · ${snap.chain_id}`], ['Avatar Safe', s.avatar || snap.avatar_safe], ['Roles Modifier', s.roles_modifier || '—'],
+      ['Action', m.from.kind === 'idle' ? 'DEPLOY idle' : 'WITHDRAW then DEPOSIT'],
+      ['From', `${m.from.protocol} · ${m.from.venue}`], ['To', `${m.to.protocol} · ${m.to.asset} (${m.to.action})${m.to.vault ? ' · ' + m.to.vault : ''}`],
+      ['Amount', `${usd(m.amt)} of ${m.from.symbol || m.g}`], ['Yield', `${pct(m.from.apy)} → ${pct(m.toApy)} · +${usd(m.amt * m.pick)}/yr`],
+    ].map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
+    $('#mPlan').hidden = true; $('#mSim').hidden = true; $('#mMsg').className = 'modal-msg'; $('#mMsg').textContent = executorOn ? 'Ready. Build & simulate constructs the transaction through the SafeAgent builders and permission engine, then runs it on Tenderly. Nothing is proposed until you confirm.' : 'Executor offline. Start it locally:  python scripts/executor.py   (needs the client .env with RPC, Tenderly and, for proposing, the agent key).';
+    $('#mBuild').disabled = !executorOn; $('#mPropose').disabled = true;
+    steps({});
+    $('#modal').hidden = false;
+  }
+
+  function movePayload(m) {
+    return { client: snap.client, chain_id: snap.chain_id, asset_group: m.g, amount_usd: Math.round(m.amt),
+      from: { kind: m.from.kind, protocol: m.from.protocol, venue: m.from.venue, symbol: m.from.symbol, vault: m.from.vault || null, usd: m.from.usd },
+      to: { protocol: m.to.protocol, asset: m.to.asset, action: m.to.action, vault: m.to.vault || null, apy: m.toApy },
+      snapshot_as_of: snap.as_of };
+  }
+
+  async function buildAndSimulate() {
+    if (!cur) return; steps({ build: 'cur' }); $('#mBuild').disabled = true; $('#mMsg').className = 'modal-msg'; $('#mMsg').textContent = 'Building…';
+    try {
+      const r = await fetch(EXECUTOR + '/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(movePayload(cur.move)) });
+      const j = await r.json();
+      if (!r.ok || j.error) throw new Error(j.error || r.statusText);
+      cur.plan = j;
+      $('#mPlan').hidden = false;
+      $('#mPlan').innerHTML = `<b>Plan</b> · ${esc(j.summary || '')}<div class="txlist" style="margin-top:6px">${(j.transactions || []).map((t, i) => `<div class="tx"><b>${i + 1}. ${esc(t.label || t.to)}</b><br>to ${esc(t.to)} · value ${esc(String(t.value ?? 0))}<br>${esc(t.data_preview || (t.data || '').slice(0, 74) + (t.data && t.data.length > 74 ? '…' : ''))}</div>`).join('')}</div>` +
+        (j.permission_check ? `<div class="fine" style="margin-top:6px">Permissions: ${esc(j.permission_check)}</div>` : '');
+      steps({ build: 'done', sim: 'cur' }); $('#mMsg').textContent = 'Simulating on Tenderly…';
+      const s = j.simulation || {};
+      $('#mSim').hidden = false;
+      $('#mSim').innerHTML = `<b>Tenderly</b> · <span class="pill ${s.success ? 'p-good' : 'p-bad'}">${s.success ? 'success' : 'reverted / failed'}</span>` +
+        (s.gas_used ? ` · gas ${Number(s.gas_used).toLocaleString()}` : '') +
+        (s.url ? ` · <a href="${esc(s.url)}" target="_blank" rel="noopener">open simulation ↗</a>` : '') +
+        (s.error ? `<div class="fine" style="margin-top:6px">${esc(s.error)}</div>` : '') +
+        (s.balance_changes ? `<div class="fine" style="margin-top:6px">${esc(s.balance_changes)}</div>` : '');
+      steps({ build: 'done', sim: s.success ? 'done' : 'fail', review: 'cur' });
+      $('#mMsg').textContent = s.success ? (j.can_propose ? 'Review the plan and the simulation. Propose to Safe submits it to the Safe Transaction Service for signers, exactly like the Telegram "approved" step.' : 'Simulation passed. Proposing is disabled on this executor (no agent key configured).') : 'Simulation did not succeed; proposing is blocked.';
+      $('#mPropose').disabled = !(s.success && j.can_propose);
+    } catch (e) { steps({ build: 'fail' }); $('#mMsg').className = 'modal-msg err'; $('#mMsg').textContent = 'Build failed: ' + e.message; $('#mBuild').disabled = false; }
+  }
+
+  async function propose() {
+    if (!cur || !cur.plan) return;
+    if (!confirm(`Propose this transaction to the ${snap.display_name} Safe? Signers will still have to approve it in the Safe UI.`)) return;
+    steps({ build: 'done', sim: 'done', review: 'done', propose: 'cur' }); $('#mPropose').disabled = true; $('#mMsg').textContent = 'Proposing…';
+    try {
+      const r = await fetch(EXECUTOR + '/propose', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan_id: cur.plan.plan_id }) });
+      const j = await r.json();
+      if (!r.ok || j.error) throw new Error(j.error || r.statusText);
+      steps({ build: 'done', sim: 'done', review: 'done', propose: 'done' });
+      $('#mMsg').innerHTML = `Proposed. Safe tx hash <span class="num">${esc(j.safe_tx_hash || '')}</span>${j.url ? ` · <a href="${esc(j.url)}" target="_blank" rel="noopener">open in Safe ↗</a>` : ''}`;
+    } catch (e) { steps({ build: 'done', sim: 'done', review: 'done', propose: 'fail' }); $('#mMsg').className = 'modal-msg err'; $('#mMsg').textContent = 'Propose failed: ' + e.message; }
   }
 
   init();

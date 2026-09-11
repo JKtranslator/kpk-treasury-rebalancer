@@ -8,6 +8,7 @@
   "vault_data_fetched_at": "2026-09-11T01:51:07.597Z",
   "run_folder": "2026-09-11",
   "nav_usd": 18392973,
+  "eth_price_usd": 2456.4499,
   "reconciliation": {
     "syncrone_nav_usd": 18380729,
     "bridge_usd": 18392599,
@@ -47,6 +48,7 @@
       "asset_group": "EURO",
       "usd": 2575394.29,
       "apy": 0.0232,
+      "apy_source": null,
       "venue_tvl_usd": 46741351.0,
       "untracked": false,
       "balance": null
@@ -59,6 +61,7 @@
       "asset_group": "ETH",
       "usd": 1801660.05,
       "apy": 0.0235,
+      "apy_source": null,
       "venue_tvl_usd": 5429295767.0,
       "untracked": false,
       "balance": null
@@ -71,6 +74,7 @@
       "asset_group": "ETH",
       "usd": 337674.46,
       "apy": 0.0228,
+      "apy_source": null,
       "venue_tvl_usd": 23652485521.0,
       "untracked": false,
       "balance": null
@@ -83,6 +87,7 @@
       "asset_group": "USD",
       "usd": 7468309.29,
       "apy": 0.0452,
+      "apy_source": null,
       "venue_tvl_usd": 20614804.0,
       "untracked": false,
       "balance": null
@@ -95,6 +100,7 @@
       "asset_group": "OTHER",
       "usd": 21460.89,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 199999.99999999997
@@ -107,6 +113,7 @@
       "asset_group": "USD",
       "usd": 2625.57,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 2625.742220095646
@@ -119,6 +126,7 @@
       "asset_group": "USD",
       "usd": 1000323.91,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 1000023.898519
@@ -131,6 +139,7 @@
       "asset_group": "USD",
       "usd": 151.99,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 152.306225
@@ -143,6 +152,7 @@
       "asset_group": "USD",
       "usd": 14142.95,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 14142.962281
@@ -155,6 +165,7 @@
       "asset_group": "ETH",
       "usd": 72955.59,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 29.872232263177914
@@ -167,6 +178,7 @@
       "asset_group": "ETH",
       "usd": 54.04,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 0.022000001
@@ -179,6 +191,7 @@
       "asset_group": "OTHER",
       "usd": 336666.38,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 2638451.2416446875
@@ -191,6 +204,7 @@
       "asset_group": "OTHER",
       "usd": 213092.01,
       "apy": null,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": true,
       "balance": null
@@ -203,6 +217,7 @@
       "asset_group": "ETH",
       "usd": 5911.6,
       "apy": null,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": true,
       "balance": null
@@ -215,6 +230,7 @@
       "asset_group": "OTHER",
       "usd": 4822.74,
       "apy": null,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": true,
       "balance": null
@@ -227,6 +243,7 @@
       "asset_group": "ETH",
       "usd": 174071.71,
       "apy": null,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": true,
       "balance": null
@@ -239,6 +256,7 @@
       "asset_group": "ETH",
       "usd": 713811.64,
       "apy": null,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": true,
       "balance": null
@@ -251,6 +269,7 @@
       "asset_group": "USD",
       "usd": 3649842.81,
       "apy": null,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": true,
       "balance": null
@@ -781,5 +800,11 @@
       ]
     }
   ],
+  "fallback_apy": {},
+  "safes": {
+    "avatar": "0x616dE58c011F8736fa20c7Ae5352F7f6FB9F0669",
+    "manager": "0xfABCA7957D67c680d3ab2C28b8dC003A5852123a",
+    "roles_modifier": "0xaF65eec285e2999e8f7bFEc57E83e88A9525F1E6"
+  },
   "ops_tools_caveat": "Optimizer respects only tvlCapPercent per venue. It ignores policy caps/floors and swap-only venues. Reference only."
 }

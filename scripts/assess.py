@@ -64,7 +64,7 @@ def build_book(h: dict, reg: dict) -> list[dict]:
             proto = reg["protocol_aliases"].get(r["protocol"].lower(), r["protocol"].lower())
             book.append(dict(kind="position", protocol=proto, venue=f"{r['position']} [{r['symbol']}]", symbol=r["symbol"],
                              asset_group=r["asset_group"], usd=r["usd"], apy=None, apy_base=None, source="syncrone",
-                             untracked=True))
+                             untracked=True, realised_apr=r.get("realised_apr"), realised_days=r.get("realised_days")))
     return book
 
 
@@ -221,7 +221,9 @@ def render_md(c, h, y, book, nav, checks, perf, args) -> str:
     for b in sorted(book, key=lambda b: (b["asset_group"], -b["usd"])):
         if b["usd"] < 1000:
             continue
-        L.append(f"| {b['asset_group']} | {b['protocol']} | {b['venue']}{' ⏳' if b['kind']=='in_flight' else ''} | {b['usd']:,.0f} | {100*b['usd']/nav:.1f}% | {'n/a' if b['apy'] is None else f'{b['apy']*100:.2f}%'} |")
+        src = b.get("apy_source")
+        tag = "" if not src or src == "vaults.fyi" else f" ({src})"
+        L.append(f"| {b['asset_group']} | {b['protocol']} | {b['venue']}{' ⏳' if b['kind']=='in_flight' else ''} | {b['usd']:,.0f} | {100*b['usd']/nav:.1f}% | {'n/a' if b['apy'] is None else f'{b['apy']*100:.2f}%'}{tag} |")
     L.append("")
     if checks:
         L.append(f"## Policy checks — {c['policy']['name']}")
@@ -297,6 +299,23 @@ def main():
     h = load(out, "holdings.json")
     y = load(out, "yields.json")
     book = build_book(h, reg)
+    # fallback APY (DeFiLlama) for untracked sleeves: most specific key wins
+    fb = y.get("fallback_apy") or {}
+    for b in book:
+        if b["kind"] == "position" and b["apy"] is None and fb:
+            for k in (f"{b['protocol']}/{b['asset_group']}/{b.get('symbol')}", f"{b['protocol']}/{b['asset_group']}"):
+                if k in fb and fb[k]["apy"] > 0:   # DeFiLlama reports 0 when it cannot compute; treat as unknown
+                    b["apy"], b["apy_source"], b["apy_pool"] = fb[k]["apy"], "defillama", fb[k]["pool"]
+                    b["venue_tvl_usd"] = fb[k]["tvl_usd"]
+                    break
+    for b in book:
+        if b["kind"] == "position" and b["apy"] is None and 0.0005 <= (b.get("realised_apr") or 0) <= 0.20 and b["usd"] >= 10_000:
+            # third tier: Syncrone realised yield this month, annualised. Noisy early in the month; labelled.
+            # Zero means Syncrone has booked no yield yet (e.g. stkAAVE rewards), so it stays unknown.
+            b["apy"], b["apy_source"] = b["realised_apr"], f"syncrone realised, {b.get('realised_days')}d annualised"
+    for b in book:
+        if b["kind"] == "position" and b["apy"] is not None and "apy_source" not in b:
+            b["apy_source"] = "vaults.fyi" if b["source"] == "strategy_api" else "unknown"
     nav = sum(b["usd"] for b in book)
     checks = policy_checks(book, nav, c.get("policy"), reg)
     perf = performance(book, y["permitted"], nav, c.get("policy"), args, reg)

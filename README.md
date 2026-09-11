@@ -47,6 +47,26 @@ Keys: `SYNCRONE_API_KEY`, `ETHERSCAN_API_KEY`, optional `SAFE_API_KEY`, optional
 Locally they are read from the environment then `.env.local` (never committed). In Actions they are
 repository secrets.
 
+## Execute (local executor on the kpk proposer bot)
+
+The **Execute** button on a simulator move talks to a local executor that reuses the SafeAgent
+(kpk proposer bot) code: same parser grammar, permission engine, builders, Tenderly simulation and
+Safe Transaction Service proposal as the Telegram flow, split into preview and approve.
+
+```bash
+python scripts/executor.py            # http://127.0.0.1:8743 ; needs Codex/SafeAgentAll next to this folder
+```
+
+`/plan` builds and simulates (nothing sent); the popup shows the commands, the Roles-wrapped steps,
+the permission result and the Tenderly link. `/propose` sends the stored manager transaction to the
+Safe for signers, only after you confirm in the popup. Swaps (CoW) and LST exits are refused here and
+must go through the bot. The executor reads each client's SafeAgent `.env`; the page never sees keys.
+
+Tenderly links: the bot shares the simulation and builds a `/public/` URL without checking the share
+response, so on plans that do not allow public simulations the link lands on Tenderly's home page.
+The executor checks the share status, reports the reason, and always returns the private dashboard
+URL (needs a Tenderly login).
+
 ## Method
 
 `METHOD.md` is the operating procedure Claude follows when asked to `run`: reconcile first, then

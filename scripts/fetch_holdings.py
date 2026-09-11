@@ -55,13 +55,26 @@ def syncrone_rows(org: dict, reg: dict) -> list[dict]:
     rows = []
     for w in org.get("wallets") or []:
         wa = (w.get("wallet_address") or "").lower()
+        receipts = reg.get("receipt_tokens", {})
         for h in w.get("holdings") or []:
             f = h.get("final") or {}
             usd = fnum(f.get("balance_usd"))
             tok = h.get("token") or {}
+            addr = (tok.get("address") or "").lower()
+            rc = receipts.get(addr)
+            if rc and usd >= DUST_USD:
+                # Syncrone books this receipt token as a wallet holding; it is a position
+                rows.append(dict(source="syncrone", kind="position", wallet=wa, protocol=rc["protocol"],
+                                 position=rc["position"], position_type="receipt_token", position_id=f"receipt-{addr}",
+                                 asset_id=None, in_flight=False, chain=h.get("chain_id"), token=addr,
+                                 symbol=tok.get("symbol") or rc.get("symbol"), balance=fnum(f.get("balance")),
+                                 price=fnum(f.get("price_usd")), usd=usd, mtd_roi_pct=None, mtd_apy_pct=None,
+                                 asset_group=rc.get("asset_group") or asset_group_of(tok.get("symbol"), reg), spam=False,
+                                 reclassified_from_idle=True))
+                continue
             rows.append(dict(source="syncrone", kind="idle", wallet=wa, protocol="(wallet)",
                              position="idle holding", chain=h.get("chain_id"),
-                             token=(tok.get("address") or "").lower(), symbol=tok.get("symbol"),
+                             token=addr, symbol=tok.get("symbol"),
                              balance=fnum(f.get("balance")), price=fnum(f.get("price_usd")), usd=usd,
                              asset_group=asset_group_of(tok.get("symbol"), reg),
                              spam=usd < DUST_USD))
@@ -74,6 +87,11 @@ def syncrone_rows(org: dict, reg: dict) -> list[dict]:
                     m = a.get("metrics") or {}
                     aid = (a.get("id") or "").lower()
                     in_flight = any(t in aid for t in ("withdraw_process", "withdraw_queue", "unstake", "pending", "claimable"))
+                    # realised yield this month, annualised: third-tier APY source for sleeves nobody prices
+                    i0 = a.get("initial") or {}
+                    days = max(1.0, (dt.date.today() - dt.date.today().replace(day=1)).days + dt.datetime.now(dt.timezone.utc).hour / 24)
+                    base_val = fnum(i0.get("balance_usd")) or fnum(f.get("balance_usd"))
+                    realised = (fnum(m.get("yield_pnl_usd")) / base_val) * (365.0 / days) if base_val > 1000 else None
                     rows.append(dict(source="syncrone", kind="position", wallet=wa, protocol=pn,
                                      position=pos.get("position_name") or "",
                                      position_type=pos.get("position_type"),
@@ -83,6 +101,8 @@ def syncrone_rows(org: dict, reg: dict) -> list[dict]:
                                      balance=fnum(f.get("balance")), price=fnum(f.get("price_usd")),
                                      usd=fnum(f.get("balance_usd")),
                                      mtd_roi_pct=m.get("roi_pct"), mtd_apy_pct=m.get("apy_pct"),
+                                     realised_apr=realised, realised_days=round(days, 1),
+                                     yield_pnl_usd=fnum(m.get("yield_pnl_usd")),
                                      asset_group=asset_group_of(tok.get("symbol"), reg),
                                      spam=False))
     return rows
@@ -298,7 +318,9 @@ def reconcile(sync_rows, strat_rows, safe_rows, eth_rows, reg, c):
         token_checks.append(row)
         if row["safe_vs_etherscan"] is not None and row["safe_vs_etherscan"] > TOL:
             flags.append(f"{sym}: Safe {s:,.4f} vs Etherscan {e:,.4f} differ by {row['safe_vs_etherscan']:.2%} (two on-chain reads disagree; retry before trusting either)")
-        if row["safe_vs_syncrone"] is not None and row["safe_vs_syncrone"] > TOL and y and s:
+        px = next((r["price"] for r in sync_rows if r["token"] == tok and r.get("price")), 0.0)
+        material = max(fnum(s), fnum(e), fnum(y)) * px >= 1000 if px else True
+        if row["safe_vs_syncrone"] is not None and row["safe_vs_syncrone"] > TOL and y and s and material:
             flags.append(f"{sym}: Safe {s:,.4f} vs Syncrone {y:,.4f} differ by {row['safe_vs_syncrone']:.2%} (Syncrone books this position in a different unit, or it lags on-chain)")
         if row["safe_vs_strategy"] is not None and row["safe_vs_strategy"] > TOL and v:
             # The Strategy API labels some positions by the vault's underlying (eETH for weETH,
@@ -315,11 +337,21 @@ def reconcile(sync_rows, strat_rows, safe_rows, eth_rows, reg, c):
     def pkey(proto: str, grp: str) -> str:
         return f"{aliases.get(proto.lower(), proto.lower())}/{grp}"
 
+    # receipt tokens reclassified from idle: covered only if the Strategy API lists that exact
+    # vault token (ciUSDCv3 is not cUSDCv3); otherwise they are their own untracked sleeve
+    strat_vaults = {r["vault"] for r in strat_rows}
+    receipt_untracked: dict[str, float] = {}
     sync_usd: dict[str, float] = {}
     for r in sync_rows:
-        if r["kind"] == "position":
-            k = pkey(r["protocol"], r["asset_group"])
-            sync_usd[k] = sync_usd.get(k, 0.0) + r["usd"]
+        if r["kind"] != "position":
+            continue
+        if r.get("reclassified_from_idle") and r["token"] not in strat_vaults:
+            k = f"{r['protocol']}/{r['asset_group']}/{r['symbol']}"
+            receipt_untracked[k] = receipt_untracked.get(k, 0.0) + r["usd"]
+            r["covered_by_strategy_api"] = False
+            continue
+        k = pkey(r["protocol"], r["asset_group"])
+        sync_usd[k] = sync_usd.get(k, 0.0) + r["usd"]
     strat_usd: dict[str, float] = {}
     for r in strat_rows:
         k = f"{r['protocol']}/{r['asset_group']}"
@@ -344,9 +376,13 @@ def reconcile(sync_rows, strat_rows, safe_rows, eth_rows, reg, c):
                                  strategy_api_usd=round(b), diff_ex_in_flight=d, status="compared"))
         if d is not None and d > 0.03 and max(a, b) > 10_000:
             flags.append(f"{k}: Syncrone ${a:,.0f} (of which in-flight ${infl:,.0f}) vs Strategy API ${b:,.0f} differ by {d:.1%} after bridging in-flight items")
+    for k, v in receipt_untracked.items():
+        untracked[k] = v
+        proto_checks.append(dict(sleeve=k, syncrone_usd=round(v), syncrone_in_flight_usd=0, strategy_api_usd=0,
+                                 status="untracked_by_strategy_api (receipt token)"))
     # mark Syncrone rows the book should keep because the Strategy API does not price them
     for r in sync_rows:
-        if r["kind"] == "position":
+        if r["kind"] == "position" and "covered_by_strategy_api" not in r:
             r["covered_by_strategy_api"] = pkey(r["protocol"], r["asset_group"]) in covered
 
     # NAV bridge

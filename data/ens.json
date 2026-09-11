@@ -8,6 +8,7 @@
   "vault_data_fetched_at": "2026-09-11T01:51:07.597Z",
   "run_folder": "2026-09-11",
   "nav_usd": 92633190,
+  "eth_price_usd": 2442.2544,
   "reconciliation": {
     "syncrone_nav_usd": 92556860,
     "bridge_usd": 92633190,
@@ -149,6 +150,7 @@
       "asset_group": "USD",
       "usd": 4990492.59,
       "apy": 0.0389,
+      "apy_source": null,
       "venue_tvl_usd": 2365358321.0,
       "untracked": false,
       "balance": null
@@ -161,6 +163,7 @@
       "asset_group": "USD",
       "usd": 1506336.54,
       "apy": 0.0489,
+      "apy_source": null,
       "venue_tvl_usd": 375485697.0,
       "untracked": false,
       "balance": null
@@ -173,6 +176,7 @@
       "asset_group": "USD",
       "usd": 2525206.06,
       "apy": 0.0531,
+      "apy_source": null,
       "venue_tvl_usd": 20022640.0,
       "untracked": false,
       "balance": null
@@ -185,6 +189,7 @@
       "asset_group": "USD",
       "usd": 12199451.92,
       "apy": 0.048,
+      "apy_source": null,
       "venue_tvl_usd": 154915207.0,
       "untracked": false,
       "balance": null
@@ -197,6 +202,7 @@
       "asset_group": "USD",
       "usd": 1019169.06,
       "apy": 0.0484,
+      "apy_source": null,
       "venue_tvl_usd": 132582902.0,
       "untracked": false,
       "balance": null
@@ -209,6 +215,7 @@
       "asset_group": "USD",
       "usd": 7921638.27,
       "apy": 0.0452,
+      "apy_source": null,
       "venue_tvl_usd": 20614804.0,
       "untracked": false,
       "balance": null
@@ -221,6 +228,7 @@
       "asset_group": "USD",
       "usd": 3257803.14,
       "apy": 0.036,
+      "apy_source": null,
       "venue_tvl_usd": 4596893293.0,
       "untracked": false,
       "balance": null
@@ -233,6 +241,7 @@
       "asset_group": "ETH",
       "usd": 20121292.56,
       "apy": 0.0235,
+      "apy_source": null,
       "venue_tvl_usd": 5429295767.0,
       "untracked": false,
       "balance": null
@@ -245,6 +254,7 @@
       "asset_group": "ETH",
       "usd": 17405568.84,
       "apy": 0.0244,
+      "apy_source": null,
       "venue_tvl_usd": 384924510.0,
       "untracked": false,
       "balance": null
@@ -257,6 +267,7 @@
       "asset_group": "ETH",
       "usd": 2514128.61,
       "apy": 0.0228,
+      "apy_source": null,
       "venue_tvl_usd": 23652485521.0,
       "untracked": false,
       "balance": null
@@ -269,6 +280,7 @@
       "asset_group": "ETH",
       "usd": 16099131.54,
       "apy": 0.0225,
+      "apy_source": null,
       "venue_tvl_usd": 209367099.0,
       "untracked": false,
       "balance": null
@@ -281,6 +293,7 @@
       "asset_group": "ETH",
       "usd": 1723352.1,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 705.639849490177
@@ -293,6 +306,7 @@
       "asset_group": "ETH",
       "usd": 1349001.02,
       "apy": 0.0,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 500.0
@@ -305,6 +319,7 @@
       "asset_group": "OTHER",
       "usd": 169.26,
       "apy": null,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": true,
       "balance": null
@@ -317,6 +332,7 @@
       "asset_group": "USD",
       "usd": 448.13,
       "apy": null,
+      "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": true,
       "balance": null
@@ -818,5 +834,11 @@
       ]
     }
   ],
+  "fallback_apy": {},
+  "safes": {
+    "avatar": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
+    "manager": "0xb423e0f6E7430fa29500c5cC9bd83D28c8BD8978",
+    "roles_modifier": "0x703806e61847984346d2d7ddd853049627e50a40"
+  },
   "ops_tools_caveat": "Optimizer respects only tvlCapPercent per venue. It ignores policy caps/floors and swap-only venues. Reference only."
 }

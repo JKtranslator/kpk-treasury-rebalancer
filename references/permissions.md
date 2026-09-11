@@ -13,7 +13,7 @@ Two views exist:
    `<client folder>/onchain_matrix_report.md`. This is the authoritative allow-list.
 
 Client folders under `Codex/SafeAgentAll/` (canonical tree, 2026-09-11): `ens`, `nexus`, `cow dao`
-(main + Gnosis + two defence Safes), `karpatkey_balancer` (mainnet + Gnosis). Other folders there (`arbitrum`, `kpk mainnet`, `OIV`) are not clients of this skill. Role key `MANAGER` =
+(main + Gnosis + two defence Safes), `balancer` and `balancer gnosis`. Other folders there (`arbitrum`, `kpk mainnet`, `OIV`) are not clients of this skill. Role key `MANAGER` =
 `0x4d414e414745520000…`.
 
 ## Roles Modifier and Safes

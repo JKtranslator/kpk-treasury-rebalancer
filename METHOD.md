@@ -118,6 +118,8 @@ permissions list does so the SafeAgent operator can map it to a route.
 - `references/permissions.md` — where permissions live per client, and what each client may use.
 - `references/policy-checks.md` — constraint framework with the ENS IPS 2026 instance.
 - `references/output-format.md` — recommendation template and worked examples.
-- `runs/` — outputs, dated per client. Not for sharing outside the team as-is.
+- `runs/` — outputs, dated per client; `runs/plans/` holds executor plans. Not for sharing as-is.
+- `scripts/executor.py` + `executor_worker.py` — local executor on the SafeAgent (kpk proposer bot) code for the page's Execute button: preview (build + Tenderly) then propose.
+- `index.html`, `assets/`, `data/` — the GitHub Pages site; `scripts/publish.py` and `refresh_holdings.py` feed it.
 
 Forked 2026-09-11 from kpk-treasury 2026.9.1 `treasury-rebalancer`; plain tool folder, not a skill. Edit freely.

@@ -12,91 +12,133 @@
 <body>
 <div class="wrap">
 
-  <div class="mast">
-    <div>
+  <div class="mast mast-grid">
+    <div class="mast-l">
       <h1>Treasury rebalancer <span class="lt">— holdings, policy, permitted moves</span></h1>
       <div class="sub">KPK Treasury · internal working view · not a recommendation until reviewed</div>
-      <div class="seg clients" id="clientTabs" role="tablist"></div>
     </div>
-    <div class="right">
+    <div class="mast-r">
       <div class="marks"><img class="k" src="assets/kpk.png" alt="KPK"><span class="wm">KPK</span></div>
       <div class="stamp" id="stamp">Loading snapshot…</div>
       <div class="stamp" id="stamp2"></div>
-      <a class="baseline" target="_blank" rel="noopener" id="refreshLink"
-         href="https://github.com/JKtranslator/kpk-treasury-rebalancer/actions/workflows/refresh.yml">
-        refresh live holdings ↗
-      </a>
+      <div class="stamp"><a class="baseline" target="_blank" rel="noopener" id="refreshLink"
+         href="https://github.com/JKtranslator/kpk-treasury-rebalancer/actions/workflows/refresh.yml">refresh live holdings ↗</a>
+         <span class="exec-state" id="execState" title="Local executor (scripts/executor.py) status">executor: checking…</span></div>
+    </div>
+  </div>
+
+  <div class="navbar">
+    <div class="seg clients" id="clientTabs" role="tablist" aria-label="Client"></div>
+    <div class="seg views" id="viewTabs" role="tablist" aria-label="View">
+      <button data-v="holdings" aria-pressed="true">Holdings</button>
+      <button data-v="strategies" aria-pressed="false">Strategies</button>
     </div>
   </div>
 
   <div id="app" hidden>
 
-    <section id="liveSection" hidden>
-      <div class="eyebrow">Live holdings</div>
-      <h2>Hourly read of Syncrone, Safe and Etherscan</h2>
-      <div class="cards" id="liveCards"></div>
-      <div class="method" style="margin-top:11px;" id="liveBox"></div>
-    </section>
+    <!-- ============ HOLDINGS ============ -->
+    <div class="view" data-view="holdings">
+      <section id="liveSection" hidden>
+        <div class="eyebrow">Live holdings</div>
+        <h2>Hourly read of Syncrone, Safe and Etherscan</h2>
+        <div class="cards" id="liveCards"></div>
+        <div class="method" style="margin-top:11px;" id="liveBox"></div>
+      </section>
 
-    <section>
-      <div class="eyebrow">Book</div>
-      <h2>Net asset value and reconciliation</h2>
-      <div class="cards" id="navCards"></div>
-      <div class="method" style="margin-top:11px;" id="reconBox"></div>
-    </section>
+      <section>
+        <div class="eyebrow">Stored snapshot</div>
+        <h2>Net asset value and reconciliation</h2>
+        <div class="cards" id="navCards"></div>
+        <div class="method" style="margin-top:11px;" id="reconBox"></div>
+      </section>
 
-    <section id="policySection">
-      <div class="eyebrow">Policy</div>
-      <h2 id="policyTitle">Policy checks</h2>
-      <div class="scroll"><table id="policyTable"><thead><tr><th>Check</th><th>Status</th><th>Detail</th></tr></thead><tbody></tbody></table></div>
-    </section>
+      <section>
+        <div class="eyebrow">Composition</div>
+        <h2>By asset group and protocol</h2>
+        <div id="composition"></div>
+      </section>
 
-    <section>
-      <div class="eyebrow">Positions</div>
-      <h2>Current strategies by asset group</h2>
-      <div id="groups"></div>
-    </section>
+      <section id="policySection">
+        <div class="eyebrow">Policy</div>
+        <h2 id="policyTitle">Policy checks</h2>
+        <div class="scroll"><table id="policyTable"><thead><tr><th>Check</th><th>Status</th><th>Detail</th></tr></thead><tbody></tbody></table></div>
+      </section>
 
-    <section>
-      <div class="eyebrow">Simulator</div>
-      <h2>Permitted moves under your thresholds</h2>
-      <div class="sim">
-        <div class="sim-grid">
-          <div class="field"><label>Min pickup <span class="val" id="pickupVal"></span></label>
-            <input type="range" id="pickup" min="0" max="300" step="5"></div>
-          <div class="field"><label>Min move <span class="val" id="moveVal"></span></label>
-            <input type="range" id="move" min="0" max="5000000" step="50000"></div>
-          <div class="field"><label>Venue TVL cap <span class="val" id="tvlVal"></span></label>
-            <input type="range" id="tvl" min="1" max="50" step="1"></div>
-          <div class="field"><label>APY basis</label>
-            <div class="seg" id="basis"><button aria-pressed="true" data-b="apy">selected period</button><button data-b="apy_30d">30-day</button></div></div>
-          <div class="field" style="grid-column:1/-1"><label>Exclude venues</label><div class="seg" id="exclude"></div></div>
+      <section>
+        <div class="eyebrow">Notes</div>
+        <h2>Flags from the run</h2>
+        <ul class="flags" id="flags"></ul>
+      </section>
+    </div>
+
+    <!-- ============ STRATEGIES ============ -->
+    <div class="view" data-view="strategies" hidden>
+      <section>
+        <div class="eyebrow">Positions</div>
+        <h2>Current strategies and what they earn</h2>
+        <p class="lead">APY source per row: <b>vaults.fyi</b> via the Strategy API where the venue is tracked, <b>DeFiLlama</b>
+          for pools it is not, and <b>Syncrone realised yield</b> (this month, annualised) where nobody publishes a rate.
+          Rows marked untracked cannot be moved by the simulator.</p>
+        <div id="groups"></div>
+      </section>
+
+      <section>
+        <div class="eyebrow">Simulator</div>
+        <h2>Permitted moves under your thresholds</h2>
+        <div class="sim">
+          <div class="sim-grid">
+            <div class="field"><label>Min pickup <span class="val" id="pickupVal"></span></label>
+              <input type="range" id="pickup" min="0" max="300" step="5"></div>
+            <div class="field"><label>Min move <span class="val" id="moveVal"></span></label>
+              <input type="range" id="move" min="0" max="5000000" step="50000"></div>
+            <div class="field"><label>Venue TVL cap <span class="val" id="tvlVal"></span></label>
+              <input type="range" id="tvl" min="1" max="50" step="1"></div>
+            <div class="field"><label>APY basis</label>
+              <div class="seg" id="basis"><button aria-pressed="true" data-b="apy">selected period</button><button data-b="apy_30d">30-day</button></div></div>
+            <div class="field" style="grid-column:1/-1"><label>Exclude venues</label><div class="seg" id="exclude"></div></div>
+          </div>
+          <div class="out" id="simOut"></div>
+          <div id="simMoves"></div>
+          <p class="fine">Runs entirely in your browser against the stored snapshot. Sizing respects the venue TVL cap
+            and the policy single-protocol cap where a policy exists. It does not model exit liquidity, gas, slippage
+            or swap routes, and untracked positions are never moved. <b>Execute</b> hands a move to the local
+            SafeAgent executor: it builds the Roles transaction, simulates it on Tenderly and, only after you approve
+            in the popup, proposes it to the Safe. Nothing is signed or sent from this page.</p>
         </div>
-        <div class="out" id="simOut"></div>
-        <div id="simMoves"></div>
-        <p class="fine">Runs entirely in your browser against the stored snapshot. Sizing respects the venue TVL cap
-          and the policy single-protocol cap where a policy exists. It does not model exit liquidity, gas, slippage
-          or swap routes, and untracked positions (no APY feed) are never moved.</p>
-      </div>
-    </section>
+      </section>
 
-    <section>
-      <div class="eyebrow">Reference</div>
-      <h2>ops-tools optimizer output</h2>
-      <p class="lead" id="opsCaveat"></p>
-      <div id="ops"></div>
-    </section>
-
-    <section>
-      <div class="eyebrow">Notes</div>
-      <h2>Flags from the run</h2>
-      <ul class="flags" id="flags"></ul>
-    </section>
+      <section>
+        <div class="eyebrow">Reference</div>
+        <h2>ops-tools optimizer output</h2>
+        <p class="lead" id="opsCaveat"></p>
+        <div id="ops"></div>
+      </section>
+    </div>
 
   </div>
 
   <div class="foot">
-    <span>KPK</span><span class="sep">·</span><span>Sources: Syncrone v2, Safe Transaction Service, Etherscan V2, KPK Strategy API (vaults.fyi APYs)</span>
+    <span>KPK</span><span class="sep">·</span><span>Sources: Syncrone v2, Safe Transaction Service, Etherscan V2, KPK Strategy API (vaults.fyi APYs), DeFiLlama yields</span>
+  </div>
+</div>
+
+<!-- ============ EXECUTE POPUP ============ -->
+<div class="modal" id="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="modal-h"><h3 id="mTitle">Execute move</h3><button class="x" id="mClose" aria-label="Close">×</button></div>
+    <div class="modal-b">
+      <div class="steps" id="mSteps"></div>
+      <dl class="kv" id="mParams"></dl>
+      <div class="method" id="mPlan" hidden></div>
+      <div class="method" id="mSim" hidden></div>
+      <div class="modal-msg" id="mMsg"></div>
+    </div>
+    <div class="modal-f">
+      <button class="btn ghost" id="mCancel" type="button">Cancel</button>
+      <button class="btn" id="mBuild" type="button">Build & simulate</button>
+      <button class="btn" id="mPropose" type="button" disabled>Propose to Safe</button>
+    </div>
   </div>
 </div>
 <script src="assets/app.js"></script>
