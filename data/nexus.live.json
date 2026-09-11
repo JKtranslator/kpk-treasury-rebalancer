@@ -1,6 +1,6 @@
 {
   "client": "nexus",
   "ok": false,
-  "as_of": "2026-09-11T17:45:39+00:00",
+  "as_of": "2026-09-11T20:59:07+00:00",
   "error": "ERROR: SYNCRONE_API_KEY is not set. Export it or add it to /home/runner/work/kpk-treasury-rebalancer/kpk-treasury-rebalancer/.env.local (names only in .env.example; never commit .env.local)."
 }
