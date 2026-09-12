@@ -6,8 +6,7 @@
   const EXECUTOR = localStorage.getItem('kpk_executor') || (location.port === '8743' ? '' : location.hostname.endsWith('github.io') || location.hostname.endsWith('sslip.io') ? 'https://82-70-94-93.sslip.io' : 'http://127.0.0.1:8743');
   const token = () => localStorage.getItem('kpk_executor_token') || '';
   const authHeaders = (h = {}) => token() ? { ...h, Authorization: 'Bearer ' + token() } : h;
-  function askToken(msg) { const t = prompt((msg || 'Executor token') + '
-(stored in this browser only; find it on the box: ~/kpk-treasury-rebalancer/.env.local -> EXECUTOR_TOKEN)', token()); if (t != null) { localStorage.setItem('kpk_executor_token', t.trim()); } return !!token(); }
+  function askToken(msg) { const t = prompt((msg || 'Executor token') + '\n(stored in this browser only; find it on the box: ~/kpk-treasury-rebalancer/.env.local -> EXECUTOR_TOKEN)', token()); if (t != null) { localStorage.setItem('kpk_executor_token', t.trim()); } return !!token(); }
   const $ = (s, el = document) => el.querySelector(s);
   const usd = (v, d = 0) => '$' + Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
   const pct = (v, d = 2) => v == null ? 'n/a' : (Number(v) * 100).toFixed(d) + '%';
