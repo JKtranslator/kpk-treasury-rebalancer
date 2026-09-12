@@ -3,7 +3,11 @@
    button talks to the local SafeAgent executor (scripts/executor.py) at EXECUTOR; nothing here signs. */
 (() => {
   // Same-origin when the page is served by the executor itself (tunnelled http://127.0.0.1:8743/); otherwise loopback.
-  const EXECUTOR = localStorage.getItem('kpk_executor') || (location.port === '8743' ? '' : 'http://127.0.0.1:8743');
+  const EXECUTOR = localStorage.getItem('kpk_executor') || (location.port === '8743' ? '' : location.hostname.endsWith('github.io') || location.hostname.endsWith('sslip.io') ? 'https://82-70-94-93.sslip.io' : 'http://127.0.0.1:8743');
+  const token = () => localStorage.getItem('kpk_executor_token') || '';
+  const authHeaders = (h = {}) => token() ? { ...h, Authorization: 'Bearer ' + token() } : h;
+  function askToken(msg) { const t = prompt((msg || 'Executor token') + '
+(stored in this browser only; find it on the box: ~/kpk-treasury-rebalancer/.env.local -> EXECUTOR_TOKEN)', token()); if (t != null) { localStorage.setItem('kpk_executor_token', t.trim()); } return !!token(); }
   const $ = (s, el = document) => el.querySelector(s);
   const usd = (v, d = 0) => '$' + Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
   const pct = (v, d = 2) => v == null ? 'n/a' : (Number(v) * 100).toFixed(d) + '%';
@@ -195,8 +199,8 @@
   /* ------------------------------------------------------------------ executor */
   async function pingExecutor() {
     const el = $('#execState');
-    try { const r = await fetch(EXECUTOR + '/health', { cache: 'no-store' }); const j = await r.json(); executorOn = !!j.ok; el.textContent = `executor: ${j.ok ? 'connected' : 'error'}${j.clients ? ' · ' + j.clients.join(', ') : ''}${j.propose ? '' : ' · simulate only'}`; el.className = 'exec-state ' + (j.ok ? 'on' : 'off'); }
-    catch (e) { executorOn = false; el.innerHTML = 'executor: offline · open the tunnel (connect-oci.ps1) and use <a href="http://127.0.0.1:8743/">127.0.0.1:8743</a>'; el.className = 'exec-state off'; }
+    try { const r = await fetch(EXECUTOR + '/health', { cache: 'no-store' }); const j = await r.json(); executorOn = !!j.ok; el.textContent = `executor: ${j.ok ? 'connected' : 'error'}${j.host ? ' @ ' + j.host : ''}${j.clients ? ' · ' + j.clients.join(', ') : ''}${j.auth ? (token() ? ' · token set' : ' · token needed') : ''}${j.proposer_code && j.proposer_code.head ? ' · kpk-proposer@' + j.proposer_code.head : ''}`; el.className = 'exec-state ' + (j.ok ? 'on' : 'off'); }
+    catch (e) { executorOn = false; el.textContent = 'executor: offline (' + EXECUTOR.replace(/^https?:\/\//, '') + ')'; el.className = 'exec-state off'; }
     $('#refreshBtn').disabled = !executorOn;
     $('#refreshBtn').title = executorOn ? 'Re-run holdings, yields and assessment for this client on ' + ($('#execState').textContent.split('@')[1] || 'the executor') : 'Connect the executor (SSH tunnel to OCI, or scripts/executor.py) to refresh';
     if (snap) simulate();
@@ -208,7 +212,8 @@
     btn.classList.add('busy'); btn.textContent = '↻ Refreshing…'; msg.hidden = false; msg.className = 'refresh-msg';
     msg.textContent = `Running holdings (Syncrone, Safe, Etherscan), yields and assessment for ${snap.display_name} on the executor host. Usually 1 to 3 minutes.`;
     try {
-      const r = await fetch(EXECUTOR + '/refresh/' + snap.client, { cache: 'no-store' });
+      let r = await fetch(EXECUTOR + '/refresh/' + snap.client, { cache: 'no-store', headers: authHeaders() });
+      if (r.status === 401 && askToken('Executor token needed to refresh')) r = await fetch(EXECUTOR + '/refresh/' + snap.client, { cache: 'no-store', headers: authHeaders() });
       const j = await r.json();
       if (!j.ok) throw new Error(j.error || 'refresh failed');
       msg.innerHTML = `Refreshed in ${j.seconds}s · NAV ${compact(j.nav_usd)} · ${j.nav_tied ? 'reconciliation ties' : '<b>reconciliation did not tie, read the flags</b>'}` +
@@ -258,12 +263,13 @@
   async function buildAndSimulate() {
     if (!cur) return; steps({ build: 'cur' }); $('#mBuild').disabled = true; $('#mMsg').className = 'modal-msg'; $('#mMsg').textContent = 'Building…';
     try {
-      const r = await fetch(EXECUTOR + '/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(movePayload(cur.move)) });
+      let r = await fetch(EXECUTOR + '/plan', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(movePayload(cur.move)) });
+      if (r.status === 401 && askToken('Executor token needed to build')) r = await fetch(EXECUTOR + '/plan', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(movePayload(cur.move)) });
       const j = await r.json();
       if (!r.ok || j.error) throw new Error(j.error || r.statusText);
       cur.plan = j;
       $('#mPlan').hidden = false;
-      $('#mPlan').innerHTML = `<b>Plan</b> · ${esc(j.summary || '')}<div class="txlist" style="margin-top:6px">${(j.transactions || []).map((t, i) => `<div class="tx"><b>${i + 1}. ${esc(t.label || t.to)}</b><br>to ${esc(t.to)} · value ${esc(String(t.value ?? 0))}<br>${esc(t.data_preview || (t.data || '').slice(0, 74) + (t.data && t.data.length > 74 ? '…' : ''))}</div>`).join('')}</div>` +
+      $('#mPlan').innerHTML = `<b>Plan</b> · ${esc(j.summary || '')}${j.proposer_code && j.proposer_code.head ? ` · built with kpk-labs/kpk-proposer @ ${esc(j.proposer_code.head)}${j.proposer_code.pulled ? ' (just updated)' : ''}` : ''}${j.proposer_code && j.proposer_code.head ? ` · built with kpk-labs/kpk-proposer @ ${esc(j.proposer_code.head)}${j.proposer_code.pulled ? ' (just updated)' : ''}` : ''}<div class="txlist" style="margin-top:6px">${(j.transactions || []).map((t, i) => `<div class="tx"><b>${i + 1}. ${esc(t.label || t.to)}</b><br>to ${esc(t.to)} · value ${esc(String(t.value ?? 0))}<br>${esc(t.data_preview || (t.data || '').slice(0, 74) + (t.data && t.data.length > 74 ? '…' : ''))}</div>`).join('')}</div>` +
         (j.permission_check ? `<div class="fine" style="margin-top:6px">Permissions: ${esc(j.permission_check)}</div>` : '');
       steps({ build: 'done', sim: 'cur' }); $('#mMsg').textContent = 'Simulating on Tenderly…';
       const s = j.simulation || {};
@@ -284,7 +290,7 @@
     if (!confirm(`Propose this transaction to the ${snap.display_name} Safe? Signers will still have to approve it in the Safe UI.`)) return;
     steps({ build: 'done', sim: 'done', review: 'done', propose: 'cur' }); $('#mPropose').disabled = true; $('#mMsg').textContent = 'Proposing…';
     try {
-      const r = await fetch(EXECUTOR + '/propose', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan_id: cur.plan.plan_id }) });
+      const r = await fetch(EXECUTOR + '/propose', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ plan_id: cur.plan.plan_id }) });
       const j = await r.json();
       if (!r.ok || j.error) throw new Error(j.error || r.statusText);
       steps({ build: 'done', sim: 'done', review: 'done', propose: 'done' });

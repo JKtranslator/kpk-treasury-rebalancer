@@ -1,7 +1,9 @@
 # Executor on the OCI box
 
-Runs next to the kpkProposer bot (`~/SafeAgentAll`) on `ubuntu@82.70.94.93`, using its venv so the
-executor worker imports the bot's own builders, permission engine and Tenderly/Safe code.
+Runs on `ubuntu@82.70.94.93`. The executor worker imports the kpkProposer code from a tracked checkout of
+**kpk-labs/kpk-proposer** at `~/kpk-proposer` (read-only deploy key) and fast-forwards it to `origin/main`
+before every plan and refresh, so a merged PR on kpk-labs is live on the next click. The page shows the
+commit it built with. Runtime files the repo does not carry (`.env` per client, `.venv`) are local to the box.
 
 ```
 ~/kpk-treasury-rebalancer        git clone of JKtranslator/kpk-treasury-rebalancer (this repo)
@@ -10,10 +12,11 @@ executor worker imports the bot's own builders, permission engine and Tenderly/S
 /etc/systemd/system/kpk-rebalancer.service   from deploy/kpk-rebalancer.service
 ```
 
-- Binds `127.0.0.1:8743` only. Reach it through `connect-oci.ps1` (SSH tunnel) from a machine the box
-  allows, then open **http://127.0.0.1:8743/**: the executor serves the page itself, same-origin, with
-  Refresh and Execute live. The GitHub Pages copy is the read-only view (browsers block a public
-  https page from calling loopback unless private-network access is allowed).
+- Public HTTPS: Caddy on 443 (`deploy/Caddyfile`, Let's Encrypt via `82-70-94-93.sslip.io`) reverse-proxies
+  to the executor on `127.0.0.1:8743`. `/plan`, `/propose` and `/refresh` require `Authorization: Bearer
+  $EXECUTOR_TOKEN` (`.env.local` on the box); the page asks for the token once and keeps it in the browser.
+  The GitHub Pages site talks to `https://82-70-94-93.sslip.io` directly, no tunnel. `connect-oci.ps1`
+  remains as a fallback.
 - `--hourly-live` refreshes live holdings for all clients every hour and pushes `data/` to the repo,
   so GitHub Pages updates without the Action (the Action stays as a fallback if you set its secrets).
 - Pushes use a repo deploy key generated on the box (`~/.ssh/kpk_rebalancer_deploy`), write access.

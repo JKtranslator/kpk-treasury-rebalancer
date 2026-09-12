@@ -1,0 +1,9 @@
+# Public HTTPS front for the executor. sslip.io resolves 82-70-94-93.sslip.io -> 82.70.94.93 so
+# Caddy can get a Let's Encrypt certificate without a custom domain. Swap for a real hostname later.
+82-70-94-93.sslip.io {
+	encode gzip
+	reverse_proxy 127.0.0.1:8743
+	log {
+		output file /var/log/caddy/rebalancer.log
+	}
+}

@@ -24,7 +24,8 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from common import client, fnum, registry
+import os
+from common import client, fnum, load_env, registry
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -40,7 +41,8 @@ PROTO = {"morphoVaults": "morpho", "aave_v3": "aave", "compound_v3": "compound",
          "spark": "spark", "stakewise_v3": "stakewise", "lido": "lido", "ether_fi": "etherfi", "stader": "stader",
          "rocket_pool": "rocketpool", "gearbox": "gearbox"}
 STABLES = {"USDC", "USDT", "USDS", "DAI", "GHO", "EURC", "PYUSD", "RLUSD"}
-ALLOWED_ORIGINS = ("http://localhost:", "http://127.0.0.1:", "https://jktranslator.github.io")
+ALLOWED_ORIGINS = ("http://localhost:", "http://127.0.0.1:", "https://jktranslator.github.io", "https://82-70-94-93.sslip.io")
+PROTECTED = ("/plan", "/propose", "/refresh/")   # need Authorization: Bearer <EXECUTOR_TOKEN>
 
 
 def underlying(symbol: str | None, asset_group: str) -> str:
@@ -122,7 +124,29 @@ def commands_for(move: dict, snap: dict) -> tuple[list[str], list[str]]:
     return cmds, notes
 
 
+_LAST_PULL = {"t": 0.0, "head": None}
+
+
+def ensure_latest_proposer(max_age: int = 120) -> dict:
+    """Fast-forward the kpk-labs/kpk-proposer checkout before use, so the executor always runs the
+    code currently on kpk-labs main. Rate-limited to one pull per `max_age` seconds. Never resets or
+    rewrites local runtime files (.env, Data/, .runtime are untracked in that repo)."""
+    if not (SAFEAGENT / ".git").exists():
+        return dict(tracked=False, note="SafeAgent folder is not a git checkout; code is whatever was deployed there")
+    now = time.time()
+    if now - _LAST_PULL["t"] < max_age and _LAST_PULL["head"]:
+        return dict(tracked=True, head=_LAST_PULL["head"], pulled=False)
+    g = lambda *a: subprocess.run(["git", "-C", str(SAFEAGENT), *a], capture_output=True, text=True, timeout=120)
+    before = (g("rev-parse", "--short", "HEAD").stdout or "").strip()
+    p = g("pull", "--ff-only", "-q", "origin", "main")
+    after = (g("rev-parse", "--short", "HEAD").stdout or "").strip()
+    _LAST_PULL.update(t=now, head=after)
+    return dict(tracked=True, head=after, pulled=(before != after), error=(p.stderr or "").strip()[-200:] or None,
+                remote=(g("remote", "get-url", "origin").stdout or "").strip())
+
+
 def run_worker(slug: str, op: str, payload: dict) -> dict:
+    sync = ensure_latest_proposer()
     cdir = SAFEAGENT / CLIENT_DIRS[slug]
     if not (cdir / ".env").exists() or not (cdir / "proposal_planner.py").exists():
         return dict(error=f"SafeAgent client folder for {slug} not found or not configured: {cdir}")
@@ -133,7 +157,9 @@ def run_worker(slug: str, op: str, payload: dict) -> dict:
     for line in reversed(txt):
         if line.startswith("{"):
             try:
-                return json.loads(line)
+                res = json.loads(line)
+                res["proposer_code"] = sync
+                return res
             except json.JSONDecodeError:
                 pass
     return dict(error="worker produced no JSON", stderr=(p.stderr or "")[-1500:], stdout=(p.stdout or "")[-500:])
@@ -196,13 +222,19 @@ class H(BaseHTTPRequestHandler):
         if any(origin.startswith(o) for o in ALLOWED_ORIGINS):
             self.send_header("Access-Control-Allow-Origin", origin)
             self.send_header("Vary", "Origin")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         # Chrome's Private Network Access: a public https page reaching 127.0.0.1 needs this on the preflight
         self.send_header("Access-Control-Allow-Private-Network", "true")
 
     STATIC_TYPES = {".html": "text/html; charset=utf-8", ".js": "application/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
                     ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".ico": "image/x-icon"}
+
+    def _authorized(self) -> bool:
+        tok = os.environ.get("EXECUTOR_TOKEN", "")
+        if not tok:
+            return self.client_address[0] in ("127.0.0.1", "::1")   # no token configured: loopback only
+        return self.headers.get("Authorization", "") == f"Bearer {tok}" or self.client_address[0] in ("127.0.0.1", "::1") and not self.headers.get("Origin")
 
     def _static(self, rel: str) -> bool:
         """Serve the page itself from the repo root so a tunnelled http://127.0.0.1:8743/ is same-origin."""
@@ -243,7 +275,8 @@ class H(BaseHTTPRequestHandler):
                     clients.append(slug)
                     keys = {l.split("=", 1)[0].strip() for l in envf.read_text(encoding="utf-8", errors="replace").splitlines() if "=" in l and not l.strip().startswith("#")}
                     propose[slug] = "AGENT_PRIVATE_KEY" in keys
-            return self._json(200, dict(ok=True, host=socket.gethostname(), clients=clients, propose=propose, safeagent=str(SAFEAGENT),
+            return self._json(200, dict(ok=True, host=socket.gethostname(), clients=clients, propose=propose, safeagent=str(SAFEAGENT), auth=bool(os.environ.get("EXECUTOR_TOKEN")),
+                                        proposer_code=ensure_latest_proposer(),
                                         refresh_running=sorted(RUNNING), can_push=(ROOT / ".git").exists()))
         if self.path.startswith("/data/"):
             name = self.path.split("/data/", 1)[1].split("?")[0]
@@ -252,6 +285,8 @@ class H(BaseHTTPRequestHandler):
                 return self._json(404, dict(error="not found"))
             return self._json(200, json.loads(f.read_text(encoding="utf-8")))
         if self.path.startswith("/refresh/"):
+            if not self._authorized():
+                return self._json(401, dict(error="unauthorized: set the executor token on the page"))
             slug = self.path.split("/refresh/", 1)[1].split("?")[0]
             if slug not in CLIENT_DIRS:
                 return self._json(400, dict(error=f"unknown client {slug}"))
@@ -266,6 +301,8 @@ class H(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(n) or b"{}")
         except json.JSONDecodeError:
             return self._json(400, dict(error="bad json"))
+        if self.path.startswith(("/plan", "/propose")) and not self._authorized():
+            return self._json(401, dict(error="unauthorized: set the executor token on the page"))
         if self.path.startswith("/plan"):
             slug = body.get("client")
             if slug not in CLIENT_DIRS:
@@ -306,6 +343,8 @@ def main():
     if a.safeagent:
         SAFEAGENT = Path(a.safeagent)
     PLANS.mkdir(parents=True, exist_ok=True)
+    load_env()
+    print("auth:", "token required for plan/propose/refresh" if os.environ.get("EXECUTOR_TOKEN") else "NO EXECUTOR_TOKEN set: loopback callers only")
     if a.hourly_live:
         def loop():
             while True:
