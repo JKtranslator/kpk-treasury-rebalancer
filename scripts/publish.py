@@ -103,7 +103,14 @@ def main():
             write_json(site / "data" / f"{slug}.strategy.json", sc)
             print(f"[{slug}] strategy cache {sc['vault_data_fetched_at']} -> data/{slug}.strategy.json")
         return
-    index = dict(generated=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), clients=[])
+    # merge into the existing index so publishing one client keeps the others' entries
+    idx_path = site / "data" / "index.json"
+    existing = {}
+    if idx_path.exists():
+        try:
+            existing = {c["client"]: c for c in json.loads(idx_path.read_text(encoding="utf-8")).get("clients", [])}
+        except Exception:
+            existing = {}
     for slug in slugs:
         run = latest_run(runs, slug)
         if not run:
@@ -111,10 +118,13 @@ def main():
             continue
         snap = snapshot(slug, run)
         write_json(site / "data" / f"{slug}.json", snap)
-        index["clients"].append(dict(client=slug, display_name=snap["display_name"], as_of=snap["as_of"],
-                                     nav_usd=snap["nav_usd"], run_folder=run.name, file=f"data/{slug}.json"))
+        existing[slug] = dict(client=slug, display_name=snap["display_name"], as_of=snap["as_of"],
+                              nav_usd=snap["nav_usd"], run_folder=run.name, file=f"data/{slug}.json")
         print(f"[{slug}] {run.name}: NAV ${snap['nav_usd']:,.0f}, {len(snap['book'])} book rows, {len(snap['permitted'])} permitted venues -> data/{slug}.json")
-    write_json(site / "data" / "index.json", index)
+    order = list(reg["clients"])
+    index = dict(generated=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+                 clients=[existing[s] for s in order if s in existing] + [v for k, v in existing.items() if k not in order])
+    write_json(idx_path, index)
     print(f"DONE -> {site / 'data' / 'index.json'}")
 
 

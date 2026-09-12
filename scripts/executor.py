@@ -198,6 +198,27 @@ class H(BaseHTTPRequestHandler):
             self.send_header("Vary", "Origin")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        # Chrome's Private Network Access: a public https page reaching 127.0.0.1 needs this on the preflight
+        self.send_header("Access-Control-Allow-Private-Network", "true")
+
+    STATIC_TYPES = {".html": "text/html; charset=utf-8", ".js": "application/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
+                    ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".ico": "image/x-icon"}
+
+    def _static(self, rel: str) -> bool:
+        """Serve the page itself from the repo root so a tunnelled http://127.0.0.1:8743/ is same-origin."""
+        rel = rel.split("?")[0].lstrip("/") or "index.html"
+        f = (ROOT / rel).resolve()
+        if ".." in rel or not str(f).startswith(str(ROOT.resolve())) or f.suffix not in self.STATIC_TYPES or not f.is_file():
+            return False
+        body = f.read_bytes()
+        self.send_response(200)
+        self._cors()
+        self.send_header("Content-Type", self.STATIC_TYPES[f.suffix])
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+        return True
 
     def _json(self, code: int, obj):
         body = json.dumps(obj, default=str).encode("utf-8")
@@ -235,6 +256,8 @@ class H(BaseHTTPRequestHandler):
             if slug not in CLIENT_DIRS:
                 return self._json(400, dict(error=f"unknown client {slug}"))
             return self._json(200, refresh_client(slug))
+        if self._static(self.path):
+            return
         self._json(404, dict(error="not found"))
 
     def do_POST(self):

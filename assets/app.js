@@ -2,14 +2,15 @@
    scripts/publish.py / refresh_holdings.py, and re-runs the move sizing client-side. The Execute
    button talks to the local SafeAgent executor (scripts/executor.py) at EXECUTOR; nothing here signs. */
 (() => {
-  const EXECUTOR = localStorage.getItem('kpk_executor') || 'http://127.0.0.1:8743';
+  // Same-origin when the page is served by the executor itself (tunnelled http://127.0.0.1:8743/); otherwise loopback.
+  const EXECUTOR = localStorage.getItem('kpk_executor') || (location.port === '8743' ? '' : 'http://127.0.0.1:8743');
   const $ = (s, el = document) => el.querySelector(s);
   const usd = (v, d = 0) => '$' + Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
   const pct = (v, d = 2) => v == null ? 'n/a' : (Number(v) * 100).toFixed(d) + '%';
   const compact = v => { v = Number(v || 0); return v >= 1e9 ? '$' + (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? '$' + (v / 1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v / 1e3).toFixed(0) + 'k' : usd(v); };
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const GROUP_COLORS = { USD: '#2D8561', ETH: '#1D1D1D', EURO: '#8E6710', OTHER: '#706E66' };
-  const srcTag = b => b.apy == null ? '' : b.apy_source && b.apy_source !== 'vaults.fyi' ? `<span class="src" title="${esc(b.apy_source)}">${b.apy_source.startsWith('defillama') ? 'llama' : 'realised'}</span>` : '';
+  const srcTag = b => b.apy == null ? '' : b.apy_source && b.apy_source !== 'vaults.fyi' ? `<span class="src" title="${esc(b.apy_source)}">${b.apy_source.startsWith('defillama') ? 'llama' : b.apy_source.startsWith('vaults.fyi') ? 'stale' : 'realised'}</span>` : '';
 
   let index = null, snap = null, live = null, moves = [], executorOn = false;
   let sim = { pickupBps: 50, moveUsd: 250000, tvlCapPct: 10, basis: 'apy', exclude: new Set() };
@@ -195,7 +196,7 @@
   async function pingExecutor() {
     const el = $('#execState');
     try { const r = await fetch(EXECUTOR + '/health', { cache: 'no-store' }); const j = await r.json(); executorOn = !!j.ok; el.textContent = `executor: ${j.ok ? 'connected' : 'error'}${j.clients ? ' · ' + j.clients.join(', ') : ''}${j.propose ? '' : ' · simulate only'}`; el.className = 'exec-state ' + (j.ok ? 'on' : 'off'); }
-    catch (e) { executorOn = false; el.textContent = 'executor: offline (run scripts/executor.py locally to enable Execute)'; el.className = 'exec-state off'; }
+    catch (e) { executorOn = false; el.innerHTML = 'executor: offline · open the tunnel (connect-oci.ps1) and use <a href="http://127.0.0.1:8743/">127.0.0.1:8743</a>'; el.className = 'exec-state off'; }
     $('#refreshBtn').disabled = !executorOn;
     $('#refreshBtn').title = executorOn ? 'Re-run holdings, yields and assessment for this client on ' + ($('#execState').textContent.split('@')[1] || 'the executor') : 'Connect the executor (SSH tunnel to OCI, or scripts/executor.py) to refresh';
     if (snap) simulate();

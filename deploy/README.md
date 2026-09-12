@@ -11,7 +11,9 @@ executor worker imports the bot's own builders, permission engine and Tenderly/S
 ```
 
 - Binds `127.0.0.1:8743` only. Reach it through `connect-oci.ps1` (SSH tunnel) from a machine the box
-  allows; the page then talks to `http://127.0.0.1:8743` exactly as with a local executor.
+  allows, then open **http://127.0.0.1:8743/**: the executor serves the page itself, same-origin, with
+  Refresh and Execute live. The GitHub Pages copy is the read-only view (browsers block a public
+  https page from calling loopback unless private-network access is allowed).
 - `--hourly-live` refreshes live holdings for all clients every hour and pushes `data/` to the repo,
   so GitHub Pages updates without the Action (the Action stays as a fallback if you set its secrets).
 - Pushes use a repo deploy key generated on the box (`~/.ssh/kpk_rebalancer_deploy`), write access.
