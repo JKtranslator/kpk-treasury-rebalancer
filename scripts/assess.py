@@ -306,10 +306,26 @@ def main():
         for b in book:
             if b["kind"] != "position" or b["apy"] is not None:
                 continue
-            sym = (b.get("symbol") or "").upper()
+            norm = lambda s: "".join(ch for ch in (s or "").lower() if ch.isalnum())
+            sym, ven = norm(b.get("symbol")), norm(b.get("venue"))
             cands = [p for p in perm if p["protocol"] == b["protocol"] and p["asset_group"] == b["asset_group"]]
-            hit = next((p for p in cands if (p.get("asset") or "").upper() and (p["asset"].upper() in sym or sym in p["asset"].upper()
-                                                                               or (b["venue"] or "").lower().find((p["asset"] or "").lower()) >= 0)), None)
+            def score(p):
+                a = norm(p.get("asset"))
+                if not a:
+                    return 0
+                if a == sym or a in ven:
+                    return 3
+                if a in sym or sym in a:
+                    return 2
+                # "kpk usdc prime v2" vs "KPK_USDC_Prime": all words of the asset minus a version tag
+                words = [w for w in (p.get("asset") or "").lower().split() if not (w.startswith("v") and w[1:].isdigit())]
+                return 1 if words and all(norm(w) in sym for w in words) else 0
+            ranked = sorted(cands, key=lambda p: -score(p))
+            hit = ranked[0] if ranked and score(ranked[0]) > 0 else None
+            if hit and score(hit) == 1:
+                # prefer the newest version when several share the same words
+                same = [p for p in cands if score(p) == 1]
+                hit = sorted(same, key=lambda p: (p.get("asset") or ""))[-1]
             if hit is None and len({p.get("asset") for p in cands}) == 1:
                 hit = cands[0]
             if hit:
