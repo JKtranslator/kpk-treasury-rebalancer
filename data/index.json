@@ -1,13 +1,13 @@
 {
-  "generated": "2026-09-12T08:55:53+00:00",
+  "generated": "2026-09-12T09:00:35+00:00",
   "clients": [
     {
-      "client": "balancer",
-      "display_name": "Balancer DAO Treasury",
-      "as_of": "2026-09-12T08:54:48+00:00",
-      "nav_usd": 7062559,
+      "client": "ens",
+      "display_name": "ENS DAO Endowment",
+      "as_of": "2026-09-12T08:59:36+00:00",
+      "nav_usd": 94326868,
       "run_folder": "2026-09-12",
-      "file": "data/balancer.json"
+      "file": "data/ens.json"
     }
   ]
 }
