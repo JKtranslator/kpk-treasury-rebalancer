@@ -3,7 +3,7 @@
   "display_name": "Balancer DAO Treasury",
   "chain_id": 1,
   "avatar_safe": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
-  "as_of": "2026-09-12T08:54:48+00:00",
+  "as_of": "2026-09-12T09:08:28+00:00",
   "period": "7day",
   "vault_data_fetched_at": "2026-09-12T01:52:08.610Z",
   "run_folder": "2026-09-12",
@@ -213,10 +213,10 @@
       "symbol": "KPK_USDC_Prime",
       "asset_group": "USD",
       "usd": 1412269.32,
-      "apy": null,
-      "apy_source": null,
-      "venue_tvl_usd": null,
-      "untracked": true,
+      "apy": 0.0454,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 20566088.0,
+      "untracked": false,
       "balance": null
     },
     {
@@ -226,10 +226,10 @@
       "symbol": "KPK_USDC_Yield",
       "asset_group": "USD",
       "usd": 641351.98,
-      "apy": null,
-      "apy_source": null,
-      "venue_tvl_usd": null,
-      "untracked": true,
+      "apy": 0.0718,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 8781920.0,
+      "untracked": false,
       "balance": null
     },
     {
