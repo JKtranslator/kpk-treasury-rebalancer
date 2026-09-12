@@ -82,6 +82,16 @@ def strategy_cache(slug: str, run: Path) -> dict | None:
                 raw_strategy_current=json.loads(cur.read_text(encoding="utf-8")) if cur.exists() else None)
 
 
+def bump_asset_version(site: Path) -> None:
+    """Refresh ?v= on the page's asset links so browsers pick up a new deploy immediately."""
+    import re, time
+    p = site / "index.html"
+    if p.exists():
+        v = str(int(time.time()))
+        t = re.sub(r'assets/(app\.js|rebalancer\.css|styles\.css)(\?v=\d+)?', lambda m: f"assets/{m.group(1)}?v={v}", p.read_text(encoding="utf-8"))
+        p.write_text(t, encoding="utf-8")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--runs", default=str(ROOT / "runs"))
