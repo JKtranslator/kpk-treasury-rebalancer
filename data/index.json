@@ -1,13 +1,13 @@
 {
-  "generated": "2026-09-12T08:51:32+00:00",
+  "generated": "2026-09-12T08:53:42+00:00",
   "clients": [
     {
-      "client": "nexus",
-      "display_name": "Nexus Mutual DAO Treasury",
-      "as_of": "2026-09-12T08:50:47+00:00",
-      "nav_usd": 7518100,
+      "client": "cow",
+      "display_name": "CoW DAO Treasury",
+      "as_of": "2026-09-12T08:52:39+00:00",
+      "nav_usd": 18487418,
       "run_folder": "2026-09-12",
-      "file": "data/nexus.json"
+      "file": "data/cow.json"
     }
   ]
 }

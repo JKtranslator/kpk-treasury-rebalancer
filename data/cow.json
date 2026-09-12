@@ -3,21 +3,21 @@
   "display_name": "CoW DAO Treasury",
   "chain_id": 1,
   "avatar_safe": "0x616dE58c011F8736fa20c7Ae5352F7f6FB9F0669",
-  "as_of": "2026-09-12T08:43:13+00:00",
+  "as_of": "2026-09-12T08:52:39+00:00",
   "period": "7day",
   "vault_data_fetched_at": "2026-09-12T01:52:08.610Z",
   "run_folder": "2026-09-12",
-  "nav_usd": 18481387,
+  "nav_usd": 18487418,
   "eth_price_usd": 2456.4499,
   "reconciliation": {
     "syncrone_nav_usd": 18487053,
-    "bridge_usd": 18481002,
-    "diff": 0.00032729406060676207,
+    "bridge_usd": 18487034,
+    "diff": null,
     "in_flight_usd": 0,
     "idle_usd": 383897,
-    "untracked_usd": 5790409,
-    "strategy_api_usd": 12306697,
-    "tokens_checked": 15,
+    "untracked_usd": 18103137,
+    "strategy_api_usd": 0,
+    "tokens_checked": 14,
     "tokens_disagree": 0,
     "other_wallets": {
       "0x616de58c011f8736fa20c7ae5352f7f6fb9f0669 chain 42161": 78150,
@@ -29,7 +29,8 @@
     }
   },
   "flags": [
-    "NOTE: positions the Strategy API / vaults.fyi does not price (kept in the book with APY unknown): aave_v3/USD $3,650,292, compound_v3/USD/ciUSDCv3 $1,000,178, stakewise_v3/ETH $730,906, uniswap/OTHER $223,708, uniswap/ETH $185,324."
+    "NOTE: Strategy API unreachable (failed after 3 attempts: http://ops-tools-backend.kpk/api/clients/current-strate); positions from Syncrone, APYs from the last snapshot's permitted venues (stale) and fallback sources",
+    "NOTE: positions the Strategy API / vaults.fyi does not price (kept in the book with APY unknown): morphoVaults/USD $7,469,962, aave_v3/USD $3,650,292, aave_v3/EURO $2,570,338, ether_fi/ETH $1,925,672, compound_v3/USD/ciUSDCv3 $1,000,178, stakewise_v3/ETH $730,906, lido/ETH $346,755, uniswap/OTHER $223,708, uniswap/ETH $185,324."
   ],
   "policy": null,
   "policy_checks": [],
@@ -40,58 +41,6 @@
     "exclude": []
   },
   "book": [
-    {
-      "kind": "position",
-      "protocol": "aave_v3",
-      "venue": "Aave Ethereum EURC",
-      "symbol": "EURC",
-      "asset_group": "EURO",
-      "usd": 2567128.09,
-      "apy": 0.0234,
-      "apy_source": "vaults.fyi",
-      "venue_tvl_usd": 46652091.0,
-      "untracked": false,
-      "balance": null
-    },
-    {
-      "kind": "position",
-      "protocol": "ether_fi",
-      "venue": "ether.fi eETH",
-      "symbol": "eETH",
-      "asset_group": "ETH",
-      "usd": 1924222.82,
-      "apy": 0.0241,
-      "apy_source": "vaults.fyi",
-      "venue_tvl_usd": 5575562544.0,
-      "untracked": false,
-      "balance": null
-    },
-    {
-      "kind": "position",
-      "protocol": "lido",
-      "venue": "Lido stETH",
-      "symbol": "stETH",
-      "asset_group": "ETH",
-      "usd": 346566.31,
-      "apy": 0.0227,
-      "apy_source": "vaults.fyi",
-      "venue_tvl_usd": 24278508386.0,
-      "untracked": false,
-      "balance": null
-    },
-    {
-      "kind": "position",
-      "protocol": "morphoVaults",
-      "venue": "kpk USDC",
-      "symbol": "kpk USDC Prime v2",
-      "asset_group": "USD",
-      "usd": 7468778.97,
-      "apy": 0.0454,
-      "apy_source": "vaults.fyi",
-      "venue_tvl_usd": 20566088.0,
-      "untracked": false,
-      "balance": null
-    },
     {
       "kind": "idle",
       "protocol": "(wallet)",
@@ -224,15 +173,67 @@
     },
     {
       "kind": "position",
+      "protocol": "ether_fi",
+      "venue": "Etherfi Staked on Ethereum [weETH]",
+      "symbol": "weETH",
+      "asset_group": "ETH",
+      "usd": 1925672.3,
+      "apy": 0.0241,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 5575562544.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
       "protocol": "stakewise_v3",
       "venue": "Stakewise Lending on Ethereum [ETH]",
       "symbol": "ETH",
       "asset_group": "ETH",
       "usd": 731290.78,
-      "apy": 0.022232099999999998,
-      "apy_source": "defillama",
-      "venue_tvl_usd": 401559690.0,
+      "apy": 0.0246,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 394424897.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "morphoVaults",
+      "venue": "Morpho v2 Yield on Ethereum [KPK_USDC_Prime]",
+      "symbol": "KPK_USDC_Prime",
+      "asset_group": "USD",
+      "usd": 7469962.41,
+      "apy": null,
+      "apy_source": null,
+      "venue_tvl_usd": null,
       "untracked": true,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "lido",
+      "venue": "Lido Staked on Ethereum [stETH]",
+      "symbol": "stETH",
+      "asset_group": "ETH",
+      "usd": 120449.77,
+      "apy": 0.0227,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 24278508386.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "lido",
+      "venue": "Lido Staked on Ethereum [wstETH]",
+      "symbol": "wstETH",
+      "asset_group": "ETH",
+      "usd": 226305.2,
+      "apy": 0.0227,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 24278508386.0,
+      "untracked": false,
       "balance": null
     },
     {
@@ -242,10 +243,23 @@
       "symbol": "GHO",
       "asset_group": "USD",
       "usd": 3650292.44,
-      "apy": 0.04510897484835451,
-      "apy_source": "syncrone realised, 11.3d annualised",
-      "venue_tvl_usd": null,
-      "untracked": true,
+      "apy": 0,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 32047766.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "aave_v3",
+      "venue": "Aave v3 Lending on Ethereum [aEthEURC]",
+      "symbol": "aEthEURC",
+      "asset_group": "EURO",
+      "usd": 2570338.48,
+      "apy": 0.0234,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 46652091.0,
+      "untracked": false,
       "balance": null
     }
   ],
@@ -941,6 +955,6 @@
     "manager": "0xfABCA7957D67c680d3ab2C28b8dC003A5852123a",
     "roles_modifier": "0xaF65eec285e2999e8f7bFEc57E83e88A9525F1E6"
   },
-  "stale_note": null,
+  "stale_note": "Strategy API unreachable; permissions and vaults.fyi APYs reused from the office cache of 2026-09-12T01:52:08.610Z",
   "ops_tools_caveat": "Optimizer respects only tvlCapPercent per venue. It ignores policy caps/floors and swap-only venues. Reference only."
 }
