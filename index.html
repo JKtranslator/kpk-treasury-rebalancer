@@ -29,11 +29,15 @@
 
   <div class="navbar">
     <div class="seg clients" id="clientTabs" role="tablist" aria-label="Client"></div>
-    <div class="seg views" id="viewTabs" role="tablist" aria-label="View">
-      <button data-v="holdings" aria-pressed="true">Holdings</button>
-      <button data-v="strategies" aria-pressed="false">Strategies</button>
+    <div class="navright">
+      <button class="btn ghost" id="refreshBtn" type="button" title="Re-run holdings, yields and assessment for this client on the executor host, then reload">↻ Refresh client</button>
+      <div class="seg views" id="viewTabs" role="tablist" aria-label="View">
+        <button data-v="holdings" aria-pressed="true">Holdings</button>
+        <button data-v="strategies" aria-pressed="false">Strategies</button>
+      </div>
     </div>
   </div>
+  <div class="refresh-msg" id="refreshMsg" hidden></div>
 
   <div id="app" hidden>
 

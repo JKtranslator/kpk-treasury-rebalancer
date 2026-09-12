@@ -65,7 +65,11 @@ def snapshot(slug: str, run: Path) -> dict:
         thresholds=dict(min_pickup_bps=a["thresholds"]["min_pickup_bps"], min_move_usd=a["thresholds"]["min_move_usd"],
                         venue_tvl_cap_pct=a["thresholds"]["venue_tvl_cap_pct"], exclude=a["thresholds"]["exclude"]),
         book=book, permitted=permitted, ops_tools=ops, fallback_apy=y.get("fallback_apy") or {},
-        safes=c["safes"].get(str(h["chain_id"]), {}),
+        safes=c["safes"].get(str(h["chain_id"]), {}), stale_note=y.get("stale_note"),
+        # raw Strategy API payloads travel with the snapshot so an off-network refresh (OCI) can reuse them
+        _raw_permissions=y.get("raw_permissions"), _raw_best_strategy=y.get("raw_best_strategy"),
+        _raw_strategy_current=(json.loads((run / "raw_strategy_current.json").read_text(encoding="utf-8"))
+                               if (run / "raw_strategy_current.json").exists() else None),
         ops_tools_caveat=y.get("ops_tools_caveat"))
 
 

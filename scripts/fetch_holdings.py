@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import json
 import sys
 import time
 from pathlib import Path
@@ -448,13 +449,30 @@ def main():
     else:
         print("  syncrone: skipped / not configured")
 
-    strat = None if "strategy" in a.skip else fetch_strategy_current(c, reg, chain_id, a.period)
+    strat, strat_note = None, None
+    if "strategy" not in a.skip:
+        try:
+            strat = fetch_strategy_current(c, reg, chain_id, a.period)
+        except Exception as e:
+            strat_note = f"Strategy API unreachable ({str(e)[:80]}); positions come from Syncrone only, APY from fallback sources"
+            print("  strategy api:", strat_note)
+            # reuse the last published snapshot's Strategy positions if it exists (keeps APY coverage; marked stale)
+            prev = Path(__file__).resolve().parent.parent / "data" / f"{a.client}.json"
+            if prev.exists():
+                try:
+                    pj = json.loads(prev.read_text(encoding="utf-8"))
+                    strat = pj.get("_raw_strategy_current") or None
+                    if strat:
+                        strat_note += f"; using Strategy API positions cached {pj.get('vault_data_fetched_at')}"
+                        print("  strategy api: cached positions from last published snapshot")
+                except Exception:
+                    pass
     strat_rows = strategy_rows(strat, chain_id) if strat else []
     if strat:
         write_json(out / "raw_strategy_current.json", strat)
         print(f"  strategy api: {len(strat_rows)} positions, total ${fnum(strat['summary']['totalValueUsd']):,.0f}, "
               f"vault data at {strat.get('vaultDataFetchedAt')}")
-    else:
+    elif not strat_note:
         print("  strategy api: skipped / not configured")
 
     safe_rows = []
@@ -480,6 +498,8 @@ def main():
         print(f"  coingecko: priced {n_priced}/{len(priced_safe)} Safe tokens; ${sum(r['usd'] for r in priced_safe):,.0f} total (receipt tokens like aTokens/vault shares are usually unpriced here)")
         sync_rows = priced_safe  # reuse the idle-holding path downstream
     recon, nav, flags = reconcile(sync_rows, strat_rows, safe_rows, eth_rows, reg, c)
+    if strat_note:
+        flags.insert(0, "NOTE: " + strat_note)
     if priced_safe:
         unp = [r["symbol"] for r in priced_safe if not r["priced"] and r["balance"] > 0]
         flags.append(f"NOTE: no Syncrone org or Strategy API client for {a.client}; book = Safe balances priced by CoinGecko. "

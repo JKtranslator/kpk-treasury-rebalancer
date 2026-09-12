@@ -1003,5 +1003,177 @@
     "manager": "0x0F035E7ff8A21159F10994aA0186449fc852A9E7",
     "roles_modifier": "0x24Fc0B9414Bb8e99a822a45BdE3A398BcfC85A58"
   },
+  "stale_note": null,
+  "_raw_permissions": null,
+  "_raw_best_strategy": null,
+  "_raw_strategy_current": {
+    "success": true,
+    "client": {
+      "name": "nexus-mutual",
+      "description": "Nexus Mutual DAO",
+      "iconURL": "https://images.spr.so/cdn-cgi/imagedelivery/j42No7y-dcokJuNgXeA0ig/52d9a94e-f458-4167-b2db-317e1faeea6d/Nexus_Mutual_Logo_Symbol_Green/w=1920,quality=90,fit=scale-down",
+      "chain": "mainnet",
+      "defaultChain": "mainnet",
+      "chains": [
+        {
+          "id": "mainnet",
+          "label": "Ethereum"
+        }
+      ]
+    },
+    "period": "7day",
+    "strategy": [
+      {
+        "assetGroup": "ETH",
+        "assets": [
+          "eETH",
+          "kpk wstETH",
+          "stETH"
+        ],
+        "apy": {
+          "base": 0.025621255630801178,
+          "reward": 0.000278352868029519,
+          "total": 0.025899608498830697
+        },
+        "totalValueUsd": "464175.4654685764",
+        "positionCount": 3,
+        "positions": [
+          {
+            "asset": "eETH",
+            "protocol": "ether_fi",
+            "vault": "0x35fa164735182de50811e8e2e824cfb9b6118ac2",
+            "vaultName": "ether.fi eETH",
+            "apy": {
+              "base": 0.0235,
+              "reward": 0,
+              "total": 0.0235
+            },
+            "positionValue": "279597.505351268977855239200514702",
+            "positionValueUsd": "279597.505351269",
+            "lpTokenBalance": "103510210093022537580",
+            "tvl": {
+              "usd": "5429295767",
+              "native": "2217814063838494600971346"
+            }
+          },
+          {
+            "asset": "kpk wstETH",
+            "protocol": "gearbox",
+            "vault": "0xa9d17f6d3285208280a1fd9b94479c62e0aaba64",
+            "vaultName": "kpk wstETH market",
+            "apy": {
+              "base": 0.028834519999999975,
+              "reward": 0.0007,
+              "total": 0.029534519999999974
+            },
+            "positionValue": "184577.9601173074596968328955276",
+            "positionValueUsd": "184577.96011730746",
+            "lpTokenBalance": "60514957690265277461",
+            "tvl": {
+              "usd": "11658262",
+              "native": "3832622167172763067182"
+            }
+          },
+          {
+            "asset": "stETH",
+            "protocol": "lido",
+            "vault": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84",
+            "vaultName": "Lido stETH",
+            "apy": {
+              "base": 0.0228,
+              "reward": 0,
+              "total": 0.0228
+            },
+            "positionValue": "0.00000000000000244803920026",
+            "positionValueUsd": "2.44803920026e-15",
+            "lpTokenBalance": "1",
+            "tvl": {
+              "usd": "23652485521",
+              "native": "9661808323444090278377659"
+            }
+          }
+        ]
+      },
+      {
+        "assetGroup": "USD",
+        "assets": [
+          "USDC",
+          "USDT",
+          "kpk USDC Yield v2"
+        ],
+        "apy": {
+          "base": 0.06761765255878663,
+          "reward": 0,
+          "total": 0.06761765255878663
+        },
+        "totalValueUsd": "1119619.4655665518",
+        "positionCount": 3,
+        "positions": [
+          {
+            "asset": "USDC",
+            "protocol": "fluid",
+            "vault": "0x9fb7b4477576fe5b32be4c1843afb1e55f251b33",
+            "vaultName": "Fluid USDC",
+            "apy": {
+              "base": 0.048,
+              "reward": 0,
+              "total": 0.048
+            },
+            "positionValue": "0.10063611100107",
+            "positionValueUsd": "0.10063611100107",
+            "lpTokenBalance": "82787",
+            "tvl": {
+              "usd": "154915207",
+              "native": "154931969173943"
+            }
+          },
+          {
+            "asset": "USDT",
+            "protocol": "fluid",
+            "vault": "0x5c20b550819128074fd538edf79791733ccedd18",
+            "vaultName": "Fluid USDT",
+            "apy": {
+              "base": 0.0484,
+              "reward": 0,
+              "total": 0.0484
+            },
+            "positionValue": "59695.32908971223264",
+            "positionValueUsd": "59695.329089712235",
+            "lpTokenBalance": "49551087237",
+            "tvl": {
+              "usd": "132582902",
+              "native": "132628404248069"
+            }
+          },
+          {
+            "asset": "kpk USDC Yield v2",
+            "protocol": "morphoVaults",
+            "vault": "0xd5cce260e7a755ddf0fb9cdf06443d593aaeaa13",
+            "vaultName": "kpk USDC Yield V2",
+            "apy": {
+              "base": 0.0687,
+              "reward": 0,
+              "total": 0.0687
+            },
+            "positionValue": "1059924.0358407284883",
+            "positionValueUsd": "1059924.0358407286",
+            "lpTokenBalance": "1012396072355769147403502",
+            "tvl": {
+              "usd": "9901520",
+              "native": "9902591848106"
+            }
+          }
+        ]
+      }
+    ],
+    "summary": {
+      "totalAssetGroups": 2,
+      "totalAssets": 6,
+      "totalPositions": 6,
+      "totalValueUsd": "1583794.9310351282",
+      "weightedAverageAPY": 0.05539101125534939
+    },
+    "vaultDataFetchedAt": "2026-09-11T01:51:07.597Z"
+  },
   "ops_tools_caveat": "Optimizer respects only tvlCapPercent per venue. It ignores policy caps/floors and swap-only venues. Reference only."
 }

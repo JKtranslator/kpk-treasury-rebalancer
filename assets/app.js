@@ -27,8 +27,9 @@
     const first = q.get('client') || index.clients[0]?.client;
     if (first) { [...tabs.children].forEach(x => x.setAttribute('aria-pressed', x.dataset.c === first)); await select(first); }
     showView(q.get('view') || 'holdings');
-    pingExecutor();
+    await pingExecutor();
     bindModal();
+    $('#refreshBtn').onclick = refreshClient;
   }
 
   function showView(v) {
@@ -37,9 +38,13 @@
     const q = new URLSearchParams(location.search); q.set('view', v); history.replaceState(null, '', '?' + q);
   }
 
+  async function fromExecutorOrSite(name) {
+    if (executorOn) { try { return await loadJSON(EXECUTOR + '/data/' + name); } catch (e) { /* fall through */ } }
+    return loadJSON('data/' + name);
+  }
   async function select(slug) {
-    snap = await loadJSON('data/' + slug + '.json');
-    try { live = await loadJSON('data/' + slug + '.live.json'); } catch (e) { live = null; }
+    snap = await fromExecutorOrSite(slug + '.json');
+    try { live = await fromExecutorOrSite(slug + '.live.json'); } catch (e) { live = null; }
     const q = new URLSearchParams(location.search); q.set('client', slug); history.replaceState(null, '', '?' + q);
     sim.pickupBps = snap.thresholds.min_pickup_bps; sim.moveUsd = snap.thresholds.min_move_usd; sim.tvlCapPct = snap.thresholds.venue_tvl_cap_pct;
     sim.exclude = new Set(snap.thresholds.exclude || []);
@@ -78,7 +83,8 @@
     $('#app').hidden = false;
     const r = snap.reconciliation;
     $('#stamp').innerHTML = `<b>${esc(snap.display_name)}</b> · chain ${snap.chain_id} · run ${esc(snap.run_folder)}`;
-    $('#stamp2').textContent = `data as of ${new Date(snap.as_of).toISOString().slice(0, 16).replace('T', ' ')} UTC · APY period ${snap.period} · vaults.fyi ${snap.vault_data_fetched_at ? new Date(snap.vault_data_fetched_at).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : 'n/a'}`;
+    if (snap.stale_note) { $('#stamp2').title = snap.stale_note; }
+    $('#stamp2').textContent = (snap.stale_note ? '⚠ stale Strategy API · ' : '') + `data as of ${new Date(snap.as_of).toISOString().slice(0, 16).replace('T', ' ')} UTC · APY period ${snap.period} · vaults.fyi ${snap.vault_data_fetched_at ? new Date(snap.vault_data_fetched_at).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : 'n/a'}`;
 
     const groups = {}; snap.book.forEach(b => groups[b.asset_group] = (groups[b.asset_group] || 0) + b.usd);
     const nav = snap.nav_usd; const stables = (groups.USD || 0) + (groups.EURO || 0);
@@ -190,7 +196,25 @@
     const el = $('#execState');
     try { const r = await fetch(EXECUTOR + '/health', { cache: 'no-store' }); const j = await r.json(); executorOn = !!j.ok; el.textContent = `executor: ${j.ok ? 'connected' : 'error'}${j.clients ? ' · ' + j.clients.join(', ') : ''}${j.propose ? '' : ' · simulate only'}`; el.className = 'exec-state ' + (j.ok ? 'on' : 'off'); }
     catch (e) { executorOn = false; el.textContent = 'executor: offline (run scripts/executor.py locally to enable Execute)'; el.className = 'exec-state off'; }
+    $('#refreshBtn').disabled = !executorOn;
+    $('#refreshBtn').title = executorOn ? 'Re-run holdings, yields and assessment for this client on ' + ($('#execState').textContent.split('@')[1] || 'the executor') : 'Connect the executor (SSH tunnel to OCI, or scripts/executor.py) to refresh';
     if (snap) simulate();
+  }
+
+  async function refreshClient() {
+    if (!snap || !executorOn) return;
+    const btn = $('#refreshBtn'), msg = $('#refreshMsg');
+    btn.classList.add('busy'); btn.textContent = '↻ Refreshing…'; msg.hidden = false; msg.className = 'refresh-msg';
+    msg.textContent = `Running holdings (Syncrone, Safe, Etherscan), yields and assessment for ${snap.display_name} on the executor host. Usually 1 to 3 minutes.`;
+    try {
+      const r = await fetch(EXECUTOR + '/refresh/' + snap.client, { cache: 'no-store' });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || 'refresh failed');
+      msg.innerHTML = `Refreshed in ${j.seconds}s · NAV ${compact(j.nav_usd)} · ${j.nav_tied ? 'reconciliation ties' : '<b>reconciliation did not tie, read the flags</b>'}` +
+        (j.stale_note ? `<br>${esc(j.stale_note)}` : '') + (j.pushed === true ? ' · pushed to the site' : j.pushed ? `<br>push: ${esc(String(j.pushed))}` : '');
+      await select(snap.client);
+    } catch (e) { msg.className = 'refresh-msg err'; msg.textContent = 'Refresh failed: ' + e.message; }
+    finally { btn.classList.remove('busy'); btn.textContent = '↻ Refresh client'; }
   }
 
   let cur = null;

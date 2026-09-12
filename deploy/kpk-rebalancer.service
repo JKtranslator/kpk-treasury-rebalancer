@@ -1,0 +1,18 @@
+[Unit]
+Description=KPK treasury rebalancer executor (refresh + execute via kpkProposer code)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/kpk-treasury-rebalancer
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/ubuntu/SafeAgentAll/.venv/bin/python scripts/executor.py --port 8743 --safeagent /home/ubuntu/SafeAgentAll --hourly-live
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/ubuntu/kpk-treasury-rebalancer/runs/executor.stdout.log
+StandardError=append:/home/ubuntu/kpk-treasury-rebalancer/runs/executor.stderr.log
+
+[Install]
+WantedBy=multi-user.target

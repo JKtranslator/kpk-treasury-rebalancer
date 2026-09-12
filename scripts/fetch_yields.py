@@ -19,6 +19,7 @@ Writes <out>/yields.json.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -114,7 +115,19 @@ def main():
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
 
-    perms, best = fetch(reg, c, chain_id, a.period, a.tvl_cap)
+    stale_note = None
+    try:
+        perms, best = fetch(reg, c, chain_id, a.period, a.tvl_cap)
+    except Exception as e:
+        # Strategy API is office-network only. Off-network (OCI), reuse the permissions from the
+        # last published snapshot; APYs there are as old as vault_data_fetched_at and are marked stale.
+        prev = Path(__file__).resolve().parent.parent / "data" / f"{a.client}.json"
+        if not prev.exists():
+            sys.exit(f"ERROR: Strategy API unreachable ({str(e)[:100]}) and no cached snapshot at {prev}")
+        pj = json.loads(prev.read_text(encoding="utf-8"))
+        perms, best = pj.get("_raw_permissions") or {"permissions": {}, "vaultDataFetchedAt": pj.get("vault_data_fetched_at")}, pj.get("_raw_best_strategy")
+        stale_note = f"Strategy API unreachable; permissions and vaults.fyi APYs reused from the snapshot of {perms.get('vaultDataFetchedAt')}"
+        print("  " + stale_note)
     write_json(out / "raw_permissions.json", perms)
     if best:
         write_json(out / "raw_best_strategy.json", best)
@@ -137,7 +150,8 @@ def main():
     write_json(out / "yields.json", dict(
         client=a.client, chain_id=chain_id, period=a.period,
         vault_data_fetched_at=perms.get("vaultDataFetchedAt"),
-        permitted=rows, fallback_apy=fallback,
+        permitted=rows, fallback_apy=fallback, stale_note=stale_note,
+        raw_permissions=perms, raw_best_strategy=best,
         all_permissions_protocols=sorted((perms.get("allPermissions") or {}).keys()),
         ops_tools_best_strategy=best,
         ops_tools_caveat="Optimizer respects only tvlCapPercent per venue. It ignores policy caps/floors and swap-only venues. Reference only.",

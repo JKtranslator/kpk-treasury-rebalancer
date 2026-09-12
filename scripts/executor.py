@@ -16,8 +16,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import socket
 import subprocess
 import sys
+import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -136,6 +139,48 @@ def run_worker(slug: str, op: str, payload: dict) -> dict:
     return dict(error="worker produced no JSON", stderr=(p.stderr or "")[-1500:], stdout=(p.stdout or "")[-500:])
 
 
+RUNNING: set = set()
+LOCK = threading.Lock()
+
+
+def refresh_client(slug: str) -> dict:
+    """Full pipeline for one client on this host, then publish and push data/ to the repo so the
+    Pages site updates. Strategy API pieces fall back to the last snapshot when unreachable."""
+    with LOCK:
+        if slug in RUNNING:
+            return dict(error=f"refresh already running for {slug}")
+        RUNNING.add(slug)
+    log, t0 = [], time.time()
+    try:
+        def step(args, timeout=900):
+            p = subprocess.run([sys.executable, *args], cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", timeout=timeout)
+            tail = ((p.stdout or "") + (p.stderr or "")).strip().splitlines()[-25:]
+            log.append(dict(cmd=" ".join(Path(a).name if str(a).endswith(".py") else str(a) for a in args), rc=p.returncode, tail=tail))
+            return p.returncode
+        rc = step([str(HERE / "run.py"), "--client", slug])
+        if rc not in (0, 2):
+            return dict(ok=False, client=slug, error="run.py failed", log=log)
+        step([str(HERE / "refresh_holdings.py"), "--clients", slug])
+        step([str(HERE / "publish.py"), "--clients", slug])
+        pushed = None
+        if (ROOT / ".git").exists():
+            g = lambda *a: subprocess.run(["git", *a], cwd=str(ROOT), capture_output=True, text=True)
+            g("add", "data")
+            if g("diff", "--staged", "--quiet").returncode != 0:
+                g("-c", "user.name=kpk-rebalancer", "-c", "user.email=noreply@kpk.io", "commit", "-q", "-m", f"data: {slug} refresh from {socket.gethostname()}")
+                g("pull", "--rebase", "-q", "-X", "theirs", "origin", "main")
+                pr = g("push", "-q", "origin", "main")
+                pushed = pr.returncode == 0 or (pr.stderr or "")[-300:]
+        snap = json.loads((ROOT / "data" / f"{slug}.json").read_text(encoding="utf-8"))
+        return dict(ok=True, client=slug, nav_tied=(rc == 0), seconds=round(time.time() - t0), pushed=pushed,
+                    as_of=snap.get("as_of"), nav_usd=snap.get("nav_usd"), stale_note=snap.get("stale_note"), flags=snap.get("flags"), log=log)
+    except Exception as e:
+        return dict(ok=False, client=slug, error=f"{type(e).__name__}: {e}", log=log)
+    finally:
+        with LOCK:
+            RUNNING.discard(slug)
+
+
 def load_snapshot(slug: str) -> dict:
     snap = json.loads((ROOT / "data" / f"{slug}.json").read_text(encoding="utf-8"))
     live = ROOT / "data" / f"{slug}.live.json"
@@ -176,7 +221,19 @@ class H(BaseHTTPRequestHandler):
                     clients.append(slug)
                     keys = {l.split("=", 1)[0].strip() for l in envf.read_text(encoding="utf-8", errors="replace").splitlines() if "=" in l and not l.strip().startswith("#")}
                     propose[slug] = "AGENT_PRIVATE_KEY" in keys
-            return self._json(200, dict(ok=True, clients=clients, propose=propose, safeagent=str(SAFEAGENT)))
+            return self._json(200, dict(ok=True, host=socket.gethostname(), clients=clients, propose=propose, safeagent=str(SAFEAGENT),
+                                        refresh_running=sorted(RUNNING), can_push=(ROOT / ".git").exists()))
+        if self.path.startswith("/data/"):
+            name = self.path.split("/data/", 1)[1].split("?")[0]
+            f = ROOT / "data" / name
+            if not name or "/" in name or ".." in name or not f.exists():
+                return self._json(404, dict(error="not found"))
+            return self._json(200, json.loads(f.read_text(encoding="utf-8")))
+        if self.path.startswith("/refresh/"):
+            slug = self.path.split("/refresh/", 1)[1].split("?")[0]
+            if slug not in CLIENT_DIRS:
+                return self._json(400, dict(error=f"unknown client {slug}"))
+            return self._json(200, refresh_client(slug))
         self._json(404, dict(error="not found"))
 
     def do_POST(self):
@@ -219,11 +276,25 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8743)
     ap.add_argument("--safeagent", default=None)
+    ap.add_argument("--hourly-live", action="store_true", help="refresh live holdings for all clients every hour and push")
     a = ap.parse_args()
     global SAFEAGENT
     if a.safeagent:
         SAFEAGENT = Path(a.safeagent)
     PLANS.mkdir(parents=True, exist_ok=True)
+    if a.hourly_live:
+        def loop():
+            while True:
+                time.sleep(3600)
+                try:
+                    subprocess.run([sys.executable, str(HERE / "refresh_holdings.py")], cwd=str(ROOT), timeout=900)
+                    if (ROOT / ".git").exists():
+                        g = lambda *x: subprocess.run(["git", *x], cwd=str(ROOT), capture_output=True, text=True)
+                        g("add", "data"); g("-c", "user.name=kpk-rebalancer", "-c", "user.email=noreply@kpk.io", "commit", "-q", "-m", "data: hourly live holdings")
+                        g("pull", "--rebase", "-q", "-X", "theirs", "origin", "main"); g("push", "-q", "origin", "main")
+                except Exception as e:
+                    sys.stderr.write(f"hourly live refresh failed: {e}\n")
+        threading.Thread(target=loop, daemon=True).start()
     print(f"executor on http://127.0.0.1:{a.port}  (SafeAgent: {SAFEAGENT})")
     ThreadingHTTPServer(("127.0.0.1", a.port), H).serve_forever()
 
