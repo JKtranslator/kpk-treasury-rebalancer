@@ -3,26 +3,27 @@
   "display_name": "Nexus Mutual DAO Treasury",
   "chain_id": 1,
   "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
-  "as_of": "2026-09-12T08:39:30+00:00",
+  "as_of": "2026-09-12T08:50:47+00:00",
   "period": "7day",
   "vault_data_fetched_at": "2026-09-12T01:52:08.610Z",
   "run_folder": "2026-09-12",
-  "nav_usd": 7517248,
+  "nav_usd": 7518100,
   "eth_price_usd": 2516.44,
   "reconciliation": {
     "syncrone_nav_usd": 7518132,
-    "bridge_usd": 7517248,
-    "diff": 0.00011759772741670358,
+    "bridge_usd": 7518100,
+    "diff": null,
     "in_flight_usd": 0,
     "idle_usd": 151075,
-    "untracked_usd": 5769965,
-    "strategy_api_usd": 1596208,
-    "tokens_checked": 15,
+    "untracked_usd": 7367025,
+    "strategy_api_usd": 0,
+    "tokens_checked": 10,
     "tokens_disagree": 0,
     "other_wallets": {}
   },
   "flags": [
-    "NOTE: positions the Strategy API / vaults.fyi does not price (kept in the book with APY unknown): nexusmutual/OTHER $4,808,845, nexusmutual/USD $255,992, uniswap/OTHER $251,001, uniswap/USD $250,100, stakewise_v3/ETH $204,027."
+    "NOTE: Strategy API unreachable (failed after 3 attempts: http://ops-tools-backend.kpk/api/clients/current-strate); positions from Syncrone, APYs from the last snapshot's permitted venues (stale) and fallback sources",
+    "NOTE: positions the Strategy API / vaults.fyi does not price (kept in the book with APY unknown): nexusmutual/OTHER $4,808,845, morphoVaults/USD $1,060,489, ether_fi/ETH $287,178, nexusmutual/USD $255,992, uniswap/OTHER $251,001, uniswap/USD $250,100, stakewise_v3/ETH $204,027, gearbox/ETH $189,665, fluid/USD $59,727."
   ],
   "policy": null,
   "policy_checks": [],
@@ -33,58 +34,6 @@
     "exclude": []
   },
   "book": [
-    {
-      "kind": "position",
-      "protocol": "ether_fi",
-      "venue": "ether.fi eETH",
-      "symbol": "eETH",
-      "asset_group": "ETH",
-      "usd": 286962.07,
-      "apy": 0.0241,
-      "apy_source": "vaults.fyi",
-      "venue_tvl_usd": 5575562544.0,
-      "untracked": false,
-      "balance": null
-    },
-    {
-      "kind": "position",
-      "protocol": "gearbox",
-      "venue": "kpk wstETH market",
-      "symbol": "kpk wstETH",
-      "asset_group": "ETH",
-      "usd": 189429.76,
-      "apy": 0.029433930000000018,
-      "apy_source": "vaults.fyi",
-      "venue_tvl_usd": 11987130.0,
-      "untracked": false,
-      "balance": null
-    },
-    {
-      "kind": "position",
-      "protocol": "fluid",
-      "venue": "Fluid USDT",
-      "symbol": "USDT",
-      "asset_group": "USD",
-      "usd": 59703.53,
-      "apy": 0.0476,
-      "apy_source": "vaults.fyi",
-      "venue_tvl_usd": 134718088.0,
-      "untracked": false,
-      "balance": null
-    },
-    {
-      "kind": "position",
-      "protocol": "morphoVaults",
-      "venue": "kpk USDC Yield V2",
-      "symbol": "kpk USDC Yield v2",
-      "asset_group": "USD",
-      "usd": 1060112.07,
-      "apy": 0.0718,
-      "apy_source": "vaults.fyi",
-      "venue_tvl_usd": 8781920.0,
-      "untracked": false,
-      "balance": null
-    },
     {
       "kind": "idle",
       "protocol": "(wallet)",
@@ -282,14 +231,53 @@
     },
     {
       "kind": "position",
+      "protocol": "ether_fi",
+      "venue": "Etherfi Staked on Ethereum [weETH]",
+      "symbol": "weETH",
+      "asset_group": "ETH",
+      "usd": 287178.23,
+      "apy": 0.0241,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 5575562544.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
       "protocol": "stakewise_v3",
       "venue": "Stakewise Staked on Ethereum [osETH]",
       "symbol": "osETH",
       "asset_group": "ETH",
       "usd": 204027.48,
-      "apy": 0.022232099999999998,
-      "apy_source": "defillama",
-      "venue_tvl_usd": 401559690.0,
+      "apy": 0.0246,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 394424897.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "gearbox",
+      "venue": "Gearbox v3 Yield on Ethereum [wstETH]",
+      "symbol": "wstETH",
+      "asset_group": "ETH",
+      "usd": 189664.69,
+      "apy": 0.029433930000000018,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 11987130.0,
+      "untracked": false,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "morphoVaults",
+      "venue": "Morpho v2 Yield on Ethereum [KPK_USDC_Yield]",
+      "symbol": "KPK_USDC_Yield",
+      "asset_group": "USD",
+      "usd": 1060489.36,
+      "apy": null,
+      "apy_source": null,
+      "venue_tvl_usd": null,
       "untracked": true,
       "balance": null
     },
@@ -343,6 +331,19 @@
       "apy_source": "defillama",
       "venue_tvl_usd": 694778.0,
       "untracked": true,
+      "balance": null
+    },
+    {
+      "kind": "position",
+      "protocol": "fluid",
+      "venue": "Fluid Yield on Ethereum [USDT]",
+      "symbol": "USDT",
+      "asset_group": "USD",
+      "usd": 59727.18,
+      "apy": 0.0476,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 134718088.0,
+      "untracked": false,
       "balance": null
     }
   ],
@@ -1003,6 +1004,6 @@
     "manager": "0x0F035E7ff8A21159F10994aA0186449fc852A9E7",
     "roles_modifier": "0x24Fc0B9414Bb8e99a822a45BdE3A398BcfC85A58"
   },
-  "stale_note": null,
+  "stale_note": "Strategy API unreachable; permissions and vaults.fyi APYs reused from the office cache of 2026-09-12T01:52:08.610Z",
   "ops_tools_caveat": "Optimizer respects only tvlCapPercent per venue. It ignores policy caps/floors and swap-only venues. Reference only."
 }
