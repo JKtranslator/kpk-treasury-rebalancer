@@ -3,9 +3,9 @@
   "display_name": "ENS DAO Endowment",
   "chain_id": 1,
   "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
-  "as_of": "2026-09-12T08:44:27+00:00",
+  "as_of": "2026-09-12T08:48:37+00:00",
   "period": "7day",
-  "vault_data_fetched_at": "2026-09-11T01:51:07.597Z",
+  "vault_data_fetched_at": "2026-09-12T01:52:08.610Z",
   "run_folder": "2026-09-12",
   "nav_usd": 94326868,
   "eth_price_usd": 2515.5658,
@@ -163,10 +163,10 @@
       "symbol": "weETH",
       "asset_group": "ETH",
       "usd": 20666841.19,
-      "apy": null,
-      "apy_source": null,
-      "venue_tvl_usd": null,
-      "untracked": true,
+      "apy": 0.0241,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 5575562544.0,
+      "untracked": false,
       "balance": null
     },
     {
@@ -176,10 +176,10 @@
       "symbol": "ETH",
       "asset_group": "ETH",
       "usd": 17886829.38,
-      "apy": 0.022232099999999998,
-      "apy_source": "defillama",
-      "venue_tvl_usd": 401559690.0,
-      "untracked": true,
+      "apy": 0.0246,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 394424897.0,
+      "untracked": false,
       "balance": null
     },
     {
@@ -189,10 +189,10 @@
       "symbol": "ETHx",
       "asset_group": "ETH",
       "usd": 16544022.39,
-      "apy": null,
-      "apy_source": null,
-      "venue_tvl_usd": null,
-      "untracked": true,
+      "apy": 0.0225,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 214880767.0,
+      "untracked": false,
       "balance": null
     },
     {
@@ -215,10 +215,10 @@
       "symbol": "aEthUSDC",
       "asset_group": "USD",
       "usd": 4991498.08,
-      "apy": 0.03648646255727041,
-      "apy_source": "syncrone realised, 11.3d annualised",
-      "venue_tvl_usd": null,
-      "untracked": true,
+      "apy": 0.0389,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 2363043241.0,
+      "untracked": false,
       "balance": null
     },
     {
@@ -228,10 +228,10 @@
       "symbol": "wstETH",
       "asset_group": "ETH",
       "usd": 381.32,
-      "apy": null,
-      "apy_source": null,
-      "venue_tvl_usd": null,
-      "untracked": true,
+      "apy": 0.0227,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 24278508386.0,
+      "untracked": false,
       "balance": null
     },
     {
@@ -241,10 +241,10 @@
       "symbol": "stETH",
       "asset_group": "ETH",
       "usd": 2578736.56,
-      "apy": 0.023536316018794374,
-      "apy_source": "syncrone realised, 11.3d annualised",
-      "venue_tvl_usd": null,
-      "untracked": true,
+      "apy": 0.0227,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 24278508386.0,
+      "untracked": false,
       "balance": null
     },
     {
@@ -254,10 +254,10 @@
       "symbol": "USDC",
       "asset_group": "USD",
       "usd": 14041960.76,
-      "apy": 0.053958068215190856,
-      "apy_source": "syncrone realised, 11.3d annualised",
-      "venue_tvl_usd": null,
-      "untracked": true,
+      "apy": 0.0481,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 153843406.0,
+      "untracked": false,
       "balance": null
     },
     {
@@ -267,10 +267,10 @@
       "symbol": "GHO",
       "asset_group": "USD",
       "usd": 576.44,
-      "apy": null,
-      "apy_source": null,
-      "venue_tvl_usd": null,
-      "untracked": true,
+      "apy": 0.0537,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 20027653.0,
+      "untracked": false,
       "balance": null
     },
     {
@@ -280,10 +280,10 @@
       "symbol": "GHO",
       "asset_group": "USD",
       "usd": 2523659.37,
-      "apy": 0.0357866815989927,
-      "apy_source": "syncrone realised, 11.3d annualised",
-      "venue_tvl_usd": null,
-      "untracked": true,
+      "apy": 0.0537,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 20027653.0,
+      "untracked": false,
       "balance": null
     },
     {
@@ -293,10 +293,10 @@
       "symbol": "USDT",
       "asset_group": "USD",
       "usd": 1019712.92,
-      "apy": 0.04547607085120004,
-      "apy_source": "syncrone realised, 11.3d annualised",
-      "venue_tvl_usd": null,
-      "untracked": true,
+      "apy": 0.0476,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 134718088.0,
+      "untracked": false,
       "balance": null
     },
     {
@@ -332,10 +332,10 @@
       "symbol": "USDC",
       "asset_group": "USD",
       "usd": 1506657.33,
-      "apy": 0.041437,
-      "apy_source": "defillama",
-      "venue_tvl_usd": 36601813.0,
-      "untracked": true,
+      "apy": 0.0491,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 378518009.0,
+      "untracked": false,
       "balance": null
     },
     {
@@ -345,10 +345,10 @@
       "symbol": "USDS",
       "asset_group": "USD",
       "usd": 3260436.57,
-      "apy": 0.025016234540877983,
-      "apy_source": "syncrone realised, 11.3d annualised",
-      "venue_tvl_usd": null,
-      "untracked": true,
+      "apy": 0.036,
+      "apy_source": "vaults.fyi (stale, 2026-09-12T01:52:08.610Z)",
+      "venue_tvl_usd": 4604534401.0,
+      "untracked": false,
       "balance": null
     },
     {
@@ -1028,6 +1028,6 @@
     "manager": "0xb423e0f6E7430fa29500c5cC9bd83D28c8BD8978",
     "roles_modifier": "0x703806e61847984346d2d7ddd853049627e50a40"
   },
-  "stale_note": null,
+  "stale_note": "Strategy API unreachable; permissions and vaults.fyi APYs reused from the office cache of 2026-09-12T01:52:08.610Z",
   "ops_tools_caveat": "Optimizer respects only tvlCapPercent per venue. It ignores policy caps/floors and swap-only venues. Reference only."
 }
