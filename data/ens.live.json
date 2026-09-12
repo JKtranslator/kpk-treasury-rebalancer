@@ -1,6 +1,150 @@
 {
   "client": "ens",
-  "ok": false,
-  "as_of": "2026-09-12T05:50:00+00:00",
-  "error": "ERROR: SYNCRONE_API_KEY is not set. Export it or add it to /home/runner/work/kpk-treasury-rebalancer/kpk-treasury-rebalancer/.env.local (names only in .env.example; never commit .env.local)."
+  "display_name": "ENS DAO Endowment",
+  "chain_id": 1,
+  "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
+  "ok": true,
+  "as_of": "2026-09-12T08:37:45+00:00",
+  "syncrone_window": {
+    "from": "2026-09-01",
+    "to": "2026-10-01"
+  },
+  "nav_usd": 94326922,
+  "positions_usd": 94325312,
+  "idle_usd": 1610,
+  "in_flight_usd": 1379803,
+  "onchain_idle_eth": 0.6398494901769821,
+  "eth_price_usd": 2515.5658,
+  "groups": {
+    "ETH": 59058224,
+    "USD": 35268477,
+    "OTHER": 168
+  },
+  "sleeves": [
+    {
+      "protocol": "ether_fi",
+      "asset_group": "ETH",
+      "usd": 20666841,
+      "in_flight_usd": 0,
+      "positions": [
+        "Etherfi Staked on Ethereum"
+      ]
+    },
+    {
+      "protocol": "stader",
+      "asset_group": "ETH",
+      "usd": 17923826,
+      "in_flight_usd": 1379803,
+      "positions": [
+        "Stader Staked on Ethereum"
+      ]
+    },
+    {
+      "protocol": "stakewise_v3",
+      "asset_group": "ETH",
+      "usd": 17886829,
+      "in_flight_usd": 0,
+      "positions": [
+        "Stakewise Lending on Ethereum"
+      ]
+    },
+    {
+      "protocol": "fluid",
+      "asset_group": "USD",
+      "usd": 17585909,
+      "in_flight_usd": 0,
+      "positions": [
+        "Fluid Yield on Ethereum"
+      ]
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset_group": "USD",
+      "usd": 7923392,
+      "in_flight_usd": 0,
+      "positions": [
+        "Morpho v2 Yield on Ethereum"
+      ]
+    },
+    {
+      "protocol": "aave_v3",
+      "asset_group": "USD",
+      "usd": 4991498,
+      "in_flight_usd": 0,
+      "positions": [
+        "Aave v3 Lending on Ethereum"
+      ]
+    },
+    {
+      "protocol": "sky",
+      "asset_group": "USD",
+      "usd": 3260437,
+      "in_flight_usd": 0,
+      "positions": [
+        "Sky Yield on Ethereum"
+      ]
+    },
+    {
+      "protocol": "lido",
+      "asset_group": "ETH",
+      "usd": 2579118,
+      "in_flight_usd": 0,
+      "positions": [
+        "Lido Staked on Ethereum"
+      ]
+    },
+    {
+      "protocol": "compound_v3",
+      "asset_group": "USD",
+      "usd": 1506657,
+      "in_flight_usd": 0,
+      "positions": [
+        "Compound v3 Lending on Ethereum"
+      ]
+    },
+    {
+      "protocol": "merkl",
+      "asset_group": "USD",
+      "usd": 584,
+      "in_flight_usd": 0,
+      "positions": [
+        "Merkl Merkl Reward on Ethereum"
+      ]
+    },
+    {
+      "protocol": "compound_v3",
+      "asset_group": "OTHER",
+      "usd": 168,
+      "in_flight_usd": 0,
+      "positions": [
+        "Compound v3 Lending on Ethereum"
+      ]
+    }
+  ],
+  "idle": [
+    {
+      "symbol": "ETH",
+      "balance": 0.6398494901769821,
+      "usd": 1610,
+      "asset_group": "ETH"
+    }
+  ],
+  "in_flight_items": [
+    {
+      "protocol": "stader",
+      "asset": "ETHx",
+      "balance": 500.0,
+      "usd": 1379803,
+      "asset_id": "ethereum-stader-withdraw_process-ETHx-0xa35b1b31ce002fbf2058d22f30f95d405200a15b-0xcf5ea1b38380f6af39068375516daf40ed70d299-0x4f2083f5fbede34c2714affb3105539775f7fe64"
+    }
+  ],
+  "token_check": {
+    "checked": 8,
+    "disagree": 0,
+    "etherscan_source": "etherscan"
+  },
+  "other_wallets": {},
+  "flags": [
+    "NOTE: $1,379,803 is in-flight (withdrawal queues) per Syncrone and invisible to Safe/Etherscan/Strategy API: 500.00 ETHx in stader."
+  ]
 }
