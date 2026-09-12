@@ -196,6 +196,11 @@ class ExplorerClient:
             raise
         if str(d.get("status")) != "1":
             msg = f"{d.get('message')} {d.get('result')}"
+            if "rate limit" in msg.lower():
+                self._rl = getattr(self, "_rl", 0) + 1
+                if self._rl <= 6:
+                    time.sleep(1.2 * self._rl)
+                    return self.call(params)
             if self.name == "etherscan" and "not supported for this chain" in msg and self.chain_id in BLOCKSCOUT:
                 self.base, self.name = BLOCKSCOUT[self.chain_id] + "?", "blockscout"
                 print(f"  etherscan free tier does not cover chain {self.chain_id}; using Blockscout")
@@ -454,19 +459,10 @@ def main():
         try:
             strat = fetch_strategy_current(c, reg, chain_id, a.period)
         except Exception as e:
-            strat_note = f"Strategy API unreachable ({str(e)[:80]}); positions come from Syncrone only, APY from fallback sources"
+            # Off the office network: the book is Syncrone's live positions (so NAV ties by construction);
+            # APYs are matched from the last snapshot's permitted venues in assess.py and marked stale.
+            strat_note = f"Strategy API unreachable ({str(e)[:80]}); positions from Syncrone, APYs from the last snapshot's permitted venues (stale) and fallback sources"
             print("  strategy api:", strat_note)
-            # reuse the last published snapshot's Strategy positions if it exists (keeps APY coverage; marked stale)
-            prev = Path(__file__).resolve().parent.parent / "data" / f"{a.client}.json"
-            if prev.exists():
-                try:
-                    pj = json.loads(prev.read_text(encoding="utf-8"))
-                    strat = pj.get("_raw_strategy_current") or None
-                    if strat:
-                        strat_note += f"; using Strategy API positions cached {pj.get('vault_data_fetched_at')}"
-                        print("  strategy api: cached positions from last published snapshot")
-                except Exception:
-                    pass
     strat_rows = strategy_rows(strat, chain_id) if strat else []
     if strat:
         write_json(out / "raw_strategy_current.json", strat)

@@ -299,6 +299,23 @@ def main():
     h = load(out, "holdings.json")
     y = load(out, "yields.json")
     book = build_book(h, reg)
+    # Off-network: Syncrone rows are the whole book; match APY from the permitted venues (vaults.fyi via
+    # the last snapshot) by protocol + asset group + token, before the DeFiLlama fallback.
+    if y.get("stale_note"):
+        perm = [p for p in y.get("permitted", []) if p.get("priced")]
+        for b in book:
+            if b["kind"] != "position" or b["apy"] is not None:
+                continue
+            sym = (b.get("symbol") or "").upper()
+            cands = [p for p in perm if p["protocol"] == b["protocol"] and p["asset_group"] == b["asset_group"]]
+            hit = next((p for p in cands if (p.get("asset") or "").upper() and (p["asset"].upper() in sym or sym in p["asset"].upper()
+                                                                               or (b["venue"] or "").lower().find((p["asset"] or "").lower()) >= 0)), None)
+            if hit is None and len({p.get("asset") for p in cands}) == 1:
+                hit = cands[0]
+            if hit:
+                b["apy"], b["apy_source"], b["venue_tvl_usd"] = hit.get("apy_total"), f"vaults.fyi (stale, {y.get('vault_data_fetched_at')})", hit.get("tvl_usd")
+                b["untracked"] = False
+                b["vault"] = hit.get("vault")
     # fallback APY (DeFiLlama) for untracked sleeves: most specific key wins
     fb = y.get("fallback_apy") or {}
     for b in book:
