@@ -1,0 +1,3162 @@
+{
+  "client": "ens",
+  "cached_at": "2026-09-12T08:47:18+00:00",
+  "vault_data_fetched_at": "2026-09-12T01:52:08.610Z",
+  "period": "7day",
+  "chain_id": 1,
+  "raw_permissions": {
+    "success": true,
+    "client": {
+      "name": "ens-dao",
+      "description": "ENS DAO",
+      "iconURL": "https://s2.coinmarketcap.com/static/img/coins/128x128/13855.png",
+      "chain": "mainnet",
+      "defaultChain": "mainnet",
+      "chains": [
+        {
+          "id": "mainnet",
+          "label": "Ethereum"
+        }
+      ]
+    },
+    "permissions": {
+      "aave_v3": [
+        {
+          "asset": "DAI",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x018008bfb33d285247A21d44E50697654f754e63"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.031,
+              "reward": 0,
+              "total": 0.031
+            },
+            "1day": {
+              "base": 0.0307,
+              "reward": 0,
+              "total": 0.0307
+            },
+            "7day": {
+              "base": 0.0309,
+              "reward": 0,
+              "total": 0.0309
+            },
+            "30day": {
+              "base": 0.028,
+              "reward": 0,
+              "total": 0.028
+            }
+          },
+          "tvl": {
+            "usd": "132462100",
+            "native": "132478036772366057607143859"
+          }
+        },
+        {
+          "asset": "ETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "ETHx",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x1c0E06a0b1A4c160c17545FF2A951bfcA57C0002"
+          },
+          "apy": {
+            "1h": {
+              "base": 0,
+              "reward": 0,
+              "total": 0
+            },
+            "1day": {
+              "base": 0.023400000000000087,
+              "reward": 0,
+              "total": 0.023400000000000087
+            },
+            "7day": {
+              "base": 0.022499999999999964,
+              "reward": 0,
+              "total": 0.022499999999999964
+            },
+            "30day": {
+              "base": 0.02299999999999991,
+              "reward": 0,
+              "total": 0.02299999999999991
+            }
+          },
+          "tvl": {
+            "usd": "200402",
+            "native": "72790521195229899046"
+          }
+        },
+        {
+          "asset": "osETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x927709711794F3De5DdBF1D176bEE2D55Ba13c21"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.020100000000000007,
+              "reward": 0,
+              "total": 0.020100000000000007
+            },
+            "1day": {
+              "base": 0.02079999999999993,
+              "reward": 0,
+              "total": 0.02079999999999993
+            },
+            "7day": {
+              "base": 0.021400000000000086,
+              "reward": 0,
+              "total": 0.021400000000000086
+            },
+            "30day": {
+              "base": 0.02190000000000003,
+              "reward": 0,
+              "total": 0.02190000000000003
+            }
+          },
+          "tvl": {
+            "usd": "320210852",
+            "native": "119061001387484319266097"
+          }
+        },
+        {
+          "asset": "USDC",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x98C23E9d8f34FEFb1B7BD6a91B7FF122F4e16F5c"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0519,
+              "reward": 0,
+              "total": 0.0519
+            },
+            "1day": {
+              "base": 0.0384,
+              "reward": 0,
+              "total": 0.0384
+            },
+            "7day": {
+              "base": 0.0389,
+              "reward": 0,
+              "total": 0.0389
+            },
+            "30day": {
+              "base": 0.0369,
+              "reward": 0,
+              "total": 0.0369
+            }
+          },
+          "tvl": {
+            "usd": "2363043241",
+            "native": "2363433751338045"
+          }
+        },
+        {
+          "asset": "USDS",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x32a6268f9Ba3642Dda7892aDd74f1D34469A4259"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0015,
+              "reward": 0,
+              "total": 0.0015
+            },
+            "1day": {
+              "base": 0.0015,
+              "reward": 0,
+              "total": 0.0015
+            },
+            "7day": {
+              "base": 0.0015,
+              "reward": 0,
+              "total": 0.0015
+            },
+            "30day": {
+              "base": 0.0013,
+              "reward": 0,
+              "total": 0.0013
+            }
+          },
+          "tvl": {
+            "usd": "9369858",
+            "native": "9370851969867332775620134"
+          }
+        },
+        {
+          "asset": "USDT",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x23878914EFE38d27C4D67Ab83ed1b93A74D4086a"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0323,
+              "reward": 0,
+              "total": 0.0323
+            },
+            "1day": {
+              "base": 0.034,
+              "reward": 0,
+              "total": 0.034
+            },
+            "7day": {
+              "base": 0.0369,
+              "reward": 0,
+              "total": 0.0369
+            },
+            "30day": {
+              "base": 0.0338,
+              "reward": 0,
+              "total": 0.0338
+            }
+          },
+          "tvl": {
+            "usd": "3174349049",
+            "native": "3175384542367155"
+          }
+        },
+        {
+          "asset": "WETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x4d5F47FA6A74757f35C14fD3a6Ef8E3C9BC514E8"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0146,
+              "reward": 0,
+              "total": 0.0146
+            },
+            "1day": {
+              "base": 0.0146,
+              "reward": 0,
+              "total": 0.0146
+            },
+            "7day": {
+              "base": 0.0144,
+              "reward": 0,
+              "total": 0.0144
+            },
+            "30day": {
+              "base": 0.0147,
+              "reward": 0,
+              "total": 0.0147
+            }
+          },
+          "tvl": {
+            "usd": "5318902597",
+            "native": "2117103480917835133601014"
+          }
+        }
+      ],
+      "compound_v3": [
+        {
+          "asset": "cUSDCv3",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xc3d688B66703497DAA19211EEdff47f25384cdc3"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0328,
+              "reward": 0,
+              "total": 0.0328
+            },
+            "1day": {
+              "base": 0.0422,
+              "reward": 0,
+              "total": 0.0422
+            },
+            "7day": {
+              "base": 0.0491,
+              "reward": 0,
+              "total": 0.0491
+            },
+            "30day": {
+              "base": 0.0472,
+              "reward": 0.0005,
+              "total": 0.0477
+            }
+          },
+          "tvl": {
+            "usd": "378518009",
+            "native": "378580562799364"
+          }
+        },
+        {
+          "asset": "cUSDSv3",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x5D409e56D886231aDAf00c8775665AD0f9897b56"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.032,
+              "reward": 0,
+              "total": 0.032
+            },
+            "1day": {
+              "base": 0.0316,
+              "reward": 0,
+              "total": 0.0316
+            },
+            "7day": {
+              "base": 0.0311,
+              "reward": 0,
+              "total": 0.0311
+            },
+            "30day": {
+              "base": 0.0373,
+              "reward": 0,
+              "total": 0.0373
+            }
+          },
+          "tvl": {
+            "usd": "1835161",
+            "native": "1835355926674094302822269"
+          }
+        },
+        {
+          "asset": "cUSDTv3",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x3Afdc9BCA9213A35503b077a6072F3D0d5AB0840"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0318,
+              "reward": 0,
+              "total": 0.0318
+            },
+            "1day": {
+              "base": 0.0318,
+              "reward": 0,
+              "total": 0.0318
+            },
+            "7day": {
+              "base": 0.0309,
+              "reward": 0,
+              "total": 0.0309
+            },
+            "30day": {
+              "base": 0.0305,
+              "reward": 0.0006,
+              "total": 0.0311
+            }
+          },
+          "tvl": {
+            "usd": "179021005",
+            "native": "179079403564862"
+          }
+        }
+      ],
+      "ether_fi": [
+        {
+          "asset": "eETH",
+          "chain": "mainnet",
+          "action": "swap",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x35fA164735182de50811E8e2E824cFb9B6118ac2"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.1038,
+              "reward": 0,
+              "total": 0.1038
+            },
+            "1day": {
+              "base": 0.0252,
+              "reward": 0,
+              "total": 0.0252
+            },
+            "7day": {
+              "base": 0.0241,
+              "reward": 0,
+              "total": 0.0241
+            },
+            "30day": {
+              "base": 0.0238,
+              "reward": 0,
+              "total": 0.0238
+            }
+          },
+          "tvl": {
+            "usd": "5575562544",
+            "native": "2219262837407079329432207"
+          }
+        }
+      ],
+      "stakewise_v3": [
+        {
+          "asset": "osETH",
+          "chain": "mainnet",
+          "action": "swap",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xac0f906e433d58fa868f936e8a43230473652885"
+          },
+          "apy": {
+            "1h": {
+              "base": 0,
+              "reward": 0,
+              "total": 0
+            },
+            "1day": {
+              "base": 0.0237,
+              "reward": 0,
+              "total": 0.0237
+            },
+            "7day": {
+              "base": 0.0246,
+              "reward": 0,
+              "total": 0.0246
+            },
+            "30day": {
+              "base": 0.0235,
+              "reward": 0,
+              "total": 0.0235
+            }
+          },
+          "tvl": {
+            "usd": "394424897",
+            "native": "156994475516132135629954"
+          }
+        }
+      ],
+      "spark": [
+        {
+          "asset": "sUSDS",
+          "chain": "mainnet",
+          "action": "swap",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "ETH",
+          "chain": "mainnet",
+          "action": "stake",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "ETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "USDC",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xBc65ad17c5C0a2A4D159fa5a503f4992c7B545FE"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.036,
+              "reward": 0,
+              "total": 0.036
+            },
+            "1day": {
+              "base": 0.036,
+              "reward": 0,
+              "total": 0.036
+            },
+            "7day": {
+              "base": 0.036,
+              "reward": 0,
+              "total": 0.036
+            },
+            "30day": {
+              "base": 0.0354,
+              "reward": 0,
+              "total": 0.0354
+            }
+          },
+          "tvl": {
+            "usd": "205835022",
+            "native": "205869038342848"
+          }
+        },
+        {
+          "asset": "USDS",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "USDT",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xe7dF13b8e3d6740fe17CBE928C7334243d86c92f"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0345,
+              "reward": 0,
+              "total": 0.0345
+            },
+            "1day": {
+              "base": 0.0345,
+              "reward": 0,
+              "total": 0.0345
+            },
+            "7day": {
+              "base": 0.0347,
+              "reward": 0,
+              "total": 0.0347
+            },
+            "30day": {
+              "base": 0.0334,
+              "reward": 0,
+              "total": 0.0334
+            }
+          },
+          "tvl": {
+            "usd": "328727306",
+            "native": "328834539343555"
+          }
+        },
+        {
+          "asset": "WETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x59cD1C87501baa753d0B5B5Ab5D8416A45cD71DB"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0145,
+              "reward": 0,
+              "total": 0.0145
+            },
+            "1day": {
+              "base": 0.0148,
+              "reward": 0,
+              "total": 0.0148
+            },
+            "7day": {
+              "base": 0.0153,
+              "reward": 0,
+              "total": 0.0153
+            },
+            "30day": {
+              "base": 0.0166,
+              "reward": 0,
+              "total": 0.0166
+            }
+          },
+          "tvl": {
+            "usd": "1373676158",
+            "native": "546769662296465305296656"
+          }
+        },
+        {
+          "asset": "wstETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        }
+      ],
+      "fluid": [
+        {
+          "asset": "GHO",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x6A29A46E21C730DcA1d8b23d637c101cec605C5B"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0439,
+              "reward": 0,
+              "total": 0.0439
+            },
+            "1day": {
+              "base": 0.0438,
+              "reward": 0.0196,
+              "total": 0.0634
+            },
+            "7day": {
+              "base": 0.0378,
+              "reward": 0.0159,
+              "total": 0.0537
+            },
+            "30day": {
+              "base": 0.0409,
+              "reward": 0.017,
+              "total": 0.0579
+            }
+          },
+          "tvl": {
+            "usd": "20027653",
+            "native": "20050573981480297906883784"
+          }
+        },
+        {
+          "asset": "USDC",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x9Fb7b4477576Fe5B32be4C1843aFB1e55F251B33"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0449,
+              "reward": 0,
+              "total": 0.0449
+            },
+            "1day": {
+              "base": 0.0449,
+              "reward": 0,
+              "total": 0.0449
+            },
+            "7day": {
+              "base": 0.0481,
+              "reward": 0,
+              "total": 0.0481
+            },
+            "30day": {
+              "base": 0.0505,
+              "reward": 0,
+              "total": 0.0505
+            }
+          },
+          "tvl": {
+            "usd": "153843406",
+            "native": "153868829806762"
+          }
+        },
+        {
+          "asset": "USDT",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x5C20B550819128074FD538Edf79791733ccEdd18"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0441,
+              "reward": 0,
+              "total": 0.0441
+            },
+            "1day": {
+              "base": 0.0449,
+              "reward": 0,
+              "total": 0.0449
+            },
+            "7day": {
+              "base": 0.0476,
+              "reward": 0,
+              "total": 0.0476
+            },
+            "30day": {
+              "base": 0.0492,
+              "reward": 0,
+              "total": 0.0492
+            }
+          },
+          "tvl": {
+            "usd": "134718088",
+            "native": "134762034892474"
+          }
+        }
+      ],
+      "lido": [
+        {
+          "asset": "stETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+          },
+          "apy": {
+            "1h": {
+              "base": 0,
+              "reward": 0,
+              "total": 0
+            },
+            "1day": {
+              "base": 0.0226,
+              "reward": 0,
+              "total": 0.0226
+            },
+            "7day": {
+              "base": 0.0227,
+              "reward": 0,
+              "total": 0.0227
+            },
+            "30day": {
+              "base": 0.0225,
+              "reward": 0,
+              "total": 0.0225
+            }
+          },
+          "tvl": {
+            "usd": "24278508386",
+            "native": "9663669088500794114031395"
+          }
+        }
+      ],
+      "morphoVaults": [
+        {
+          "asset": "kpk ETH Prime v1",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "kpk ETH Prime v2",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xBb50A5341368751024ddf33385BA8cf61fE65FF9"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0178,
+              "reward": 0,
+              "total": 0.0178
+            },
+            "1day": {
+              "base": 0.0178,
+              "reward": 0,
+              "total": 0.0178
+            },
+            "7day": {
+              "base": 0.0183,
+              "reward": 0,
+              "total": 0.0183
+            },
+            "30day": {
+              "base": 0.019,
+              "reward": 0,
+              "total": 0.019
+            }
+          },
+          "tvl": {
+            "usd": "2678641",
+            "native": "1066190009756418108550"
+          }
+        },
+        {
+          "asset": "kpk USDC Prime v1",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "kpk USDC Prime v2",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x4Ef53d2cAa51C447fdFEEedee8F07FD1962C9ee6"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0447,
+              "reward": 0,
+              "total": 0.0447
+            },
+            "1day": {
+              "base": 0.0447,
+              "reward": 0,
+              "total": 0.0447
+            },
+            "7day": {
+              "base": 0.0454,
+              "reward": 0,
+              "total": 0.0454
+            },
+            "30day": {
+              "base": 0.0445,
+              "reward": 0,
+              "total": 0.0445
+            }
+          },
+          "tvl": {
+            "usd": "20566088",
+            "native": "20569486708577"
+          }
+        },
+        {
+          "asset": "kpk USDT Prime v1",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "kpk USDT Prime v2",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x870F0BF29A25A40E7CC087cD5C53e70C11F2C8A8"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0283,
+              "reward": 0,
+              "total": 0.0283
+            },
+            "1day": {
+              "base": 0.028,
+              "reward": 0,
+              "total": 0.028
+            },
+            "7day": {
+              "base": 0.0326,
+              "reward": 0,
+              "total": 0.0326
+            },
+            "30day": {
+              "base": 0.0324,
+              "reward": 0,
+              "total": 0.0324
+            }
+          },
+          "tvl": {
+            "usd": "1127491",
+            "native": "1127859663558"
+          }
+        },
+        {
+          "asset": "kpk ETH Yield v2",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x5dbf760b4fd0cDdDe0366b33aEb338b2A6d77725"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0286,
+              "reward": 0,
+              "total": 0.0286
+            },
+            "1day": {
+              "base": 0.0289,
+              "reward": 0,
+              "total": 0.0289
+            },
+            "7day": {
+              "base": 0.0308,
+              "reward": 0,
+              "total": 0.0308
+            },
+            "30day": {
+              "base": 0.0299,
+              "reward": 0,
+              "total": 0.0299
+            }
+          },
+          "tvl": {
+            "usd": "2417183",
+            "native": "962121048783303993060"
+          }
+        },
+        {
+          "asset": "kpk USDC Yield v2",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xD5cCe260E7a755DDf0Fb9cdF06443d593AaeaA13"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0775,
+              "reward": 0,
+              "total": 0.0775
+            },
+            "1day": {
+              "base": 0.0867,
+              "reward": 0,
+              "total": 0.0867
+            },
+            "7day": {
+              "base": 0.0718,
+              "reward": 0,
+              "total": 0.0718
+            },
+            "30day": {
+              "base": 0.0699,
+              "reward": 0,
+              "total": 0.0699
+            }
+          },
+          "tvl": {
+            "usd": "8781920",
+            "native": "8783371626141"
+          }
+        },
+        {
+          "asset": "morpho.sentoraPyusdMain",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "morpho.sentoraRlusdMain",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "morpho.bbqUsdc",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "morpho.steakhouseHighYieldUsdc",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        }
+      ],
+      "rocket_pool": [
+        {
+          "asset": "rETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xae78736cd615f374d3085123a210448e74fc6393"
+          },
+          "apy": {
+            "1h": {
+              "base": 0,
+              "reward": 0,
+              "total": 0
+            },
+            "1day": {
+              "base": 0.0215,
+              "reward": 0,
+              "total": 0.0215
+            },
+            "7day": {
+              "base": 0.022,
+              "reward": 0,
+              "total": 0.022
+            },
+            "30day": {
+              "base": 0.0219,
+              "reward": 0,
+              "total": 0.0219
+            }
+          },
+          "tvl": {
+            "usd": "932912847",
+            "native": "371330927851497860080927"
+          }
+        }
+      ],
+      "sky": [
+        {
+          "asset": "USDS",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.036,
+              "reward": 0,
+              "total": 0.036
+            },
+            "1day": {
+              "base": 0.036,
+              "reward": 0,
+              "total": 0.036
+            },
+            "7day": {
+              "base": 0.036,
+              "reward": 0,
+              "total": 0.036
+            },
+            "30day": {
+              "base": 0.0354,
+              "reward": 0,
+              "total": 0.0354
+            }
+          },
+          "tvl": {
+            "usd": "4604534401",
+            "native": "4605022580229041446906416428"
+          }
+        }
+      ],
+      "stader": [
+        {
+          "asset": "ETHx",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xA35b1B31Ce002FBF2058D22F30f95D405200A15b"
+          },
+          "apy": {
+            "1h": {
+              "base": 0,
+              "reward": 0,
+              "total": 0
+            },
+            "1day": {
+              "base": 0.0234,
+              "reward": 0,
+              "total": 0.0234
+            },
+            "7day": {
+              "base": 0.0225,
+              "reward": 0,
+              "total": 0.0225
+            },
+            "30day": {
+              "base": 0.023,
+              "reward": 0,
+              "total": 0.023
+            }
+          },
+          "tvl": {
+            "usd": "214880767",
+            "native": "85529827257750950197366"
+          }
+        }
+      ]
+    },
+    "allPermissions": {
+      "ankr": [
+        {
+          "asset": "ETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        }
+      ],
+      "aura": [
+        {
+          "asset": "153",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "109",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "179",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        }
+      ],
+      "aave_v3": [
+        {
+          "asset": "DAI",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x018008bfb33d285247A21d44E50697654f754e63"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.031,
+              "reward": 0,
+              "total": 0.031
+            },
+            "1day": {
+              "base": 0.0307,
+              "reward": 0,
+              "total": 0.0307
+            },
+            "7day": {
+              "base": 0.0309,
+              "reward": 0,
+              "total": 0.0309
+            },
+            "30day": {
+              "base": 0.028,
+              "reward": 0,
+              "total": 0.028
+            }
+          },
+          "tvl": {
+            "usd": "132462100",
+            "native": "132478036772366057607143859"
+          }
+        },
+        {
+          "asset": "ETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "ETHx",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x1c0E06a0b1A4c160c17545FF2A951bfcA57C0002"
+          },
+          "apy": {
+            "1h": {
+              "base": 0,
+              "reward": 0,
+              "total": 0
+            },
+            "1day": {
+              "base": 0.023400000000000087,
+              "reward": 0,
+              "total": 0.023400000000000087
+            },
+            "7day": {
+              "base": 0.022499999999999964,
+              "reward": 0,
+              "total": 0.022499999999999964
+            },
+            "30day": {
+              "base": 0.02299999999999991,
+              "reward": 0,
+              "total": 0.02299999999999991
+            }
+          },
+          "tvl": {
+            "usd": "200402",
+            "native": "72790521195229899046"
+          }
+        },
+        {
+          "asset": "osETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x927709711794F3De5DdBF1D176bEE2D55Ba13c21"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.020100000000000007,
+              "reward": 0,
+              "total": 0.020100000000000007
+            },
+            "1day": {
+              "base": 0.02079999999999993,
+              "reward": 0,
+              "total": 0.02079999999999993
+            },
+            "7day": {
+              "base": 0.021400000000000086,
+              "reward": 0,
+              "total": 0.021400000000000086
+            },
+            "30day": {
+              "base": 0.02190000000000003,
+              "reward": 0,
+              "total": 0.02190000000000003
+            }
+          },
+          "tvl": {
+            "usd": "320210852",
+            "native": "119061001387484319266097"
+          }
+        },
+        {
+          "asset": "USDC",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x98C23E9d8f34FEFb1B7BD6a91B7FF122F4e16F5c"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0519,
+              "reward": 0,
+              "total": 0.0519
+            },
+            "1day": {
+              "base": 0.0384,
+              "reward": 0,
+              "total": 0.0384
+            },
+            "7day": {
+              "base": 0.0389,
+              "reward": 0,
+              "total": 0.0389
+            },
+            "30day": {
+              "base": 0.0369,
+              "reward": 0,
+              "total": 0.0369
+            }
+          },
+          "tvl": {
+            "usd": "2363043241",
+            "native": "2363433751338045"
+          }
+        },
+        {
+          "asset": "USDS",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x32a6268f9Ba3642Dda7892aDd74f1D34469A4259"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0015,
+              "reward": 0,
+              "total": 0.0015
+            },
+            "1day": {
+              "base": 0.0015,
+              "reward": 0,
+              "total": 0.0015
+            },
+            "7day": {
+              "base": 0.0015,
+              "reward": 0,
+              "total": 0.0015
+            },
+            "30day": {
+              "base": 0.0013,
+              "reward": 0,
+              "total": 0.0013
+            }
+          },
+          "tvl": {
+            "usd": "9369858",
+            "native": "9370851969867332775620134"
+          }
+        },
+        {
+          "asset": "USDT",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x23878914EFE38d27C4D67Ab83ed1b93A74D4086a"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0323,
+              "reward": 0,
+              "total": 0.0323
+            },
+            "1day": {
+              "base": 0.034,
+              "reward": 0,
+              "total": 0.034
+            },
+            "7day": {
+              "base": 0.0369,
+              "reward": 0,
+              "total": 0.0369
+            },
+            "30day": {
+              "base": 0.0338,
+              "reward": 0,
+              "total": 0.0338
+            }
+          },
+          "tvl": {
+            "usd": "3174349049",
+            "native": "3175384542367155"
+          }
+        },
+        {
+          "asset": "WETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x4d5F47FA6A74757f35C14fD3a6Ef8E3C9BC514E8"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0146,
+              "reward": 0,
+              "total": 0.0146
+            },
+            "1day": {
+              "base": 0.0146,
+              "reward": 0,
+              "total": 0.0146
+            },
+            "7day": {
+              "base": 0.0144,
+              "reward": 0,
+              "total": 0.0144
+            },
+            "30day": {
+              "base": 0.0147,
+              "reward": 0,
+              "total": 0.0147
+            }
+          },
+          "tvl": {
+            "usd": "5318902597",
+            "native": "2117103480917835133601014"
+          }
+        }
+      ],
+      "balancer_v2": [
+        {
+          "asset": "wstETH-WETH-BPT",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "wstETH-WETH-BPT",
+          "chain": "mainnet",
+          "action": "stake",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "B-rETH-STABLE",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "B-rETH-STABLE",
+          "chain": "mainnet",
+          "action": "stake",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "osETH/wETH-BPT",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "osETH/wETH-BPT",
+          "chain": "mainnet",
+          "action": "stake",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        }
+      ],
+      "compound_v3": [
+        {
+          "asset": "cUSDCv3",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xc3d688B66703497DAA19211EEdff47f25384cdc3"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0328,
+              "reward": 0,
+              "total": 0.0328
+            },
+            "1day": {
+              "base": 0.0422,
+              "reward": 0,
+              "total": 0.0422
+            },
+            "7day": {
+              "base": 0.0491,
+              "reward": 0,
+              "total": 0.0491
+            },
+            "30day": {
+              "base": 0.0472,
+              "reward": 0.0005,
+              "total": 0.0477
+            }
+          },
+          "tvl": {
+            "usd": "378518009",
+            "native": "378580562799364"
+          }
+        },
+        {
+          "asset": "cUSDSv3",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x5D409e56D886231aDAf00c8775665AD0f9897b56"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.032,
+              "reward": 0,
+              "total": 0.032
+            },
+            "1day": {
+              "base": 0.0316,
+              "reward": 0,
+              "total": 0.0316
+            },
+            "7day": {
+              "base": 0.0311,
+              "reward": 0,
+              "total": 0.0311
+            },
+            "30day": {
+              "base": 0.0373,
+              "reward": 0,
+              "total": 0.0373
+            }
+          },
+          "tvl": {
+            "usd": "1835161",
+            "native": "1835355926674094302822269"
+          }
+        },
+        {
+          "asset": "cUSDTv3",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x3Afdc9BCA9213A35503b077a6072F3D0d5AB0840"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0318,
+              "reward": 0,
+              "total": 0.0318
+            },
+            "1day": {
+              "base": 0.0318,
+              "reward": 0,
+              "total": 0.0318
+            },
+            "7day": {
+              "base": 0.0309,
+              "reward": 0,
+              "total": 0.0309
+            },
+            "30day": {
+              "base": 0.0305,
+              "reward": 0.0006,
+              "total": 0.0311
+            }
+          },
+          "tvl": {
+            "usd": "179021005",
+            "native": "179079403564862"
+          }
+        }
+      ],
+      "convex": [
+        {
+          "asset": "25",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "174",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "177",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "232",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "268",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        }
+      ],
+      "cowswap": [
+        {
+          "asset": null,
+          "chain": "mainnet",
+          "action": "swap",
+          "sellAssets": [
+            "AURA",
+            "BAL",
+            "COMP",
+            "CRV",
+            "CVX",
+            "DAI",
+            "ETH",
+            "ETHx",
+            "FLUID",
+            "GHO",
+            "LDO",
+            "MORPHO",
+            "OETH",
+            "RPL",
+            "SPK",
+            "SWISE",
+            "USDC",
+            "USDS",
+            "USDT",
+            "WETH",
+            "ankrETH",
+            "eETH",
+            "osETH",
+            "rETH",
+            "sUSDS",
+            "stETH",
+            "weETH",
+            "wstETH"
+          ],
+          "buyAssets": [
+            "DAI",
+            "ETH",
+            "ETHx",
+            "GHO",
+            "OETH",
+            "USDC",
+            "USDS",
+            "USDT",
+            "WETH",
+            "ankrETH",
+            "eETH",
+            "osETH",
+            "rETH",
+            "sUSDS",
+            "stETH",
+            "weETH",
+            "wstETH"
+          ],
+          "isTWAP": false,
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": null,
+          "chain": "mainnet",
+          "action": "swap",
+          "sellAssets": [
+            "ETH",
+            "USDC",
+            "USDS",
+            "USDT"
+          ],
+          "buyAssets": [
+            "ETH",
+            "USDC",
+            "USDS",
+            "USDT"
+          ],
+          "isTWAP": true,
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": null,
+          "chain": "mainnet",
+          "action": "swap",
+          "sellAssets": [
+            "USDC",
+            "syrupUSDC"
+          ],
+          "buyAssets": [
+            "USDC",
+            "syrupUSDC"
+          ],
+          "isTWAP": false,
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": null,
+          "chain": "mainnet",
+          "action": "swap",
+          "sellAssets": [
+            "USDT",
+            "syrupUSDT"
+          ],
+          "buyAssets": [
+            "USDT",
+            "syrupUSDT"
+          ],
+          "isTWAP": false,
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        }
+      ],
+      "fluid": [
+        {
+          "asset": "GHO",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x6A29A46E21C730DcA1d8b23d637c101cec605C5B"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0439,
+              "reward": 0,
+              "total": 0.0439
+            },
+            "1day": {
+              "base": 0.0438,
+              "reward": 0.0196,
+              "total": 0.0634
+            },
+            "7day": {
+              "base": 0.0378,
+              "reward": 0.0159,
+              "total": 0.0537
+            },
+            "30day": {
+              "base": 0.0409,
+              "reward": 0.017,
+              "total": 0.0579
+            }
+          },
+          "tvl": {
+            "usd": "20027653",
+            "native": "20050573981480297906883784"
+          }
+        },
+        {
+          "asset": "USDC",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x9Fb7b4477576Fe5B32be4C1843aFB1e55F251B33"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0449,
+              "reward": 0,
+              "total": 0.0449
+            },
+            "1day": {
+              "base": 0.0449,
+              "reward": 0,
+              "total": 0.0449
+            },
+            "7day": {
+              "base": 0.0481,
+              "reward": 0,
+              "total": 0.0481
+            },
+            "30day": {
+              "base": 0.0505,
+              "reward": 0,
+              "total": 0.0505
+            }
+          },
+          "tvl": {
+            "usd": "153843406",
+            "native": "153868829806762"
+          }
+        },
+        {
+          "asset": "USDT",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x5C20B550819128074FD538Edf79791733ccEdd18"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0441,
+              "reward": 0,
+              "total": 0.0441
+            },
+            "1day": {
+              "base": 0.0449,
+              "reward": 0,
+              "total": 0.0449
+            },
+            "7day": {
+              "base": 0.0476,
+              "reward": 0,
+              "total": 0.0476
+            },
+            "30day": {
+              "base": 0.0492,
+              "reward": 0,
+              "total": 0.0492
+            }
+          },
+          "tvl": {
+            "usd": "134718088",
+            "native": "134762034892474"
+          }
+        }
+      ],
+      "lido": [
+        {
+          "asset": "stETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+          },
+          "apy": {
+            "1h": {
+              "base": 0,
+              "reward": 0,
+              "total": 0
+            },
+            "1day": {
+              "base": 0.0226,
+              "reward": 0,
+              "total": 0.0226
+            },
+            "7day": {
+              "base": 0.0227,
+              "reward": 0,
+              "total": 0.0227
+            },
+            "30day": {
+              "base": 0.0225,
+              "reward": 0,
+              "total": 0.0225
+            }
+          },
+          "tvl": {
+            "usd": "24278508386",
+            "native": "9663669088500794114031395"
+          }
+        }
+      ],
+      "morphoMarkets": [
+        {
+          "asset": "0x64d65c9a2d91c36d56fbc42d69e979335320169b3df63bf92789e2c8883fcc64",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "0xb8fc70e82bc5bb53e773626fcc6a23f7eefa036918d7ef216ecfb1950a94a85e",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "0xd0e50cdac92fe2172043f5e0c36532c6369d24947e40968f34a5e8819ca9ec5d",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "0x3a85e619751152991742810df6ec69ce473daef99e28a64ab2340d7b7ccfee49",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "0xb323495f7e4148be5643a4ea4a8221eef163e4bccfdedc2a6f4696baacbc86cc",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        }
+      ],
+      "morphoVaults": [
+        {
+          "asset": "kpk ETH Prime v1",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "kpk ETH Prime v2",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xBb50A5341368751024ddf33385BA8cf61fE65FF9"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0178,
+              "reward": 0,
+              "total": 0.0178
+            },
+            "1day": {
+              "base": 0.0178,
+              "reward": 0,
+              "total": 0.0178
+            },
+            "7day": {
+              "base": 0.0183,
+              "reward": 0,
+              "total": 0.0183
+            },
+            "30day": {
+              "base": 0.019,
+              "reward": 0,
+              "total": 0.019
+            }
+          },
+          "tvl": {
+            "usd": "2678641",
+            "native": "1066190009756418108550"
+          }
+        },
+        {
+          "asset": "kpk USDC Prime v1",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "kpk USDC Prime v2",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x4Ef53d2cAa51C447fdFEEedee8F07FD1962C9ee6"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0447,
+              "reward": 0,
+              "total": 0.0447
+            },
+            "1day": {
+              "base": 0.0447,
+              "reward": 0,
+              "total": 0.0447
+            },
+            "7day": {
+              "base": 0.0454,
+              "reward": 0,
+              "total": 0.0454
+            },
+            "30day": {
+              "base": 0.0445,
+              "reward": 0,
+              "total": 0.0445
+            }
+          },
+          "tvl": {
+            "usd": "20566088",
+            "native": "20569486708577"
+          }
+        },
+        {
+          "asset": "kpk USDT Prime v1",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "kpk USDT Prime v2",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x870F0BF29A25A40E7CC087cD5C53e70C11F2C8A8"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0283,
+              "reward": 0,
+              "total": 0.0283
+            },
+            "1day": {
+              "base": 0.028,
+              "reward": 0,
+              "total": 0.028
+            },
+            "7day": {
+              "base": 0.0326,
+              "reward": 0,
+              "total": 0.0326
+            },
+            "30day": {
+              "base": 0.0324,
+              "reward": 0,
+              "total": 0.0324
+            }
+          },
+          "tvl": {
+            "usd": "1127491",
+            "native": "1127859663558"
+          }
+        },
+        {
+          "asset": "kpk ETH Yield v2",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x5dbf760b4fd0cDdDe0366b33aEb338b2A6d77725"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0286,
+              "reward": 0,
+              "total": 0.0286
+            },
+            "1day": {
+              "base": 0.0289,
+              "reward": 0,
+              "total": 0.0289
+            },
+            "7day": {
+              "base": 0.0308,
+              "reward": 0,
+              "total": 0.0308
+            },
+            "30day": {
+              "base": 0.0299,
+              "reward": 0,
+              "total": 0.0299
+            }
+          },
+          "tvl": {
+            "usd": "2417183",
+            "native": "962121048783303993060"
+          }
+        },
+        {
+          "asset": "kpk USDC Yield v2",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xD5cCe260E7a755DDf0Fb9cdF06443d593AaeaA13"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0775,
+              "reward": 0,
+              "total": 0.0775
+            },
+            "1day": {
+              "base": 0.0867,
+              "reward": 0,
+              "total": 0.0867
+            },
+            "7day": {
+              "base": 0.0718,
+              "reward": 0,
+              "total": 0.0718
+            },
+            "30day": {
+              "base": 0.0699,
+              "reward": 0,
+              "total": 0.0699
+            }
+          },
+          "tvl": {
+            "usd": "8781920",
+            "native": "8783371626141"
+          }
+        },
+        {
+          "asset": "morpho.sentoraPyusdMain",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "morpho.sentoraRlusdMain",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "morpho.bbqUsdc",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "morpho.steakhouseHighYieldUsdc",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        }
+      ],
+      "rocket_pool": [
+        {
+          "asset": "rETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xae78736cd615f374d3085123a210448e74fc6393"
+          },
+          "apy": {
+            "1h": {
+              "base": 0,
+              "reward": 0,
+              "total": 0
+            },
+            "1day": {
+              "base": 0.0215,
+              "reward": 0,
+              "total": 0.0215
+            },
+            "7day": {
+              "base": 0.022,
+              "reward": 0,
+              "total": 0.022
+            },
+            "30day": {
+              "base": 0.0219,
+              "reward": 0,
+              "total": 0.0219
+            }
+          },
+          "tvl": {
+            "usd": "932912847",
+            "native": "371330927851497860080927"
+          }
+        }
+      ],
+      "sky": [
+        {
+          "asset": "USDS",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.036,
+              "reward": 0,
+              "total": 0.036
+            },
+            "1day": {
+              "base": 0.036,
+              "reward": 0,
+              "total": 0.036
+            },
+            "7day": {
+              "base": 0.036,
+              "reward": 0,
+              "total": 0.036
+            },
+            "30day": {
+              "base": 0.0354,
+              "reward": 0,
+              "total": 0.0354
+            }
+          },
+          "tvl": {
+            "usd": "4604534401",
+            "native": "4605022580229041446906416428"
+          }
+        }
+      ],
+      "spark": [
+        {
+          "asset": "ETH",
+          "chain": "mainnet",
+          "action": "stake",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "ETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "USDC",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xBc65ad17c5C0a2A4D159fa5a503f4992c7B545FE"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.036,
+              "reward": 0,
+              "total": 0.036
+            },
+            "1day": {
+              "base": 0.036,
+              "reward": 0,
+              "total": 0.036
+            },
+            "7day": {
+              "base": 0.036,
+              "reward": 0,
+              "total": 0.036
+            },
+            "30day": {
+              "base": 0.0354,
+              "reward": 0,
+              "total": 0.0354
+            }
+          },
+          "tvl": {
+            "usd": "205835022",
+            "native": "205869038342848"
+          }
+        },
+        {
+          "asset": "USDS",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        },
+        {
+          "asset": "USDT",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xe7dF13b8e3d6740fe17CBE928C7334243d86c92f"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0345,
+              "reward": 0,
+              "total": 0.0345
+            },
+            "1day": {
+              "base": 0.0345,
+              "reward": 0,
+              "total": 0.0345
+            },
+            "7day": {
+              "base": 0.0347,
+              "reward": 0,
+              "total": 0.0347
+            },
+            "30day": {
+              "base": 0.0334,
+              "reward": 0,
+              "total": 0.0334
+            }
+          },
+          "tvl": {
+            "usd": "328727306",
+            "native": "328834539343555"
+          }
+        },
+        {
+          "asset": "WETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0x59cD1C87501baa753d0B5B5Ab5D8416A45cD71DB"
+          },
+          "apy": {
+            "1h": {
+              "base": 0.0145,
+              "reward": 0,
+              "total": 0.0145
+            },
+            "1day": {
+              "base": 0.0148,
+              "reward": 0,
+              "total": 0.0148
+            },
+            "7day": {
+              "base": 0.0153,
+              "reward": 0,
+              "total": 0.0153
+            },
+            "30day": {
+              "base": 0.0166,
+              "reward": 0,
+              "total": 0.0166
+            }
+          },
+          "tvl": {
+            "usd": "1373676158",
+            "native": "546769662296465305296656"
+          }
+        },
+        {
+          "asset": "wstETH",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": null,
+          "apy": null,
+          "tvl": null
+        }
+      ],
+      "stader": [
+        {
+          "asset": "ETHx",
+          "chain": "mainnet",
+          "action": "deposit",
+          "vaultsfyiInfo": {
+            "chain": "mainnet",
+            "vault": "0xA35b1B31Ce002FBF2058D22F30f95D405200A15b"
+          },
+          "apy": {
+            "1h": {
+              "base": 0,
+              "reward": 0,
+              "total": 0
+            },
+            "1day": {
+              "base": 0.0234,
+              "reward": 0,
+              "total": 0.0234
+            },
+            "7day": {
+              "base": 0.0225,
+              "reward": 0,
+              "total": 0.0225
+            },
+            "30day": {
+              "base": 0.023,
+              "reward": 0,
+              "total": 0.023
+            }
+          },
+          "tvl": {
+            "usd": "214880767",
+            "native": "85529827257750950197366"
+          }
+        }
+      ]
+    },
+    "vaultDataFetchedAt": "2026-09-12T01:52:08.610Z"
+  },
+  "raw_best_strategy": {
+    "success": true,
+    "client": {
+      "name": "ens-dao",
+      "description": "ENS DAO",
+      "chain": "mainnet"
+    },
+    "period": "7day",
+    "constraints": {
+      "assetGroup": {}
+    },
+    "currentStrategy": {
+      "totalValueUsd": "72229445.59438865",
+      "assetGroups": [
+        {
+          "assetGroup": "USD",
+          "totalValue": "35262437.51132435",
+          "positionCount": 7
+        },
+        {
+          "assetGroup": "ETH",
+          "totalValue": "36967008.083064295",
+          "positionCount": 5
+        }
+      ]
+    },
+    "recommendations": [
+      {
+        "assetGroup": "USD",
+        "currentValue": "35262437.51132435",
+        "recommendedValue": "35262437.511324346",
+        "currentWeightedAPY": 0.04550267013450585,
+        "recommendedWeightedAPY": 0.04999482799964444,
+        "apyImprovement": 0.004492157865138589,
+        "apyImprovementPercent": "9.87",
+        "apyImprovementPercentagePoints": "0.45",
+        "changedValue": "31230177.932833854",
+        "changedValueUsd": "31230177.932833854",
+        "allocations": [
+          {
+            "asset": "kpk USDC Yield v2",
+            "protocol": "morphoVaults",
+            "vault": "0xd5cce260e7a755ddf0fb9cdf06443d593aaeaa13",
+            "vaultName": "kpk USDC Yield V2",
+            "apy": {
+              "base": 0.0718,
+              "reward": 0,
+              "total": 0.0718
+            },
+            "currentValue": 0,
+            "recommendedValue": 878192,
+            "tvl": {
+              "usd": "8781920",
+              "native": "8783371626141"
+            },
+            "recommendedValueUsd": "878192",
+            "change": 878192,
+            "changeUsd": "878192",
+            "changePercent": "100.00"
+          },
+          {
+            "asset": "GHO",
+            "protocol": "fluid",
+            "vault": "0x6a29a46e21c730dca1d8b23d637c101cec605c5b",
+            "vaultName": "Fluid GHO",
+            "apy": {
+              "base": 0.0378,
+              "reward": 0.0159,
+              "total": 0.0537
+            },
+            "currentValue": 2525838.7001837436,
+            "recommendedValue": 2525838.7001837436,
+            "tvl": {
+              "usd": "20027653",
+              "native": "20050573981480297906883784"
+            },
+            "recommendedValueUsd": "2525838.7001837436",
+            "change": 0,
+            "changeUsd": "0",
+            "changePercent": "0.00"
+          },
+          {
+            "asset": "cUSDCv3",
+            "protocol": "compound_v3",
+            "vault": "0xc3d688b66703497daa19211eedff47f25384cdc3",
+            "vaultName": "Compound v3 USDC",
+            "apy": {
+              "base": 0.0491,
+              "reward": 0,
+              "total": 0.0491
+            },
+            "currentValue": 1506420.8783067553,
+            "recommendedValue": 31858406.811140604,
+            "tvl": {
+              "usd": "378518009",
+              "native": "378580562799364"
+            },
+            "recommendedValueUsd": "31858406.811140604",
+            "change": 30351985.93283385,
+            "changeUsd": "30351985.93283385",
+            "changePercent": "2014.84"
+          },
+          {
+            "asset": "USDC",
+            "protocol": "fluid",
+            "vault": "0x9fb7b4477576fe5b32be4c1843afb1e55f251b33",
+            "vaultName": "Fluid USDC",
+            "apy": {
+              "base": 0.0481,
+              "reward": 0,
+              "total": 0.0481
+            },
+            "currentValue": 14039725.808019506,
+            "recommendedValue": 0,
+            "tvl": {
+              "usd": "153843406",
+              "native": "153868829806762"
+            },
+            "recommendedValueUsd": "0",
+            "change": -14039725.808019506,
+            "changeUsd": "-14039725.808019506",
+            "changePercent": "-100.00"
+          },
+          {
+            "asset": "USDT",
+            "protocol": "fluid",
+            "vault": "0x5c20b550819128074fd538edf79791733ccedd18",
+            "vaultName": "Fluid USDT",
+            "apy": {
+              "base": 0.0476,
+              "reward": 0,
+              "total": 0.0476
+            },
+            "currentValue": 1019309.0094581033,
+            "recommendedValue": 0,
+            "tvl": {
+              "usd": "134718088",
+              "native": "134762034892474"
+            },
+            "recommendedValueUsd": "0",
+            "change": -1019309.0094581033,
+            "changeUsd": "-1019309.0094581033",
+            "changePercent": "-100.00"
+          },
+          {
+            "asset": "kpk USDC Prime v2",
+            "protocol": "morphoVaults",
+            "vault": "0x4ef53d2caa51c447fdfeeedee8f07fd1962c9ee6",
+            "vaultName": "kpk USDC",
+            "apy": {
+              "base": 0.0454,
+              "reward": 0,
+              "total": 0.0454
+            },
+            "currentValue": 7922136.457419524,
+            "recommendedValue": 0,
+            "tvl": {
+              "usd": "20566088",
+              "native": "20569486708577"
+            },
+            "recommendedValueUsd": "0",
+            "change": -7922136.457419524,
+            "changeUsd": "-7922136.457419524",
+            "changePercent": "-100.00"
+          },
+          {
+            "asset": "USDC",
+            "protocol": "aave_v3",
+            "vault": "0x98c23e9d8f34fefb1b7bd6a91b7ff122f4e16f5c",
+            "vaultName": "Aave v3 USDC",
+            "apy": {
+              "base": 0.0389,
+              "reward": 0,
+              "total": 0.0389
+            },
+            "currentValue": 4990725.456267783,
+            "recommendedValue": 0,
+            "tvl": {
+              "usd": "2363043241",
+              "native": "2363433751338045"
+            },
+            "recommendedValueUsd": "0",
+            "change": -4990725.456267783,
+            "changeUsd": "-4990725.456267783",
+            "changePercent": "-100.00"
+          },
+          {
+            "asset": "USDS",
+            "protocol": "sky",
+            "vault": "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd",
+            "vaultName": "Savings USDS",
+            "apy": {
+              "base": 0.036,
+              "reward": 0,
+              "total": 0.036
+            },
+            "currentValue": 3258281.2016689377,
+            "recommendedValue": 0,
+            "tvl": {
+              "usd": "4604534401",
+              "native": "4605022580229041446906416428"
+            },
+            "recommendedValueUsd": "0",
+            "change": -3258281.2016689377,
+            "changeUsd": "-3258281.2016689377",
+            "changePercent": "-100.00"
+          }
+        ],
+        "finalAllocation": [
+          {
+            "protocol": "morphoVaults",
+            "totalValue": "878192",
+            "totalValueUsd": "878192",
+            "positionCount": 1,
+            "positions": [
+              {
+                "asset": "kpk USDC Yield v2",
+                "vault": "0xd5cce260e7a755ddf0fb9cdf06443d593aaeaa13",
+                "vaultName": "kpk USDC Yield V2",
+                "value": "878192",
+                "valueUsd": "878192",
+                "apy": {
+                  "base": 0.0718,
+                  "reward": 0,
+                  "total": 0.0718
+                },
+                "tvl": {
+                  "usd": "8781920",
+                  "native": "8783371626141"
+                }
+              }
+            ]
+          },
+          {
+            "protocol": "fluid",
+            "totalValue": "2525838.7001837436",
+            "totalValueUsd": "2525838.7001837436",
+            "positionCount": 1,
+            "positions": [
+              {
+                "asset": "GHO",
+                "vault": "0x6a29a46e21c730dca1d8b23d637c101cec605c5b",
+                "vaultName": "Fluid GHO",
+                "value": "2525838.7001837436",
+                "valueUsd": "2525838.7001837436",
+                "apy": {
+                  "base": 0.0378,
+                  "reward": 0.0159,
+                  "total": 0.0537
+                },
+                "tvl": {
+                  "usd": "20027653",
+                  "native": "20050573981480297906883784"
+                }
+              }
+            ]
+          },
+          {
+            "protocol": "compound_v3",
+            "totalValue": "31858406.811140604",
+            "totalValueUsd": "31858406.811140604",
+            "positionCount": 1,
+            "positions": [
+              {
+                "asset": "cUSDCv3",
+                "vault": "0xc3d688b66703497daa19211eedff47f25384cdc3",
+                "vaultName": "Compound v3 USDC",
+                "value": "31858406.811140604",
+                "valueUsd": "31858406.811140604",
+                "apy": {
+                  "base": 0.0491,
+                  "reward": 0,
+                  "total": 0.0491
+                },
+                "tvl": {
+                  "usd": "378518009",
+                  "native": "378580562799364"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "assetGroup": "ETH",
+        "currentValue": "36967008.083064295",
+        "recommendedValue": "36967008.08306429",
+        "currentWeightedAPY": 0.023528763149657166,
+        "recommendedWeightedAPY": 0.02464054029627263,
+        "apyImprovement": 0.0011117771466154641,
+        "apyImprovementPercent": "4.73",
+        "apyImprovementPercentagePoints": "0.11",
+        "changedValue": "19103052.55619412",
+        "changedValueUsd": "19103052.55619412",
+        "allocations": [
+          {
+            "asset": "kpk ETH Yield v2",
+            "protocol": "morphoVaults",
+            "vault": "0x5dbf760b4fd0cddde0366b33aeb338b2a6d77725",
+            "vaultName": "kpk ETH Yield V2",
+            "apy": {
+              "base": 0.0308,
+              "reward": 0,
+              "total": 0.0308
+            },
+            "currentValue": 0,
+            "recommendedValue": 241718.30000000002,
+            "tvl": {
+              "usd": "2417183",
+              "native": "962121048783303993060"
+            },
+            "recommendedValueUsd": "241718.30000000002",
+            "change": 241718.30000000002,
+            "changeUsd": "241718.30000000002",
+            "changePercent": "100.00"
+          },
+          {
+            "asset": "osETH",
+            "protocol": "stakewise_v3",
+            "vault": "0xac0f906e433d58fa868f936e8a43230473652885",
+            "vaultName": "StakeWise V3 Genesis",
+            "apy": {
+              "base": 0.0246,
+              "reward": 0,
+              "total": 0.0246
+            },
+            "currentValue": 17863955.526870176,
+            "recommendedValue": 36725289.78306429,
+            "tvl": {
+              "usd": "394424897",
+              "native": "156994475516132135629954"
+            },
+            "recommendedValueUsd": "36725289.78306429",
+            "change": 18861334.256194115,
+            "changeUsd": "18861334.256194115",
+            "changePercent": "105.58"
+          },
+          {
+            "asset": "eETH",
+            "protocol": "ether_fi",
+            "vault": "0x35fa164735182de50811e8e2e824cfb9b6118ac2",
+            "vaultName": "ether.fi eETH",
+            "apy": {
+              "base": 0.0241,
+              "reward": 0,
+              "total": 0.0241
+            },
+            "currentValue": 2.5123488981e-15,
+            "recommendedValue": 2.5123488981e-15,
+            "tvl": {
+              "usd": "5575562544",
+              "native": "2219262837407079329432207"
+            },
+            "recommendedValueUsd": "2.5123488981e-15",
+            "change": 0,
+            "changeUsd": "0",
+            "changePercent": "0.00"
+          },
+          {
+            "asset": "stETH",
+            "protocol": "lido",
+            "vault": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84",
+            "vaultName": "Lido stETH",
+            "apy": {
+              "base": 0.0227,
+              "reward": 0,
+              "total": 0.0227
+            },
+            "currentValue": 2579951.2067531357,
+            "recommendedValue": 0,
+            "tvl": {
+              "usd": "24278508386",
+              "native": "9663669088500794114031395"
+            },
+            "recommendedValueUsd": "0",
+            "change": -2579951.2067531357,
+            "changeUsd": "-2579951.2067531357",
+            "changePercent": "-100.00"
+          },
+          {
+            "asset": "ETHx",
+            "protocol": "stader",
+            "vault": "0xa35b1b31ce002fbf2058d22f30f95d405200a15b",
+            "vaultName": "Stader ETHx",
+            "apy": {
+              "base": 0.0225,
+              "reward": 0,
+              "total": 0.0225
+            },
+            "currentValue": 16523101.068764126,
+            "recommendedValue": 0,
+            "tvl": {
+              "usd": "214880767",
+              "native": "85529827257750950197366"
+            },
+            "recommendedValueUsd": "0",
+            "change": -16523101.068764126,
+            "changeUsd": "-16523101.068764126",
+            "changePercent": "-100.00"
+          },
+          {
+            "asset": "kpk ETH Prime v2",
+            "protocol": "morphoVaults",
+            "vault": "0xbb50a5341368751024ddf33385ba8cf61fe65ff9",
+            "vaultName": "kpk ETH",
+            "apy": {
+              "base": 0.0183,
+              "reward": 0,
+              "total": 0.0183
+            },
+            "currentValue": 0.2806768577830176,
+            "recommendedValue": 0,
+            "tvl": {
+              "usd": "2678641",
+              "native": "1066190009756418108550"
+            },
+            "recommendedValueUsd": "0",
+            "change": -0.2806768577830176,
+            "changeUsd": "-0.2806768577830176",
+            "changePercent": "-100.00"
+          }
+        ],
+        "finalAllocation": [
+          {
+            "protocol": "morphoVaults",
+            "totalValue": "241718.30000000002",
+            "totalValueUsd": "241718.30000000002",
+            "positionCount": 1,
+            "positions": [
+              {
+                "asset": "kpk ETH Yield v2",
+                "vault": "0x5dbf760b4fd0cddde0366b33aeb338b2a6d77725",
+                "vaultName": "kpk ETH Yield V2",
+                "value": "241718.30000000002",
+                "valueUsd": "241718.30000000002",
+                "apy": {
+                  "base": 0.0308,
+                  "reward": 0,
+                  "total": 0.0308
+                },
+                "tvl": {
+                  "usd": "2417183",
+                  "native": "962121048783303993060"
+                }
+              }
+            ]
+          },
+          {
+            "protocol": "stakewise_v3",
+            "totalValue": "36725289.78306429",
+            "totalValueUsd": "36725289.78306429",
+            "positionCount": 1,
+            "positions": [
+              {
+                "asset": "osETH",
+                "vault": "0xac0f906e433d58fa868f936e8a43230473652885",
+                "vaultName": "StakeWise V3 Genesis",
+                "value": "36725289.78306429",
+                "valueUsd": "36725289.78306429",
+                "apy": {
+                  "base": 0.0246,
+                  "reward": 0,
+                  "total": 0.0246
+                },
+                "tvl": {
+                  "usd": "394424897",
+                  "native": "156994475516132135629954"
+                }
+              }
+            ]
+          },
+          {
+            "protocol": "ether_fi",
+            "totalValue": "2.5123488981e-15",
+            "totalValueUsd": "2.5123488981e-15",
+            "positionCount": 1,
+            "positions": [
+              {
+                "asset": "eETH",
+                "vault": "0x35fa164735182de50811e8e2e824cfb9b6118ac2",
+                "vaultName": "ether.fi eETH",
+                "value": "2.5123488981e-15",
+                "valueUsd": "2.5123488981e-15",
+                "apy": {
+                  "base": 0.0241,
+                  "reward": 0,
+                  "total": 0.0241
+                },
+                "tvl": {
+                  "usd": "5575562544",
+                  "native": "2219262837407079329432207"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "summary": {
+      "totalRecommendations": 2,
+      "totalRecommendedValue": "72229445.59438863",
+      "averageRecommendedAPY": 0.03731768414795854,
+      "averageCurrentAPY": 0.03451571664208151,
+      "totalAPYImprovement": 0.56
+    },
+    "vaultDataFetchedAt": "2026-09-12T01:52:08.610Z"
+  },
+  "raw_strategy_current": {
+    "success": true,
+    "client": {
+      "name": "ens-dao",
+      "description": "ENS DAO",
+      "iconURL": "https://s2.coinmarketcap.com/static/img/coins/128x128/13855.png",
+      "chain": "mainnet",
+      "defaultChain": "mainnet",
+      "chains": [
+        {
+          "id": "mainnet",
+          "label": "Ethereum"
+        }
+      ]
+    },
+    "period": "7day",
+    "strategy": [
+      {
+        "assetGroup": "USD",
+        "assets": [
+          "USDC",
+          "cUSDCv3",
+          "GHO",
+          "USDT",
+          "kpk USDC Prime v2",
+          "USDS"
+        ],
+        "apy": {
+          "base": 0.04436375750771923,
+          "reward": 0.0011389126267866217,
+          "total": 0.04550267013450586
+        },
+        "totalValueUsd": "35262437.51132435",
+        "positionCount": 7,
+        "positions": [
+          {
+            "asset": "USDC",
+            "protocol": "aave_v3",
+            "vault": "0x98c23e9d8f34fefb1b7bd6a91b7ff122f4e16f5c",
+            "vaultName": "Aave v3 USDC",
+            "apy": {
+              "base": 0.0389,
+              "reward": 0,
+              "total": 0.0389
+            },
+            "positionValue": "4990725.45626778368993",
+            "positionValueUsd": "4990725.456267783",
+            "lpTokenBalance": "4991550210109",
+            "tvl": {
+              "usd": "2363043241",
+              "native": "2363433751338045"
+            }
+          },
+          {
+            "asset": "cUSDCv3",
+            "protocol": "compound_v3",
+            "vault": "0xc3d688b66703497daa19211eedff47f25384cdc3",
+            "vaultName": "Compound v3 USDC",
+            "apy": {
+              "base": 0.0491,
+              "reward": 0,
+              "total": 0.0491
+            },
+            "positionValue": "1506420.87830675543674",
+            "positionValueUsd": "1506420.8783067553",
+            "lpTokenBalance": "1506669825362",
+            "tvl": {
+              "usd": "378518009",
+              "native": "378580562799364"
+            }
+          },
+          {
+            "asset": "GHO",
+            "protocol": "fluid",
+            "vault": "0x6a29a46e21c730dca1d8b23d637c101cec605c5b",
+            "vaultName": "Fluid GHO",
+            "apy": {
+              "base": 0.0378,
+              "reward": 0.0159,
+              "total": 0.0537
+            },
+            "positionValue": "2525838.70018374376635891807597864",
+            "positionValueUsd": "2525838.7001837436",
+            "lpTokenBalance": "2249816521640327598363552",
+            "tvl": {
+              "usd": "20027653",
+              "native": "20050573981480297906883784"
+            }
+          },
+          {
+            "asset": "USDC",
+            "protocol": "fluid",
+            "vault": "0x9fb7b4477576fe5b32be4c1843afb1e55f251b33",
+            "vaultName": "Fluid USDC",
+            "apy": {
+              "base": 0.0481,
+              "reward": 0,
+              "total": 0.0481
+            },
+            "positionValue": "14039725.80801950514652",
+            "positionValueUsd": "14039725.808019506",
+            "lpTokenBalance": "11548834126682",
+            "tvl": {
+              "usd": "153843406",
+              "native": "153868829806762"
+            }
+          },
+          {
+            "asset": "USDT",
+            "protocol": "fluid",
+            "vault": "0x5c20b550819128074fd538edf79791733ccedd18",
+            "vaultName": "Fluid USDT",
+            "apy": {
+              "base": 0.0476,
+              "reward": 0,
+              "total": 0.0476
+            },
+            "positionValue": "1019309.0094581032884",
+            "positionValueUsd": "1019309.0094581033",
+            "lpTokenBalance": "845977997791",
+            "tvl": {
+              "usd": "134718088",
+              "native": "134762034892474"
+            }
+          },
+          {
+            "asset": "kpk USDC Prime v2",
+            "protocol": "morphoVaults",
+            "vault": "0x4ef53d2caa51c447fdfeeedee8f07fd1962c9ee6",
+            "vaultName": "kpk USDC",
+            "apy": {
+              "base": 0.0454,
+              "reward": 0,
+              "total": 0.0454
+            },
+            "positionValue": "7922136.45741952412088",
+            "positionValueUsd": "7922136.457419524",
+            "lpTokenBalance": "7670414061352908063513685",
+            "tvl": {
+              "usd": "20566088",
+              "native": "20569486708577"
+            }
+          },
+          {
+            "asset": "USDS",
+            "protocol": "sky",
+            "vault": "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd",
+            "vaultName": "Savings USDS",
+            "apy": {
+              "base": 0.036,
+              "reward": 0,
+              "total": 0.036
+            },
+            "positionValue": "3258281.20166893779398742548523888",
+            "positionValueUsd": "3258281.2016689377",
+            "lpTokenBalance": "2937699088068302360079326",
+            "tvl": {
+              "usd": "4604534401",
+              "native": "4605022580229041446906416428"
+            }
+          }
+        ]
+      },
+      {
+        "assetGroup": "ETH",
+        "assets": [
+          "eETH",
+          "osETH",
+          "stETH",
+          "kpk ETH Prime v2",
+          "ETHx"
+        ],
+        "apy": {
+          "base": 0.02373349641541966,
+          "reward": 0,
+          "total": 0.02373349641541966
+        },
+        "totalValueUsd": "57618673.939192854",
+        "positionCount": 5,
+        "positions": [
+          {
+            "asset": "eETH",
+            "protocol": "ether_fi",
+            "vault": "0x35fa164735182de50811e8e2e824cfb9b6118ac2",
+            "vaultName": "ether.fi eETH",
+            "apy": {
+              "base": 0.0241,
+              "reward": 0,
+              "total": 0.0241
+            },
+            "positionValue": "20651284.946476908103354370769558028",
+            "positionValueUsd": "20651284.946476907",
+            "lpTokenBalance": "7449133773802619493417",
+            "tvl": {
+              "usd": "5575562544",
+              "native": "2219262837407079329432207"
+            }
+          },
+          {
+            "asset": "osETH",
+            "protocol": "stakewise_v3",
+            "vault": "0xac0f906e433d58fa868f936e8a43230473652885",
+            "vaultName": "StakeWise V3 Genesis",
+            "apy": {
+              "base": 0.0246,
+              "reward": 0,
+              "total": 0.0246
+            },
+            "positionValue": "17863955.5268701769443440187717863",
+            "positionValueUsd": "17863955.526870176",
+            "lpTokenBalance": "6552256839197248474589",
+            "tvl": {
+              "usd": "394424897",
+              "native": "156994475516132135629954"
+            }
+          },
+          {
+            "asset": "stETH",
+            "protocol": "lido",
+            "vault": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84",
+            "vaultName": "Lido stETH",
+            "apy": {
+              "base": 0.0227,
+              "reward": 0,
+              "total": 0.0227
+            },
+            "positionValue": "2579951.2067531356407004266770613",
+            "positionValueUsd": "2580332.1164047844",
+            "lpTokenBalance": "1026908009753048575073",
+            "tvl": {
+              "usd": "24278508386",
+              "native": "9663669088500794114031395"
+            }
+          },
+          {
+            "asset": "kpk ETH Prime v2",
+            "protocol": "morphoVaults",
+            "vault": "0xbb50a5341368751024ddf33385ba8cf61fe65ff9",
+            "vaultName": "kpk ETH",
+            "apy": {
+              "base": 0.0183,
+              "reward": 0,
+              "total": 0.0183
+            },
+            "positionValue": "0.2806768577830176080531151",
+            "positionValueUsd": "0.2806768577830176",
+            "lpTokenBalance": "109453105315006",
+            "tvl": {
+              "usd": "2678641",
+              "native": "1066190009756418108550"
+            }
+          },
+          {
+            "asset": "ETHx",
+            "protocol": "stader",
+            "vault": "0xa35b1b31ce002fbf2058d22f30f95d405200a15b",
+            "vaultName": "Stader ETHx",
+            "apy": {
+              "base": 0.0225,
+              "reward": 0,
+              "total": 0.0225
+            },
+            "positionValue": "16523101.0687641263676741658174965",
+            "positionValueUsd": "16523101.068764126",
+            "lpTokenBalance": "5995065507483995959061",
+            "tvl": {
+              "usd": "214880767",
+              "native": "85529827257750950197366"
+            }
+          }
+        ]
+      }
+    ],
+    "summary": {
+      "totalAssetGroups": 2,
+      "totalAssets": 11,
+      "totalPositions": 12,
+      "totalValueUsd": "92881111.4505172",
+      "weightedAverageAPY": 0.031998192174916486
+    },
+    "vaultDataFetchedAt": "2026-09-12T01:52:08.610Z"
+  }
+}

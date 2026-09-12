@@ -165,10 +165,11 @@ def refresh_client(slug: str) -> dict:
         pushed = None
         if (ROOT / ".git").exists():
             g = lambda *a: subprocess.run(["git", *a], cwd=str(ROOT), capture_output=True, text=True)
-            g("add", "data")
+            # the box owns data/<client>.json, .live.json and index.json; the office run owns *.strategy.json
+            g("add", "data/index.json", f"data/{slug}.json", f"data/{slug}.live.json")
             if g("diff", "--staged", "--quiet").returncode != 0:
                 g("-c", "user.name=kpk-rebalancer", "-c", "user.email=noreply@kpk.io", "commit", "-q", "-m", f"data: {slug} refresh from {socket.gethostname()}")
-                g("pull", "--rebase", "-q", "-X", "theirs", "origin", "main")
+                g("pull", "--rebase", "-q", "origin", "main")
                 pr = g("push", "-q", "origin", "main")
                 pushed = pr.returncode == 0 or (pr.stderr or "")[-300:]
         snap = json.loads((ROOT / "data" / f"{slug}.json").read_text(encoding="utf-8"))
@@ -290,8 +291,9 @@ def main():
                     subprocess.run([sys.executable, str(HERE / "refresh_holdings.py")], cwd=str(ROOT), timeout=900)
                     if (ROOT / ".git").exists():
                         g = lambda *x: subprocess.run(["git", *x], cwd=str(ROOT), capture_output=True, text=True)
-                        g("add", "data"); g("-c", "user.name=kpk-rebalancer", "-c", "user.email=noreply@kpk.io", "commit", "-q", "-m", "data: hourly live holdings")
-                        g("pull", "--rebase", "-q", "-X", "theirs", "origin", "main"); g("push", "-q", "origin", "main")
+                        g("add", *[str(p.relative_to(ROOT)) for p in (ROOT / "data").glob("*.live.json")])
+                        g("-c", "user.name=kpk-rebalancer", "-c", "user.email=noreply@kpk.io", "commit", "-q", "-m", "data: hourly live holdings")
+                        g("pull", "--rebase", "-q", "origin", "main"); g("push", "-q", "origin", "main")
                 except Exception as e:
                     sys.stderr.write(f"hourly live refresh failed: {e}\n")
         threading.Thread(target=loop, daemon=True).start()

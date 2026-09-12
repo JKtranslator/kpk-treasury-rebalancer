@@ -66,11 +66,20 @@ def snapshot(slug: str, run: Path) -> dict:
                         venue_tvl_cap_pct=a["thresholds"]["venue_tvl_cap_pct"], exclude=a["thresholds"]["exclude"]),
         book=book, permitted=permitted, ops_tools=ops, fallback_apy=y.get("fallback_apy") or {},
         safes=c["safes"].get(str(h["chain_id"]), {}), stale_note=y.get("stale_note"),
-        # raw Strategy API payloads travel with the snapshot so an off-network refresh (OCI) can reuse them
-        _raw_permissions=y.get("raw_permissions"), _raw_best_strategy=y.get("raw_best_strategy"),
-        _raw_strategy_current=(json.loads((run / "raw_strategy_current.json").read_text(encoding="utf-8"))
-                               if (run / "raw_strategy_current.json").exists() else None),
         ops_tools_caveat=y.get("ops_tools_caveat"))
+
+
+def strategy_cache(slug: str, run: Path) -> dict | None:
+    """Office-network artefact: the raw Strategy API payloads (permissions, positions, optimizer) the
+    off-network executor reuses. Written only by a local `run`; the box never writes this file."""
+    y = json.loads((run / "yields.json").read_text(encoding="utf-8"))
+    if y.get("stale_note") or not y.get("raw_permissions"):
+        return None
+    cur = run / "raw_strategy_current.json"
+    return dict(client=slug, cached_at=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+                vault_data_fetched_at=y.get("vault_data_fetched_at"), period=y.get("period"), chain_id=y.get("chain_id"),
+                raw_permissions=y["raw_permissions"], raw_best_strategy=y.get("raw_best_strategy"),
+                raw_strategy_current=json.loads(cur.read_text(encoding="utf-8")) if cur.exists() else None)
 
 
 def main():
@@ -78,10 +87,22 @@ def main():
     ap.add_argument("--runs", default=str(ROOT / "runs"))
     ap.add_argument("--site", default=str(ROOT))
     ap.add_argument("--clients", nargs="*", default=None)
+    ap.add_argument("--strategy-only", action="store_true",
+                    help="write only data/<client>.strategy.json (office network); the box writes the snapshots")
     a = ap.parse_args()
     reg = registry()
     slugs = a.clients or list(reg["clients"])
     runs, site = Path(a.runs), Path(a.site)
+    if a.strategy_only:
+        for slug in slugs:
+            run = latest_run(runs, slug)
+            sc = strategy_cache(slug, run) if run else None
+            if not sc:
+                print(f"[{slug}] no fresh Strategy API payload in {run}; skipped")
+                continue
+            write_json(site / "data" / f"{slug}.strategy.json", sc)
+            print(f"[{slug}] strategy cache {sc['vault_data_fetched_at']} -> data/{slug}.strategy.json")
+        return
     index = dict(generated=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), clients=[])
     for slug in slugs:
         run = latest_run(runs, slug)

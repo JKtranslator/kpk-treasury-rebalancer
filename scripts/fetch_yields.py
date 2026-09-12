@@ -121,12 +121,12 @@ def main():
     except Exception as e:
         # Strategy API is office-network only. Off-network (OCI), reuse the permissions from the
         # last published snapshot; APYs there are as old as vault_data_fetched_at and are marked stale.
-        prev = Path(__file__).resolve().parent.parent / "data" / f"{a.client}.json"
+        prev = Path(__file__).resolve().parent.parent / "data" / f"{a.client}.strategy.json"
         if not prev.exists():
-            sys.exit(f"ERROR: Strategy API unreachable ({str(e)[:100]}) and no cached snapshot at {prev}")
+            sys.exit(f"ERROR: Strategy API unreachable ({str(e)[:100]}) and no cache at {prev}; run `run` on the office network first")
         pj = json.loads(prev.read_text(encoding="utf-8"))
-        perms, best = pj.get("_raw_permissions") or {"permissions": {}, "vaultDataFetchedAt": pj.get("vault_data_fetched_at")}, pj.get("_raw_best_strategy")
-        stale_note = f"Strategy API unreachable; permissions and vaults.fyi APYs reused from the snapshot of {perms.get('vaultDataFetchedAt')}"
+        perms, best = pj["raw_permissions"], pj.get("raw_best_strategy")
+        stale_note = f"Strategy API unreachable; permissions and vaults.fyi APYs reused from the office cache of {pj.get('vault_data_fetched_at')}"
         print("  " + stale_note)
     write_json(out / "raw_permissions.json", perms)
     if best:
