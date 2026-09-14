@@ -59,11 +59,12 @@ def underlying(symbol: str | None, asset_group: str) -> str:
 
 
 def fmt_amount(usd: float, token: str, eth_price: float) -> str:
+    import math
     if token in STABLES:
-        return f"{usd:.2f}"
+        return f"{math.floor(usd * 100) / 100:.2f}"        # never round up past the balance
     if not eth_price:
         raise ValueError("no ETH price in snapshot; re-run publish")
-    return f"{usd / eth_price:.6f}"
+    return f"{math.floor(usd / eth_price * 1e6) / 1e6:.6f}"
 
 
 def commands_for(move: dict, snap: dict) -> tuple[list[str], list[str]]:
@@ -77,6 +78,11 @@ def commands_for(move: dict, snap: dict) -> tuple[list[str], list[str]]:
         raise ValueError(f"no bot mapping for destination protocol {to['protocol']}")
     to_token = underlying(to.get("asset"), grp)
     amount = fmt_amount(fnum(move["amount_usd"]), to_token if to_token in STABLES else "ETH", eth_price)
+    # deploying (almost) the whole idle balance or the whole position: use the bot's `all`, which
+    # resolves the exact on-chain balance at build time instead of a snapshot figure
+    if fnum(move["amount_usd"]) >= 0.99 * fnum(frm.get("usd")) and frm["kind"] in ("idle", "position"):
+        amount = "all"
+        notes.append("amount set to `all`: the bot resolves the exact balance on-chain when building")
 
     # 1. source leg
     if frm["kind"] == "idle":
