@@ -4,27 +4,27 @@
   "chain_id": 1,
   "avatar_safe": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
   "ok": true,
-  "as_of": "2026-09-12T09:09:32+00:00",
+  "as_of": "2026-09-14T12:13:21+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 7062587,
-  "positions_usd": 6315388,
-  "idle_usd": 747198,
+  "nav_usd": 7049462,
+  "positions_usd": 6289457,
+  "idle_usd": 760005,
   "in_flight_usd": 0,
   "onchain_idle_eth": 0.0,
-  "eth_price_usd": 2515.5658,
+  "eth_price_usd": 2477.8011,
   "groups": {
-    "OTHER": 3044902,
-    "USD": 2641151,
-    "ETH": 1376506
+    "OTHER": 3051190,
+    "USD": 2642084,
+    "ETH": 1356162
   },
   "sleeves": [
     {
       "protocol": "aave_v3",
       "asset_group": "OTHER",
-      "usd": 2447808,
+      "usd": 2440274,
       "in_flight_usd": 0,
       "positions": [
         "Aave v2 Staked on Ethereum"
@@ -33,7 +33,7 @@
     {
       "protocol": "morphoVaults",
       "asset_group": "USD",
-      "usd": 2053621,
+      "usd": 2054355,
       "in_flight_usd": 0,
       "positions": [
         "Morpho v2 Yield on Ethereum"
@@ -42,7 +42,7 @@
     {
       "protocol": "ether_fi",
       "asset_group": "ETH",
-      "usd": 973322,
+      "usd": 958301,
       "in_flight_usd": 0,
       "positions": [
         "Etherfi Staked on Ethereum"
@@ -51,7 +51,7 @@
     {
       "protocol": "compound_v3",
       "asset_group": "USD",
-      "usd": 500087,
+      "usd": 500284,
       "in_flight_usd": 0,
       "positions": [
         "Compound v3 Institutional USDC (ciUSDCv3)"
@@ -60,7 +60,7 @@
     {
       "protocol": "rocket_pool",
       "asset_group": "ETH",
-      "usd": 184758,
+      "usd": 182148,
       "in_flight_usd": 0,
       "positions": [
         "Rocketpool Staked on Ethereum"
@@ -69,7 +69,7 @@
     {
       "protocol": "stakewise_v3",
       "asset_group": "ETH",
-      "usd": 135319,
+      "usd": 133304,
       "in_flight_usd": 0,
       "positions": [
         "Stakewise Lending on Ethereum"
@@ -78,7 +78,7 @@
     {
       "protocol": "balancer_v2",
       "asset_group": "ETH",
-      "usd": 15299,
+      "usd": 15618,
       "in_flight_usd": 0,
       "positions": [
         "Balancer v2 Staked on Ethereum"
@@ -87,7 +87,7 @@
     {
       "protocol": "aave_v3",
       "asset_group": "USD",
-      "usd": 5059,
+      "usd": 5060,
       "in_flight_usd": 0,
       "positions": [
         "Aave v3 Lending on Ethereum",
@@ -97,7 +97,7 @@
     {
       "protocol": "compound_v3",
       "asset_group": "OTHER",
-      "usd": 89,
+      "usd": 86,
       "in_flight_usd": 0,
       "positions": [
         "Compound v3 Lending on Ethereum"
@@ -108,7 +108,7 @@
     {
       "symbol": "HOPR",
       "balance": 617205.1496353952,
-      "usd": 7013,
+      "usd": 7154,
       "asset_group": "OTHER"
     },
     {
@@ -120,37 +120,46 @@
     {
       "symbol": "BAL",
       "balance": 3327556.6717589125,
-      "usd": 359416,
+      "usd": 367860,
       "asset_group": "OTHER"
     },
     {
       "symbol": "WETH",
       "balance": 26.955387389731737,
-      "usd": 67808,
+      "usd": 66790,
       "asset_group": "ETH"
     },
     {
       "symbol": "SAFE",
       "balance": 839265.9869857737,
-      "usd": 81123,
+      "usd": 80653,
       "asset_group": "OTHER"
     },
     {
       "symbol": "COW",
       "balance": 1141738.5472482624,
-      "usd": 149454,
+      "usd": 155162,
       "asset_group": "OTHER"
     }
   ],
   "in_flight_items": [],
   "token_check": {
-    "checked": 16,
+    "checked": 17,
     "disagree": 0,
     "etherscan_source": "etherscan"
   },
   "other_wallets": {
-    "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 42161": 2186,
-    "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 100": 2206629
+    "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 42161": 2188,
+    "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 100": 2207140
   },
-  "flags": []
+  "unbooked": [
+    {
+      "symbol": "cUSDCv3",
+      "balance": 1.589557,
+      "position": "Compound v3 USDC (cUSDCv3) (not yet booked by Syncrone)"
+    }
+  ],
+  "flags": [
+    "NOTE: Safe holds vault shares Syncrone has not booked yet: 1.59 cUSDCv3"
+  ]
 }
