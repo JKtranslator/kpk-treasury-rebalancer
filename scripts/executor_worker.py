@@ -123,6 +123,32 @@ def do_plan(client_dir: Path, payload: dict):
     sim = simulate(manager_tx, all_steps=all_steps, skip_balance_check=skip)
     if chained:
         sim["note"] = "pre-flight balance check skipped for chained legs; Tenderly bundle result is authoritative"
+    # The bot's Telegram flow asks "wrap ETH into WETH? yes" when a WETH deposit exceeds the WETH balance
+    # but the Safe holds ETH. Answer yes the same way the bot does: set wrap_eth on the intent, which makes
+    # build_steps prepend the WETH wrap for the shortfall, then rebuild and re-simulate.
+    nw = sim.get("needs_wrap") if not sim.get("success") else None
+    if nw and isinstance(nw, dict):
+        for it in intents:
+            if str(it.get("token", "")).upper() == "WETH":
+                it["wrap_eth"] = True
+                if nw.get("shortfall_raw"):
+                    it["wrap_shortfall_raw"] = int(nw["shortfall_raw"])
+        all_steps, labels = [], []
+        for it in intents:
+            try:
+                steps, extra = pp.build_steps(it)
+            except Exception as e:
+                fail(f"rebuild with ETH wrap failed: {e}", trace=traceback.format_exc(limit=3))
+            for _s in steps:
+                labels.append(f"{it['protocol']} {it['action']}" + (f" {it.get('amount_human')}" if it.get("amount_human") else ""))
+            all_steps.extend(steps)
+        manager_steps = [_wrap_with_role(s) for s in all_steps]
+        manager_tx = build_multisend(manager_steps)
+        sim = simulate(manager_tx, all_steps=all_steps, skip_balance_check=True)
+        sim["note"] = (f"wrapped {float(nw.get('shortfall', 0)):.6f} ETH into WETH inside the bundle (Safe had {nw.get('weth_have')} WETH, "
+                       f"{nw.get('eth_have')} ETH); pre-flight skipped, Tenderly bundle result is authoritative")
+    if not sim.get("success") and not sim.get("error") and sim.get("needs_wrap"):
+        sim["error"] = f"needs ETH wrap: {sim['needs_wrap']}"
     tl = tenderly_links(sim) if (sim.get("link") or sim.get("links")) else dict(links=[], share_note=None)
 
     plan_id = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:6]
