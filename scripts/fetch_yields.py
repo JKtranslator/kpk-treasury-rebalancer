@@ -56,6 +56,7 @@ def flatten_permissions(perms: dict, period: str, reg: dict) -> list[dict]:
                              chain=e.get("chain"), vault=(vf.get("vault") or "").lower() or None,
                              apy_total=sel.get("total"), apy_base=sel.get("base"), apy_reward=sel.get("reward"),
                              apy_30d=(apy.get("30day") or {}).get("total"),
+                             apy_1d=(apy.get("1day") or {}).get("total"), apy_1h=(apy.get("1h") or {}).get("total"),
                              apy_all=apy or None,
                              tvl_usd=fnum((e.get("tvl") or {}).get("usd")) if e.get("tvl") else None,
                              asset_group=asset_group_of(e.get("asset") or "", reg),
@@ -157,6 +158,7 @@ def live_apy_refresh(rows: list[dict], chain_id: int) -> tuple[int, int]:
         r.update(apy_total=fnum(p.get("apy")) / 100, apy_base=(fnum(p.get("apyBase")) / 100) if p.get("apyBase") is not None else None,
                  apy_reward=(fnum(p.get("apyReward")) / 100) if p.get("apyReward") is not None else None,
                  apy_30d=(fnum(p.get("apyMean30d")) / 100) if p.get("apyMean30d") is not None else r.get("apy_30d"),
+                 apy_1d=fnum(p.get("apy")) / 100,   # DeFiLlama apy is the current (spot) rate
                  tvl_usd=fnum(p.get("tvlUsd")), priced=True, apy_source="defillama live", llama_pool=p["pool"])
         matched += 1
     return matched, unmatched

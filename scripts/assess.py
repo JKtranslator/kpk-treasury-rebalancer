@@ -124,9 +124,13 @@ def performance(book, permitted, nav, pol, args, reg):
             by_proto[b["protocol"]] = by_proto.get(b["protocol"], 0.0) + b["usd"]
     excluded = {e.lower() for e in args.exclude}
     groups = {}
+    STABLE_SYMS = {"USDC", "USDT", "USDS", "DAI", "GHO", "EURC", "PYUSD", "RLUSD"}
+    IDLE_FLOOR_USD = 5_000     # smaller idle balances are noise, not actions
     for grp in sorted({b["asset_group"] for b in book} | {p["asset_group"] for p in permitted}):
+        if grp == "OTHER":
+            continue            # governance / non-yield tokens are never rotated by the simulator
         pos = [b for b in book if b["asset_group"] == grp and b["kind"] == "position" and b["usd"] > 1000]
-        idle = [b for b in book if b["asset_group"] == grp and b["kind"] == "idle" and b["usd"] > 1000]
+        idle = [b for b in book if b["asset_group"] == grp and b["kind"] == "idle" and b["usd"] >= IDLE_FLOOR_USD]
         infl = [b for b in book if b["asset_group"] == grp and b["kind"] == "in_flight"]
         total = sum(b["usd"] for b in pos + idle + infl)
         if total < 1000:
@@ -162,6 +166,12 @@ def performance(book, permitted, nav, pol, args, reg):
                 if remaining < args.min_move_usd and src["kind"] != "idle":
                     break
                 if v["protocol"] == src["protocol"] and v.get("asset") == src.get("symbol"):
+                    continue
+                # token compatibility: same token, or stable-to-stable (swap), or the ETH family
+                st, vt = (src.get("symbol") or "").upper(), (v.get("asset") or "").upper()
+                same = st == vt or any(t in st and t in vt for t in STABLE_SYMS)
+                ok_swap = (any(t in st for t in STABLE_SYMS) and any(t in vt for t in STABLE_SYMS)) or grp == "ETH"
+                if not (same or ok_swap):
                     continue
                 pick = fnum(v["apy_total"]) - fnum(src["apy"])
                 if pick < min_pick and src["kind"] == "position":
