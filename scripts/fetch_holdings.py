@@ -263,6 +263,39 @@ def price_safe_balances(chain_id: int, safe_rows: list[dict], reg: dict) -> list
     return rows
 
 
+def rebase_idle_on_safe(sync_rows: list[dict], safe_rows: list[dict], reg: dict, safe: str, chain_id: int) -> tuple[list[str], list[dict]]:
+    """Wallet balances: the Safe is live, Syncrone books with a delay. Re-base idle rows on the Safe
+    balance at Syncrone's price (a token absent from the Safe is gone), and add receipt tokens the
+    Safe holds that Syncrone has not booked yet. Returns (lag notes, unbooked rows). Used by both the
+    full run and the hourly live refresh."""
+    if not (safe_rows and sync_rows):
+        return [], []
+    by_tok = {r["token"]: r for r in safe_rows}
+    lag = []
+    for r in sync_rows:
+        if r["kind"] != "idle" or not r.get("price"):
+            continue
+        sb = by_tok.get(r["token"])
+        live_bal = sb["balance"] if sb is not None else 0.0
+        if abs(live_bal - r["balance"]) > max(1e-9, 0.005 * max(live_bal, r["balance"])):
+            lag.append(f"{r['symbol']} {r['balance']:,.4f} -> {live_bal:,.4f}")
+            r["balance"], r["usd"] = live_bal, live_bal * r["price"]
+            r["spam"] = r["usd"] < DUST_USD
+            r["rebased_on_safe"] = True
+    known = {r["token"] for r in sync_rows}
+    fresh = []
+    for sb in safe_rows:
+        rc = reg.get("receipt_tokens", {}).get(sb["token"])
+        if rc and sb["token"] not in known and sb["balance"] > 0:
+            row = dict(source="safe", kind="position", wallet=safe.lower(), protocol=rc["protocol"],
+                       position=rc["position"] + " (not yet booked by Syncrone)", position_type="receipt_token",
+                       position_id=f"safe-{sb['token']}", asset_id=None, in_flight=False, chain=chain_id,
+                       token=sb["token"], symbol=sb["symbol"] or rc.get("symbol"), balance=sb["balance"], price=0.0,
+                       usd=0.0, asset_group=rc.get("asset_group", "OTHER"), spam=False, unbooked=True)
+            sync_rows.append(row); fresh.append(row)
+    return lag, fresh
+
+
 # ---------------------------------------------------------------- reconcile
 def pct_diff(a: float, b: float) -> float | None:
     if a is None or b is None:
@@ -476,35 +509,11 @@ def main():
         safe_rows = fetch_safe_balances(reg, chain_id, safe)
         print(f"  safe: {len(safe_rows)} token balances")
 
-    # Wallet balances: the Safe is live, Syncrone books with a delay. Re-base idle rows on the Safe
-    # balance at Syncrone's price so a deposit made minutes ago no longer shows as idle.
-    if safe_rows and sync_rows:
-        by_tok = {r["token"]: r for r in safe_rows}
-        lag = []
-        for r in sync_rows:
-            if r["kind"] != "idle" or not r.get("price"):
-                continue
-            sb = by_tok.get(r["token"])
-            live_bal = sb["balance"] if sb is not None else 0.0     # absent from the Safe = gone
-            if abs(live_bal - r["balance"]) > max(1e-9, 0.005 * max(live_bal, r["balance"])):
-                lag.append(f"{r['symbol']} {r['balance']:,.4f} -> {live_bal:,.4f}")
-                r["balance"], r["usd"] = live_bal, live_bal * r["price"]
-                r["spam"] = r["usd"] < DUST_USD
-                r["rebased_on_safe"] = True
-        if lag:
-            print("  idle re-based on live Safe balances (Syncrone lagging):", "; ".join(lag[:6]))
-        # receipt tokens the Safe holds that Syncrone has not booked yet (a deposit made minutes ago)
-        known = {r["token"] for r in sync_rows}
-        fresh = [(sb, reg["receipt_tokens"][sb["token"]]) for sb in safe_rows
-                 if sb["token"] in reg.get("receipt_tokens", {}) and sb["token"] not in known and sb["balance"] > 0]
-        for sb, rc in fresh:
-            sync_rows.append(dict(source="safe", kind="position", wallet=safe.lower(), protocol=rc["protocol"],
-                                  position=rc["position"] + " (not yet booked by Syncrone)", position_type="receipt_token",
-                                  position_id=f"safe-{sb['token']}", asset_id=None, in_flight=False, chain=chain_id,
-                                  token=sb["token"], symbol=sb["symbol"] or rc.get("symbol"), balance=sb["balance"], price=0.0,
-                                  usd=0.0, asset_group=rc.get("asset_group", "OTHER"), spam=False, unbooked=True))
-        if fresh:
-            print("  Safe holds receipt tokens Syncrone has not booked:", "; ".join(f"{sb['balance']:,.4f} {sb['symbol']}" for sb, _ in fresh))
+    lag, fresh = rebase_idle_on_safe(sync_rows, safe_rows, reg, safe or "", chain_id)
+    if lag:
+        print("  idle re-based on live Safe balances (Syncrone lagging):", "; ".join(lag[:6]))
+    if fresh:
+        print("  Safe holds receipt tokens Syncrone has not booked:", "; ".join(f"{r['balance']:,.4f} {r['symbol']}" for r in fresh))
     eth_rows = []
     if safe and "etherscan" not in a.skip:
         tokens = {r["token"]: r["decimals"] for r in safe_rows}

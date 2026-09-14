@@ -23,7 +23,7 @@ from pathlib import Path
 
 from common import client, fnum, load_env, registry, write_json
 from fetch_holdings import (DUST_USD, ZERO, fetch_etherscan, fetch_safe_balances, fetch_syncrone,
-                            reconcile, scope_syncrone, syncrone_rows)
+                            rebase_idle_on_safe, reconcile, scope_syncrone, syncrone_rows)
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -36,6 +36,7 @@ def live_snapshot(slug: str, reg: dict) -> dict:
     rows_all = syncrone_rows(org, reg) if org else []
     rows, other = scope_syncrone(rows_all, safe, chain_id)
     safe_rows = fetch_safe_balances(reg, chain_id, safe)
+    lag, fresh = rebase_idle_on_safe(rows, safe_rows, reg, safe, chain_id)   # live Safe wins over Syncrone's lag
     tokens = {r["token"]: r["decimals"] for r in safe_rows}
     for r in rows:
         if r["token"] and r["token"] not in tokens and (r["kind"] == "position" or not r["spam"]):
@@ -78,7 +79,10 @@ def live_snapshot(slug: str, reg: dict) -> dict:
         token_check=dict(checked=len(toks), disagree=sum(1 for t in toks if t["safe_vs_etherscan"] is not None and t["safe_vs_etherscan"] > 0.01),
                          etherscan_source=(eth_rows[1].get("explorer") if len(eth_rows) > 1 else "etherscan")),
         other_wallets={k: round(v) for k, v in other_w.items() if v > DUST_USD},
-        flags=[f for f in flags if not f.startswith("NOTE: positions the Strategy API")])
+        unbooked=[dict(symbol=r["symbol"], balance=r["balance"], position=r["position"]) for r in fresh],
+        flags=[f for f in flags if not f.startswith("NOTE: positions the Strategy API")]
+              + ([f"NOTE: idle re-based on the live Safe (Syncrone lagging): {'; '.join(lag[:6])}"] if lag else [])
+              + ([f"NOTE: Safe holds vault shares Syncrone has not booked yet: " + ", ".join(f"{r['balance']:,.2f} {r['symbol']}" for r in fresh)] if fresh else []))
 
 
 def main():
