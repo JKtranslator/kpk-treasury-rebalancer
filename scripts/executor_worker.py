@@ -33,7 +33,10 @@ sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="repla
 def load_runtime(client_dir: Path):
     root = client_dir.parent
     shared_core = root / "shared" / "core"
-    sys.path[:] = [str(client_dir), str(shared_core)] + [p for p in sys.path if "SafeAgentAll" not in p]
+    # prepend the client and shared/core dirs; keep everything else (the venv site-packages may live
+    # under the SafeAgent folder itself, so never filter by folder name)
+    keep = [p for p in sys.path if Path(p or ".").resolve() not in (client_dir, shared_core)]
+    sys.path[:] = [str(client_dir), str(shared_core)] + keep
     os.chdir(client_dir)
     from dotenv import load_dotenv
     load_dotenv(dotenv_path=root / ".env", override=False)
