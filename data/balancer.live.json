@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
   "ok": true,
-  "as_of": "2026-09-14T12:13:21+00:00",
+  "as_of": "2026-09-14T13:16:56+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -155,7 +155,7 @@
   "unbooked": [
     {
       "symbol": "cUSDCv3",
-      "balance": 1.589557,
+      "balance": 1.589564,
       "position": "Compound v3 USDC (cUSDCv3) (not yet booked by Syncrone)"
     }
   ],
