@@ -159,10 +159,14 @@
     const nav = snap.nav_usd; const cap = snap.policy?.protocol_cap_pct_nav;
     const byProto = {}; snap.book.forEach(b => { if (b.kind !== 'idle') byProto[b.protocol] = (byProto[b.protocol] || 0) + b.usd; });
     const minPick = sim.pickupBps / 1e4; moves = []; let before = 0, den = 0, idleDeployed = 0;
-    const apyOf = p => sim.basis === 'apy_30d' && p.apy_30d != null ? p.apy_30d : p.apy;
+    const apyOf = p => (sim.basis === 'apy_30d' && p.apy_30d != null) ? p.apy_30d : (sim.basis === 'apy_1d' && p.apy_1d != null) ? p.apy_1d : p.apy;
+    const STABLE_SYMS = ['USDC', 'USDT', 'USDS', 'DAI', 'GHO', 'EURC', 'PYUSD', 'RLUSD'];
+    const isStable = s => STABLE_SYMS.some(t => (s || '').toUpperCase().includes(t));
+    const IDLE_FLOOR = 5000;
     for (const g of [...new Set(snap.book.map(b => b.asset_group))]) {
+      if (g === 'OTHER') continue;   // governance / non-yield tokens are never rotated
       const pos = snap.book.filter(b => b.asset_group === g && b.kind === 'position' && b.apy != null && !b.untracked);
-      const idle = snap.book.filter(b => b.asset_group === g && b.kind === 'idle' && b.usd > 1000);
+      const idle = snap.book.filter(b => b.asset_group === g && b.kind === 'idle' && b.usd >= IDLE_FLOOR);
       const venues = snap.permitted.filter(p => p.asset_group === g && p.priced && apyOf(p) != null && !sim.exclude.has(p.protocol)).sort((a, b) => apyOf(b) - apyOf(a));
       pos.forEach(b => { before += b.usd * b.apy; den += b.usd; });
       if (!venues.length) continue;
@@ -174,6 +178,9 @@
         for (const v of venues) {
           if (rem < sim.moveUsd && src.kind !== 'idle') break;
           if (v.protocol === src.protocol && v.asset === src.symbol) continue;
+          const st = (src.symbol || '').toUpperCase(), vt = (v.asset || '').toUpperCase();
+          const compatible = st === vt || (isStable(st) && isStable(vt)) || g === 'ETH';
+          if (!compatible) continue;
           const pick = apyOf(v) - src.apy;
           if (pick < minPick && src.kind === 'position' && !sim.exclude.has(src.protocol)) break;
           const amt = Math.min(rem, headroom.get(v));
@@ -190,7 +197,7 @@
       ['Blended APY before', den ? pct(before / (den - idleDeployed)) : 'n/a'], ['Blended APY after', den ? pct(after / den) : 'n/a'],
       ['Pickup per year', compact(pickup)],
     ].map(([t, v]) => `<div class="o"><div class="t">${t}</div><div class="v num">${v}</div></div>`).join('');
-    $('#simMoves').innerHTML = moves.length ? moves.map(m => `<div class="mv ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path"><b>${m.g}</b> · ${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → ${pct(m.toApy)}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.forced ? ' · excluded venue: exit is mandatory' : ''}</small></div><div class="amt num">${usd(m.amt)}<small>+${usd(m.amt * m.pick)}/yr</small></div><button class="btn ${executorOn ? '' : 'ghost'}" data-exec="${m.id}" type="button" title="${executorOn ? 'Build, simulate and propose via the local SafeAgent executor' : 'Start scripts/executor.py to enable'}">Execute</button></div>`).join('')
+    $('#simMoves').innerHTML = moves.length ? moves.map(m => `<div class="mv ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path"><b>${m.g}</b> · ${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → ${pct(m.toApy)}${m.to.apy_1d != null && sim.basis !== 'apy_1d' ? ` (spot ${pct(m.to.apy_1d)})` : ''}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.forced ? ' · excluded venue: exit is mandatory' : ''}</small></div><div class="amt num">${usd(m.amt)}<small>+${usd(m.amt * m.pick)}/yr</small></div><button class="btn ${executorOn ? '' : 'ghost'}" data-exec="${m.id}" type="button" title="${executorOn ? 'Build, simulate and propose via the local SafeAgent executor' : 'Start scripts/executor.py to enable'}">Execute</button></div>`).join('')
       : '<p class="empty">No move clears these thresholds. Laggards are noted, not traded.</p>';
     $('#simMoves').onclick = e => { const b = e.target.closest('button[data-exec]'); if (b) openModal(moves[Number(b.dataset.exec)]); };
     renderStage2();

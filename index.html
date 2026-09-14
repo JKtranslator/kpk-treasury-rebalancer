@@ -6,8 +6,8 @@
 <title>Treasury Rebalancer | KPK</title>
 <meta name="description" content="Holdings, policy checks and permitted yield moves for the treasuries KPK manages. Snapshot-driven; simulate thresholds in the browser.">
 <link rel="icon" href="assets/kpk.png">
-<link rel="stylesheet" href="assets/styles.css?v=1789206272">
-<link rel="stylesheet" href="assets/rebalancer.css?v=1789206272">
+<link rel="stylesheet" href="assets/styles.css?v=1789384604">
+<link rel="stylesheet" href="assets/rebalancer.css?v=1789384604">
 </head>
 <body>
 <div class="wrap">
@@ -97,7 +97,7 @@
             <div class="field"><label>Venue TVL cap <span class="val" id="tvlVal"></span></label>
               <input type="range" id="tvl" min="1" max="50" step="1"></div>
             <div class="field"><label>APY basis</label>
-              <div class="seg" id="basis"><button aria-pressed="true" data-b="apy">selected period</button><button data-b="apy_30d">30-day</button></div></div>
+              <div class="seg" id="basis"><button data-b="apy_1d">spot (1-day)</button><button aria-pressed="true" data-b="apy">7-day</button><button data-b="apy_30d">30-day</button></div></div>
             <div class="field" style="grid-column:1/-1"><label>Exclude venues</label><div class="seg" id="exclude"></div></div>
           </div>
           <div class="out" id="simOut"></div>
@@ -143,6 +143,6 @@
     </div>
   </div>
 </div>
-<script src="assets/app.js?v=1789206272"></script>
+<script src="assets/app.js?v=1789384604"></script>
 </body>
 </html>
