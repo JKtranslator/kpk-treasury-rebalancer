@@ -3,28 +3,28 @@
   "display_name": "Nexus Mutual DAO Treasury",
   "chain_id": 1,
   "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
-  "as_of": "2026-09-14T10:11:59+00:00",
+  "as_of": "2026-09-14T10:14:54+00:00",
   "period": "7day",
   "vault_data_fetched_at": "2026-09-14T01:52:48.343Z",
   "run_folder": "2026-09-14",
-  "nav_usd": 7444220,
+  "nav_usd": 7438644,
   "eth_price_usd": 2484.24,
   "reconciliation": {
-    "syncrone_nav_usd": 7444253,
-    "bridge_usd": 7444221,
+    "syncrone_nav_usd": 7438676,
+    "bridge_usd": 7438644,
     "diff": null,
     "in_flight_usd": 0,
-    "idle_usd": 149424,
+    "idle_usd": 143847,
     "untracked_usd": 7294797,
     "strategy_api_usd": 0,
-    "tokens_checked": 10,
+    "tokens_checked": 9,
     "tokens_disagree": 0,
     "other_wallets": {}
   },
   "flags": [
     "NOTE: Strategy API unreachable (failed after 3 attempts: http://ops-tools-backend.kpk/api/clients/current-strate); positions from Syncrone, APYs from the last snapshot's permitted venues (stale) and fallback sources",
     "NOTE: positions the Strategy API / vaults.fyi does not price (kept in the book with APY unknown): nexusmutual/OTHER $4,746,744, morphoVaults/USD $1,061,153, ether_fi/ETH $282,746, nexusmutual/USD $256,074, uniswap/OTHER $251,081, uniswap/USD $250,100, stakewise_v3/ETH $200,440, gearbox/ETH $186,766, fluid/USD $59,692.",
-    "NOTE: idle balances taken from the live Safe (Syncrone had not booked recent moves): cbBTC 0.01"
+    "NOTE: idle balances taken from the live Safe (Syncrone had not booked recent moves): USDC 0.00, cbBTC 0.01"
   ],
   "policy": null,
   "policy_checks": [],
@@ -35,19 +35,6 @@
     "exclude": []
   },
   "book": [
-    {
-      "kind": "idle",
-      "protocol": "(wallet)",
-      "venue": "idle in Safe [USDC]",
-      "symbol": "USDC",
-      "asset_group": "USD",
-      "usd": 5576.85,
-      "apy": 0.0,
-      "apy_source": null,
-      "venue_tvl_usd": null,
-      "untracked": false,
-      "balance": 5576.857831
-    },
     {
       "kind": "idle",
       "protocol": "(wallet)",
