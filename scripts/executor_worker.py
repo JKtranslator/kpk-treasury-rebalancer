@@ -94,7 +94,15 @@ def do_plan(client_dir: Path, payload: dict):
     if not commands:
         fail("no commands")
     intents, all_steps, labels = [], [], []
+    swap_quote = None
     for cmd in commands:
+        if "__SWAP_OUT__" in cmd:
+            if not swap_quote:
+                fail("deposit leg depends on a swap output but no swap leg produced a quote", command=cmd)
+            from token_registry import get_decimals
+            dec = get_decimals(swap_quote["buy_token"])
+            human = swap_quote["min_buy_amount"] / 10 ** dec
+            cmd = cmd.replace("__SWAP_OUT__", f"{human:.{min(dec, 6)}f}")
         intent = parse_command(cmd)
         if intent.get("error"):
             fail(f"parser rejected `{cmd}`: {intent['error']}", command=cmd)
@@ -107,6 +115,13 @@ def do_plan(client_dir: Path, payload: dict):
             fail(f"build failed for `{cmd}`: {e}", command=cmd, trace=traceback.format_exc(limit=3))
         if extra.get("_cow_submit"):
             fail("swaps are not executed from the page; use the proposer bot for CoW orders", command=cmd)
+        if extra.get("swap_quote"):
+            q = extra["swap_quote"]
+            from token_registry import get_decimals
+            sd, bd = get_decimals(q["sell_token"]), get_decimals(q["buy_token"])
+            sell_h, out_h, min_h = q["sell_amount"] / 10 ** sd, q["quote_buy_amount"] / 10 ** bd, q["min_buy_amount"] / 10 ** bd
+            swap_quote = dict(q, sell_human=sell_h, quote_out_human=out_h, min_out_human=min_h,
+                              impact_pct=round((sell_h - out_h) / sell_h * 100, 3) if sell_h else None)
         for s in steps:
             labels.append(f"{intent['protocol']} {intent['action']}" + (f" {intent.get('amount_human')}" if intent.get("amount_human") else ""))
         intents.append(intent)
@@ -156,7 +171,7 @@ def do_plan(client_dir: Path, payload: dict):
     plans_dir.mkdir(parents=True, exist_ok=True)
     plan_file = plans_dir / f"{plan_id}.json"
     record = dict(plan_id=plan_id, client_dir=str(client_dir), created=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-                  commands=commands, intents=intents, steps=all_steps, manager_tx=manager_tx, simulation=sim, tenderly=tl,
+                  commands=commands, intents=intents, steps=all_steps, manager_tx=manager_tx, simulation=sim, tenderly=tl, swap_quote=swap_quote,
                   safe=config.SAFE_ADDRESS, manager_safe=config.MANAGER_SAFE, roles_modifier=config.ROLES_MODIFIER, chain_id=config.CHAIN_ID)
     plan_file.write_text(json.dumps(record, default=str, indent=1), encoding="utf-8")
 
@@ -172,7 +187,7 @@ def do_plan(client_dir: Path, payload: dict):
         return dict(label=label, to=s.get("to"), value=str(s.get("value", 0)), operation=s.get("operation", 0),
                     selector=data[:10], data_preview=data[:74] + ("…" if len(data) > 74 else ""), data_len=len(data))
     out(dict(
-        plan_id=plan_id, plan_file=str(plan_file), client_dir=client_dir.name,
+        plan_id=plan_id, plan_file=str(plan_file), client_dir=client_dir.name, swap_quote=swap_quote,
         summary=f"{len(all_steps)} step(s) wrapped in execTransactionWithRole, bundled via MultiSend; from manager Safe {config.MANAGER_SAFE} to avatar {config.SAFE_ADDRESS}",
         commands=commands,
         transactions=[preview(s, labels[i] if i < len(labels) else "") for i, s in enumerate(all_steps)],

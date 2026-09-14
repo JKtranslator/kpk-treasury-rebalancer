@@ -84,11 +84,16 @@ def commands_for(move: dict, snap: dict) -> tuple[list[str], list[str]]:
         amount = "all"
         notes.append("amount set to `all`: the bot resolves the exact balance on-chain when building")
 
+    swap_leg = False
+    swap_note = ("swapped on Uniswap v3 inside the same MultiSend (bot quote, 50 bps max slippage); "
+                 "CoW cannot be bundled because it fills asynchronously")
     # 1. source leg
     if frm["kind"] == "idle":
         src_token = underlying(frm.get("symbol"), grp)
         if src_token in STABLES and to_token in STABLES and src_token != to_token:
-            raise ValueError(f"idle {src_token} into a {to_token} venue needs a swap first; use the proposer bot (cowswap)")
+            cmds.append(f"uniswap swap {amount} {src_token} {to_token}")   # permission engine rejects it where not allowed
+            notes.append(f"{src_token} -> {to_token} {swap_note}")
+            swap_leg = True
         if src_token == "WETH" and to_token == "ETH":
             cmds.append(f"cowswap unwrap {amount} WETH")
             notes.append("idle WETH unwrapped to ETH before staking")
@@ -105,9 +110,16 @@ def commands_for(move: dict, snap: dict) -> tuple[list[str], list[str]]:
         else:
             cmds.append(f"{fp} withdraw {amount} {src_token}{vault}")
         if src_token != to_token:
-            raise ValueError(f"{src_token} -> {to_token} needs a swap between the legs; use the proposer bot (cowswap)")
+            if src_token in STABLES and to_token in STABLES:
+                cmds.append(f"uniswap swap {amount} {src_token} {to_token}")
+                notes.append(f"{src_token} -> {to_token} {swap_note}")
+                swap_leg = True
+            else:
+                raise ValueError(f"{src_token} -> {to_token} needs a swap between the legs; use the proposer bot (cowswap)")
 
-    # 2. destination leg
+    # 2. destination leg: after a swap, the worker sizes the deposit from the swap's minimum output
+    if swap_leg:
+        amount = "__SWAP_OUT__"
     vault = to.get("vault") or ""
     if to_proto == "morpho":
         if not vault:
