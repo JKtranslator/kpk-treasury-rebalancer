@@ -216,7 +216,8 @@
       const j = await r.json();
       if (!j.ok) throw new Error(j.error || 'refresh failed');
       msg.innerHTML = `Refreshed in ${j.seconds}s · NAV ${compact(j.nav_usd)} · ${j.nav_tied ? 'reconciliation ties' : '<b>reconciliation did not tie, read the flags</b>'}` +
-        (j.stale_note ? `<br>${esc(j.stale_note)}` : '') + (j.pushed === true ? ' · pushed to the site' : j.pushed ? `<br>push: ${esc(String(j.pushed))}` : '');
+        (j.stale_note ? `<br>${esc(j.stale_note)}` : '') + (j.pushed === true ? ' · pushed to the site' : j.pushed ? `<br><b>Site not updated:</b> ${esc(String(j.pushed).split('hint:')[0])}` : '');
+      if (j.pushed !== true) msg.classList.add('warn');
       await select(snap.client);
     } catch (e) { msg.className = 'refresh-msg err'; msg.textContent = 'Refresh failed: ' + e.message; }
     finally { btn.classList.remove('busy'); btn.textContent = '↻ Refresh client'; }
