@@ -19,6 +19,7 @@ Writes <out>/yields.json.
 from __future__ import annotations
 
 import argparse
+import re
 import json
 import sys
 from pathlib import Path
@@ -125,8 +126,23 @@ def live_apy_refresh(rows: list[dict], chain_id: int) -> tuple[int, int]:
     for p in pools:
         if p.get("chain") == chain:
             by_key.setdefault((p["project"], p["symbol"].upper()), []).append(p)
+    # kpk vault families: DeFiLlama lists one pool per family (the live version). Price only the
+    # highest version among the permitted rows; older versions stay unpriced so they are never proposed.
+    fam: dict[str, int] = {}
+    def family(r):
+        m = re.match(r"^(.*?)(?:\s+v(\d+))?$", (r.get("asset") or "").strip(), re.I)
+        return (m.group(1).lower(), int(m.group(2) or 1)) if m else ((r.get("asset") or "").lower(), 1)
+    for r in rows:
+        if r["protocol"] == "morphoVaults" and (r.get("asset") or "").lower().startswith("kpk"):
+            f, v = family(r); fam[f] = max(fam.get(f, 0), v)
     matched = unmatched = 0
     for r in rows:
+        if r["protocol"] == "morphoVaults" and (r.get("asset") or "").lower().startswith("kpk"):
+            f, v = family(r)
+            if v < fam.get(f, v):
+                r.update(priced=False, apy_total=None, apy_30d=None, apy_source=f"superseded by v{fam[f]}")
+                unmatched += 1
+                continue
         proj = LLAMA_PROJECT.get(r["protocol"])
         sym = llama_symbol(r["protocol"], r.get("asset")) if proj else None
         if sym in ("SUSDS", "SDAI"):

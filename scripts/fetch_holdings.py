@@ -476,6 +476,24 @@ def main():
         safe_rows = fetch_safe_balances(reg, chain_id, safe)
         print(f"  safe: {len(safe_rows)} token balances")
 
+    # Wallet balances: the Safe is live, Syncrone books with a delay. Re-base idle rows on the Safe
+    # balance at Syncrone's price so a deposit made minutes ago no longer shows as idle.
+    if safe_rows and sync_rows:
+        by_tok = {r["token"]: r for r in safe_rows}
+        lag = []
+        for r in sync_rows:
+            if r["kind"] != "idle" or not r.get("price"):
+                continue
+            sb = by_tok.get(r["token"])
+            if sb is None:
+                continue
+            if abs(sb["balance"] - r["balance"]) > max(1e-9, 0.005 * max(sb["balance"], r["balance"])):
+                lag.append(f"{r['symbol']} {r['balance']:,.4f} -> {sb['balance']:,.4f}")
+                r["balance"], r["usd"] = sb["balance"], sb["balance"] * r["price"]
+                r["spam"] = r["usd"] < DUST_USD
+                r["rebased_on_safe"] = True
+        if lag:
+            print("  idle re-based on live Safe balances (Syncrone lagging):", "; ".join(lag[:6]))
     eth_rows = []
     if safe and "etherscan" not in a.skip:
         tokens = {r["token"]: r["decimals"] for r in safe_rows}
@@ -494,6 +512,10 @@ def main():
         print(f"  coingecko: priced {n_priced}/{len(priced_safe)} Safe tokens; ${sum(r['usd'] for r in priced_safe):,.0f} total (receipt tokens like aTokens/vault shares are usually unpriced here)")
         sync_rows = priced_safe  # reuse the idle-holding path downstream
     recon, nav, flags = reconcile(sync_rows, strat_rows, safe_rows, eth_rows, reg, c)
+    rb = [r for r in sync_rows if r.get("rebased_on_safe")]
+    if rb:
+        flags.append("NOTE: idle balances taken from the live Safe (Syncrone had not booked recent moves): "
+                     + ", ".join(f"{r['symbol']} {r['balance']:,.2f}" for r in rb[:6]))
     if strat_note:
         flags.insert(0, "NOTE: " + strat_note)
     if priced_safe:

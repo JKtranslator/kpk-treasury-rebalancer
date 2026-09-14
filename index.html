@@ -21,16 +21,14 @@
       <div class="marks"><img class="k" src="assets/kpk.png" alt="KPK"><span class="wm">KPK</span></div>
       <div class="stamp" id="stamp">Loading snapshot…</div>
       <div class="stamp" id="stamp2"></div>
-      <div class="stamp"><a class="baseline" target="_blank" rel="noopener" id="refreshLink"
-         href="https://github.com/JKtranslator/kpk-treasury-rebalancer/actions/workflows/refresh.yml">refresh live holdings ↗</a>
-         <span class="exec-state" id="execState" title="Local executor (scripts/executor.py) status">executor: checking…</span></div>
+      <div class="stamp"><span class="exec-state" id="execState" title="Local executor (scripts/executor.py) status">executor: checking…</span></div>
     </div>
   </div>
 
   <div class="navbar">
     <div class="seg clients" id="clientTabs" role="tablist" aria-label="Client"></div>
     <div class="navright">
-      <button class="btn ghost" id="refreshBtn" type="button" title="Re-run holdings, yields and assessment for this client on the executor host, then reload">↻ Refresh client</button>
+      <button class="btn ghost" id="refreshBtn" type="button" title="Re-run live holdings, yields and the assessment for this client, then reload">↻ Refresh client</button>
       <div class="seg views" id="viewTabs" role="tablist" aria-label="View">
         <button data-v="holdings" aria-pressed="true">Holdings</button>
         <button data-v="strategies" aria-pressed="false">Strategies</button>

@@ -6,7 +6,8 @@
 .exec-state.on{background:var(--good-bg);color:var(--good);}
 .exec-state.off{background:var(--card);color:var(--muted);}
 .navright{display:flex;align-items:center;gap:10px;}
-.refresh-msg{margin-top:10px;background:var(--card);border-radius:11px;padding:9px 13px;font-size:12.5px;line-height:1.55;}
+.refresh-msg{margin-top:10px;background:var(--card);color:var(--body);border-radius:11px;padding:9px 13px;font-size:12.5px;line-height:1.55;}
+.refresh-msg.ok{background:var(--good-bg);color:var(--good);}
 .refresh-msg.warn{background:var(--warn-bg);color:var(--warn);}
 .refresh-msg.err{background:var(--bad-bg);color:var(--bad);}
 .refresh-msg[hidden]{display:none!important;}
