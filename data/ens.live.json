@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
   "ok": true,
-  "as_of": "2026-09-14T10:04:38+00:00",
+  "as_of": "2026-09-14T11:12:05+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -139,12 +139,25 @@
     }
   ],
   "token_check": {
-    "checked": 8,
+    "checked": 10,
     "disagree": 0,
     "etherscan_source": "etherscan"
   },
   "other_wallets": {},
+  "unbooked": [
+    {
+      "symbol": "cUSDCv3",
+      "balance": 1507031.419787,
+      "position": "Compound v3 USDC (cUSDCv3) (not yet booked by Syncrone)"
+    },
+    {
+      "symbol": "sUSDS",
+      "balance": 2937699.0880683023,
+      "position": "Savings USDS (sUSDS) (not yet booked by Syncrone)"
+    }
+  ],
   "flags": [
-    "NOTE: $1,360,325 is in-flight (withdrawal queues) per Syncrone and invisible to Safe/Etherscan/Strategy API: 500.00 ETHx in stader."
+    "NOTE: $1,360,325 is in-flight (withdrawal queues) per Syncrone and invisible to Safe/Etherscan/Strategy API: 500.00 ETHx in stader.",
+    "NOTE: Safe holds vault shares Syncrone has not booked yet: 1,507,031.42 cUSDCv3, 2,937,699.09 sUSDS"
   ]
 }
