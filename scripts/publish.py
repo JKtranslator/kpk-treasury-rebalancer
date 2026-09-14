@@ -40,7 +40,7 @@ def snapshot(slug: str, run: Path) -> dict:
                  untracked=b.get("untracked", False), balance=b.get("balance")) for b in a["book"] if fnum(b["usd"]) >= 1]
     permitted = [dict(protocol=p["protocol"], asset=p["asset"], action=p["action"], asset_group=p["asset_group"],
                       apy=p.get("apy_total"), apy_30d=p.get("apy_30d"), tvl_usd=p.get("tvl_usd"), priced=p["priced"],
-                      vault=p.get("vault")) for p in y.get("permitted", []) if p["action"] in ("deposit", "stake", "swap")]
+                      vault=p.get("vault"), apy_source=p.get("apy_source")) for p in y.get("permitted", []) if p["action"] in ("deposit", "stake", "swap")]
     ob = y.get("ops_tools_best_strategy") or {}
     ops = [dict(asset_group=r["assetGroup"], current_apy=fnum(r["currentWeightedAPY"]),
                 recommended_apy=fnum(r["recommendedWeightedAPY"]), changed_usd=fnum(r["changedValue"]),

@@ -13,7 +13,7 @@
   const compact = v => { v = Number(v || 0); return v >= 1e9 ? '$' + (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? '$' + (v / 1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v / 1e3).toFixed(0) + 'k' : usd(v); };
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const GROUP_COLORS = { USD: '#2D8561', ETH: '#1D1D1D', EURO: '#8E6710', OTHER: '#706E66' };
-  const srcTag = b => b.apy == null ? '' : b.apy_source && b.apy_source !== 'vaults.fyi' ? `<span class="src" title="${esc(b.apy_source)}">${b.apy_source.startsWith('defillama') ? 'llama' : b.apy_source.startsWith('vaults.fyi') ? 'stale' : 'realised'}</span>` : '';
+  const srcTag = b => b.apy == null ? '' : b.apy_source && b.apy_source !== 'vaults.fyi' ? `<span class="src" title="${esc(b.apy_source)}">${b.apy_source.startsWith('defillama') ? 'llama' : b.apy_source.includes('stale') ? 'stale' : b.apy_source.startsWith('vaults.fyi') ? '' : 'realised'}</span>` : '';
 
   let index = null, snap = null, live = null, moves = [], executorOn = false;
   let sim = { pickupBps: 50, moveUsd: 250000, tvlCapPct: 10, basis: 'apy', exclude: new Set() };
@@ -88,7 +88,7 @@
     const r = snap.reconciliation;
     $('#stamp').innerHTML = `<b>${esc(snap.display_name)}</b> · chain ${snap.chain_id} · run ${esc(snap.run_folder)}`;
     if (snap.stale_note) { $('#stamp2').title = snap.stale_note; }
-    $('#stamp2').textContent = (snap.stale_note ? '⚠ stale Strategy API · ' : '') + `data as of ${new Date(snap.as_of).toISOString().slice(0, 16).replace('T', ' ')} UTC · APY period ${snap.period} · vaults.fyi ${snap.vault_data_fetched_at ? new Date(snap.vault_data_fetched_at).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : 'n/a'}`;
+    $('#stamp2').textContent = (snap.stale_note ? '⚠ off-network: office permissions, live DeFiLlama APYs · ' : '') + `data as of ${new Date(snap.as_of).toISOString().slice(0, 16).replace('T', ' ')} UTC · APY period ${snap.period} · vaults.fyi ${snap.vault_data_fetched_at ? new Date(snap.vault_data_fetched_at).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : 'n/a'}`;
 
     const groups = {}; snap.book.forEach(b => groups[b.asset_group] = (groups[b.asset_group] || 0) + b.usd);
     const nav = snap.nav_usd; const stables = (groups.USD || 0) + (groups.EURO || 0);

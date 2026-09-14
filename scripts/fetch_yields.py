@@ -58,7 +58,7 @@ def flatten_permissions(perms: dict, period: str, reg: dict) -> list[dict]:
                              apy_all=apy or None,
                              tvl_usd=fnum((e.get("tvl") or {}).get("usd")) if e.get("tvl") else None,
                              asset_group=asset_group_of(e.get("asset") or "", reg),
-                             priced=sel.get("total") is not None,
+                             priced=sel.get("total") is not None, apy_source="vaults.fyi" if sel.get("total") is not None else None,
                              sell_assets=e.get("sellAssets"), buy_assets=e.get("buyAssets")))
     return rows
 
@@ -82,6 +82,64 @@ def defillama_fallback(reg: dict) -> dict:
                           tvl_usd=fnum(p.get("tvlUsd")), pool=pid, project=p["project"], symbol=p["symbol"], chain=p["chain"],
                           source="defillama")
     return out
+
+
+LLAMA_PROJECT = {"aave_v3": "aave-v3", "compound_v3": "compound-v3", "fluid": "fluid-lending", "sky": "sky-lending",
+                 "spark": "sparklend", "lido": "lido", "ether_fi": "ether.fi-stake", "stader": "stader", "stakewise_v3": "stakewise-v3",
+                 "rocket_pool": "rocket-pool", "gearbox": "gearbox", "morphoVaults": "morpho-blue"}
+LLAMA_CHAIN = {1: "Ethereum", 100: "Gnosis", 42161: "Arbitrum", 8453: "Base"}
+
+
+def llama_symbol(protocol: str, asset: str) -> str | None:
+    a = (asset or "").strip()
+    if protocol == "morphoVaults":
+        if not a.lower().startswith("kpk"):
+            return None                              # non-kpk vaults: not resolvable by name
+        words = [w for w in a.replace("-", " ").split() if not (w.lower().startswith("v") and w[1:].isdigit())]
+        return "-".join(w.upper() for w in words)   # "kpk USDC Yield v2" -> KPK-USDC-YIELD
+    if protocol == "compound_v3":
+        au = a.upper()
+        return au[1:-2] if au.startswith("C") and au.endswith("V3") else au
+    if protocol == "sky" or (protocol == "spark" and a.upper() in ("USDS", "SUSDS")):
+        return "SUSDS"
+    if protocol == "ether_fi":
+        return "WEETH"
+    return {"eETH": "WEETH", "ETH": "WETH" if protocol in ("gearbox", "aave_v3", "spark") else "ETH"}.get(a, a.upper())
+
+
+def live_apy_refresh(rows: list[dict], chain_id: int) -> tuple[int, int]:
+    """Off-network alternative to vaults.fyi: match every permitted venue to a DeFiLlama pool
+    (project + chain + symbol, highest TVL wins) and overwrite the cached APY/TVL. Returns
+    (matched, unmatched). Rows that do not match keep their cached values and are labelled stale."""
+    try:
+        pools = http_json("https://yields.llama.fi/pools", timeout=120)["data"]
+    except Exception as e:
+        print("  defillama live refresh failed:", str(e)[:120])
+        return 0, len(rows)
+    chain = LLAMA_CHAIN.get(chain_id, "Ethereum")
+    by_key: dict[tuple, list] = {}
+    for p in pools:
+        if p.get("chain") == chain:
+            by_key.setdefault((p["project"], p["symbol"].upper()), []).append(p)
+    matched = unmatched = 0
+    for r in rows:
+        proj = LLAMA_PROJECT.get(r["protocol"])
+        sym = llama_symbol(r["protocol"], r.get("asset")) if proj else None
+        if sym == "SUSDS":
+            proj = "sky-lending"
+        cands = [p for p in by_key.get((proj, sym), []) if fnum(p.get("apy")) > 0] if proj and sym else []
+        if not cands:
+            unmatched += 1
+            if r.get("priced"):
+                r["apy_source"] = f"{r.get('apy_source') or 'cache'} (stale)"
+            continue
+        p = max(cands, key=lambda x: fnum(x.get("tvlUsd")))
+        r.update(apy_total=fnum(p.get("apy")) / 100, apy_base=(fnum(p.get("apyBase")) / 100) if p.get("apyBase") is not None else None,
+                 apy_reward=(fnum(p.get("apyReward")) / 100) if p.get("apyReward") is not None else None,
+                 apy_30d=(fnum(p.get("apyMean30d")) / 100) if p.get("apyMean30d") is not None else r.get("apy_30d"),
+                 tvl_usd=fnum(p.get("tvlUsd")), priced=True, apy_source="defillama live", llama_pool=p["pool"])
+        matched += 1
+    return matched, unmatched
 
 
 def vaults_fyi_benchmarks(chain_name: str) -> dict | None:
@@ -132,6 +190,11 @@ def main():
     if best:
         write_json(out / "raw_best_strategy.json", best)
     rows = flatten_permissions(perms, a.period, reg)
+    if stale_note:
+        m, u = live_apy_refresh(rows, chain_id)
+        stale_note = (f"Strategy API unreachable: permissions from the office cache of {perms.get('vaultDataFetchedAt')}; "
+                      f"APYs refreshed live from DeFiLlama for {m} venues" + (f", {u} kept cached (stale)" if u else ""))
+        print("  " + stale_note)
     priced = [r for r in rows if r["priced"]]
     print(f"[{a.client}] permissions: {len(rows)} permitted entries across {len(perms.get('permissions') or {})} protocols; "
           f"{len(priced)} priced by vaults.fyi; vault data at {perms.get('vaultDataFetchedAt')}")

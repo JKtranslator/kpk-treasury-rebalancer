@@ -329,7 +329,8 @@ def main():
             if hit is None and len({p.get("asset") for p in cands}) == 1:
                 hit = cands[0]
             if hit:
-                b["apy"], b["apy_source"], b["venue_tvl_usd"] = hit.get("apy_total"), f"vaults.fyi (stale, {y.get('vault_data_fetched_at')})", hit.get("tvl_usd")
+                b["apy"], b["venue_tvl_usd"] = hit.get("apy_total"), hit.get("tvl_usd")
+                b["apy_source"] = hit.get("apy_source") or f"vaults.fyi (stale, {y.get('vault_data_fetched_at')})"
                 b["untracked"] = False
                 b["vault"] = hit.get("vault")
     # fallback APY (DeFiLlama) for untracked sleeves: most specific key wins
