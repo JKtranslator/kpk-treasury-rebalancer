@@ -95,6 +95,7 @@ def do_plan(client_dir: Path, payload: dict):
         fail("no commands")
     intents, all_steps, labels = [], [], []
     swap_quote = None
+    cow_submit = None
     for cmd in commands:
         if "__SWAP_OUT__" in cmd:
             if not swap_quote:
@@ -114,7 +115,9 @@ def do_plan(client_dir: Path, payload: dict):
         except Exception as e:
             fail(f"build failed for `{cmd}`: {e}", command=cmd, trace=traceback.format_exc(limit=3))
         if extra.get("_cow_submit"):
-            fail("swaps are not executed from the page; use the proposer bot for CoW orders", command=cmd)
+            if cow_submit:
+                fail("only one CoW order per plan", command=cmd)
+            cow_submit = extra["_cow_submit"]   # submitted to the CoW API at propose time, exactly like execute_plan
         if extra.get("swap_quote"):
             q = extra["swap_quote"]
             from token_registry import get_decimals
@@ -179,6 +182,7 @@ def do_plan(client_dir: Path, payload: dict):
     plan_file = plans_dir / f"{plan_id}.json"
     record = dict(plan_id=plan_id, client_dir=str(client_dir), created=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                   commands=commands, intents=intents, steps=all_steps, manager_tx=manager_tx, simulation=sim, tenderly=tl, swap_quote=swap_quote,
+                  cow_submit=cow_submit,
                   safe=config.SAFE_ADDRESS, manager_safe=config.MANAGER_SAFE, roles_modifier=config.ROLES_MODIFIER, chain_id=config.CHAIN_ID)
     plan_file.write_text(json.dumps(record, default=str, indent=1), encoding="utf-8")
 
@@ -195,6 +199,11 @@ def do_plan(client_dir: Path, payload: dict):
                     selector=data[:10], data_preview=data[:74] + ("…" if len(data) > 74 else ""), data_len=len(data))
     out(dict(
         plan_id=plan_id, plan_file=str(plan_file), client_dir=client_dir.name, swap_quote=swap_quote,
+        cow_order=(dict(sell_token=cow_submit.get("sell_token"), buy_token=cow_submit.get("buy_token"),
+                        sell_amount=str(cow_submit.get("sell_amount")), buy_amount=str(cow_submit.get("buy_amount")),
+                        valid_to=cow_submit.get("valid_to"), slippage_bps=cow_submit.get("slippage_bps"),
+                        note="pre-signed CoW order: submitted to the CoW API when you propose; fills after the Safe executes the setPreSignature step")
+                   if cow_submit else None),
         summary=f"{len(all_steps)} step(s) wrapped in execTransactionWithRole, bundled via MultiSend; from manager Safe {config.MANAGER_SAFE} to avatar {config.SAFE_ADDRESS}",
         commands=commands,
         transactions=[preview(s, labels[i] if i < len(labels) else "") for i, s in enumerate(all_steps)],
@@ -218,13 +227,31 @@ def do_propose(client_dir: Path, payload: dict):
         fail("refusing to propose: the stored plan's simulation did not succeed")
     if not os.environ.get("AGENT_PRIVATE_KEY"):
         fail("AGENT_PRIVATE_KEY is not configured for this client; cannot propose")
+    # CoW leg, same order as execute_plan: submit the pre-signed order to the CoW API, then propose the
+    # Safe tx that sets the presignature. If the API refuses, store the order for `cow resubmit`.
+    cow_uid = cow_url = cow_warning = None
+    cow_submit = rec.get("cow_submit")
+    if cow_submit:
+        from cow_api import submit_presign_order, order_url
+        try:
+            cow_uid = submit_presign_order(**cow_submit)
+            cow_url = order_url(cow_uid)
+        except Exception as e:
+            cow_warning = f"CoW API submission failed ({str(e)[:160]}); order stored for `cow resubmit <safe tx hash>` after execution"
     try:
         tx = propose_manager_tx(rec["manager_tx"])
     except Exception as e:
-        fail(f"proposal failed: {e}", trace=traceback.format_exc(limit=3))
-    rec["proposed"] = dict(at=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), tx=tx)
+        fail(f"proposal failed: {e}", trace=traceback.format_exc(limit=3), cow_order_uid=cow_uid)
+    if cow_submit and not cow_uid:
+        try:
+            from cow_order_store import save as save_cow_order
+            save_cow_order(tx["hash"], cow_submit)
+        except Exception as e:
+            cow_warning = f"{cow_warning}; storing the order also failed: {e}"
+    rec["proposed"] = dict(at=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), tx=tx, cow_order_uid=cow_uid, cow_url=cow_url)
     pf.write_text(json.dumps(rec, default=str, indent=1), encoding="utf-8")
-    out(dict(plan_id=rec["plan_id"], safe_tx_hash=tx.get("hash"), url=tx.get("url"), nonce=tx.get("nonce"), safe=tx.get("safe")))
+    out(dict(plan_id=rec["plan_id"], safe_tx_hash=tx.get("hash"), url=tx.get("url"), nonce=tx.get("nonce"), safe=tx.get("safe"),
+             cow_order_uid=cow_uid, cow_url=cow_url, cow_warning=cow_warning))
 
 
 def main():

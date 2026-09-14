@@ -193,6 +193,30 @@
     $('#simMoves').innerHTML = moves.length ? moves.map(m => `<div class="mv ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path"><b>${m.g}</b> · ${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → ${pct(m.toApy)}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.forced ? ' · excluded venue: exit is mandatory' : ''}</small></div><div class="amt num">${usd(m.amt)}<small>+${usd(m.amt * m.pick)}/yr</small></div><button class="btn ${executorOn ? '' : 'ghost'}" data-exec="${m.id}" type="button" title="${executorOn ? 'Build, simulate and propose via the local SafeAgent executor' : 'Start scripts/executor.py to enable'}">Execute</button></div>`).join('')
       : '<p class="empty">No move clears these thresholds. Laggards are noted, not traded.</p>';
     $('#simMoves').onclick = e => { const b = e.target.closest('button[data-exec]'); if (b) openModal(moves[Number(b.dataset.exec)]); };
+    renderStage2();
+  }
+
+  /* ------------------------------------------------------------------ stage 2 (after a CoW fill) */
+  async function renderStage2() {
+    let box = $('#stage2'); if (!box) { box = document.createElement('div'); box.id = 'stage2'; $('#simMoves').parentNode.insertBefore(box, $('#simMoves')); }
+    const pend = JSON.parse(localStorage.getItem('kpk_stage2') || '{}'); const p = pend[snap.client];
+    if (!p) { box.innerHTML = ''; return; }
+    let status = '';
+    if (p.cow_uid) { try { const o = await (await fetch(EXECUTOR + '/cow/' + p.cow_uid, { cache: 'no-store' })).json(); status = o.status ? ` · CoW order <a href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.status)}</a>` : ''; } catch (e) { } }
+    box.innerHTML = `<div class="refresh-msg warn"><b>Stage 2 pending:</b> ${esc(p.label)} · stage 1 proposed ${new Date(p.created).toISOString().slice(0, 16).replace('T', ' ')} UTC${status}.
+      Run it once the Safe has executed stage 1 and the order has filled. <button class="btn" id="stage2Run" type="button" style="margin-left:8px">Run stage 2</button>
+      <button class="btn ghost" id="stage2Drop" type="button">Dismiss</button></div>`;
+    $('#stage2Run').onclick = () => openStage2(p);
+    $('#stage2Drop').onclick = () => { delete pend[snap.client]; localStorage.setItem('kpk_stage2', JSON.stringify(pend)); renderStage2(); };
+  }
+  function openStage2(p) {
+    cur = { move: null, plan: null, stage2: p };
+    $('#mTitle').textContent = `Execute · ${snap.display_name} · stage 2`;
+    $('#mParams').innerHTML = [['Client / chain', `${snap.client} · ${snap.chain_id}`], ['Avatar Safe', (snap.safes && snap.safes.avatar) || snap.avatar_safe], ['Action', 'DEPOSIT (stage 2)'], ['Command', p.commands.join(' ; ')], ['Waits for', `${p.wait_for} from the CoW fill`]]
+      .map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
+    $('#mPlan').hidden = true; $('#mSim').hidden = true; $('#mMsg').className = 'modal-msg';
+    $('#mMsg').textContent = 'Build & simulate deposits the whole ' + p.wait_for + ' balance currently in the Safe. If the order has not filled yet the bot reports a zero balance.';
+    $('#mBuild').disabled = !executorOn; $('#mPropose').disabled = true; steps({}); $('#modal').hidden = false;
   }
 
   /* ------------------------------------------------------------------ executor */
@@ -263,14 +287,18 @@
   async function buildAndSimulate() {
     if (!cur) return; steps({ build: 'cur' }); $('#mBuild').disabled = true; $('#mMsg').className = 'modal-msg'; $('#mMsg').textContent = 'Building…';
     try {
-      let r = await fetch(EXECUTOR + '/plan', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(movePayload(cur.move)) });
-      if (r.status === 401 && askToken('Executor token needed to build')) r = await fetch(EXECUTOR + '/plan', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(movePayload(cur.move)) });
+      const payload = cur.stage2 ? { client: snap.client, commands: cur.stage2.commands, stage: '2 of 2', notes: ['stage 2: deposit of the CoW fill'] } : movePayload(cur.move);
+      let r = await fetch(EXECUTOR + '/plan', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(payload) });
+      if (r.status === 401 && askToken('Executor token needed to build')) r = await fetch(EXECUTOR + '/plan', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(payload) });
       const j = await r.json();
       if (!r.ok || j.error) throw new Error(j.error || r.statusText);
       cur.plan = j;
       $('#mPlan').hidden = false;
-      $('#mPlan').innerHTML = `<b>Plan</b> · ${esc(j.summary || '')}${j.proposer_code && j.proposer_code.head ? ` · built with kpk-labs/kpk-proposer @ ${esc(j.proposer_code.head)}${j.proposer_code.pulled ? ' (just updated)' : ''}` : ''}${j.proposer_code && j.proposer_code.head ? ` · built with kpk-labs/kpk-proposer @ ${esc(j.proposer_code.head)}${j.proposer_code.pulled ? ' (just updated)' : ''}` : ''}<div class="txlist" style="margin-top:6px">${(j.transactions || []).map((t, i) => `<div class="tx"><b>${i + 1}. ${esc(t.label || t.to)}</b><br>to ${esc(t.to)} · value ${esc(String(t.value ?? 0))}<br>${esc(t.data_preview || (t.data || '').slice(0, 74) + (t.data && t.data.length > 74 ? '…' : ''))}</div>`).join('')}</div>` +
+      $('#mPlan').innerHTML = (j.stage ? `<span class="pill p-warn">stage ${esc(j.stage)}</span> ` : '') + `<b>Plan</b> · ${esc(j.summary || '')}${j.proposer_code && j.proposer_code.head ? ` · built with kpk-labs/kpk-proposer @ ${esc(j.proposer_code.head)}${j.proposer_code.pulled ? ' (just updated)' : ''}` : ''}${j.proposer_code && j.proposer_code.head ? ` · built with kpk-labs/kpk-proposer @ ${esc(j.proposer_code.head)}${j.proposer_code.pulled ? ' (just updated)' : ''}` : ''}<div class="txlist" style="margin-top:6px">${(j.transactions || []).map((t, i) => `<div class="tx"><b>${i + 1}. ${esc(t.label || t.to)}</b><br>to ${esc(t.to)} · value ${esc(String(t.value ?? 0))}<br>${esc(t.data_preview || (t.data || '').slice(0, 74) + (t.data && t.data.length > 74 ? '…' : ''))}</div>`).join('')}</div>` +
         (j.swap_quote ? `<div class="fine" style="margin-top:6px"><b>Swap (${esc(j.swap_quote.venue)}, fee ${j.swap_quote.fee_tier / 1e4}%):</b> ${Number(j.swap_quote.sell_human).toLocaleString('en-US', { maximumFractionDigits: 2 })} ${esc(j.swap_quote.sell_token)} → ${Number(j.swap_quote.quote_out_human).toLocaleString('en-US', { maximumFractionDigits: 2 })} ${esc(j.swap_quote.buy_token)} quoted, min ${Number(j.swap_quote.min_out_human).toLocaleString('en-US', { maximumFractionDigits: 2 })} · price impact ${j.swap_quote.impact_pct}%${j.swap_quote.impact_pct > 0.5 ? ' <span class="pill p-warn">high: consider CoW via the bot</span>' : ''}</div>` : '') +
+        (j.cow_order ? `<div class="fine" style="margin-top:6px"><b>CoW order:</b> sell ${esc(j.cow_order.sell_token)} → buy ${esc(j.cow_order.buy_token)}, slippage ${j.cow_order.slippage_bps} bps, valid to ${new Date(j.cow_order.valid_to * 1000).toISOString().slice(0, 16).replace('T', ' ')} UTC. ${esc(j.cow_order.note)}</div>` : '') +
+        (j.next_stage ? `<div class="fine" style="margin-top:6px"><b>Stage 2 (after the order fills):</b> ${esc(j.next_stage.label)} — offered on the Strategies tab once this stage is proposed.</div>` : '') +
+        (j.notes && j.notes.length ? `<div class="fine" style="margin-top:6px">${j.notes.map(esc).join('<br>')}</div>` : '') +
         (j.permission_check ? `<div class="fine" style="margin-top:6px">Permissions: ${esc(j.permission_check)}</div>` : '');
       steps({ build: 'done', sim: 'cur' }); $('#mMsg').textContent = 'Simulating on Tenderly…';
       const s = j.simulation || {};
@@ -295,7 +323,15 @@
       const j = await r.json();
       if (!r.ok || j.error) throw new Error(j.error || r.statusText);
       steps({ build: 'done', sim: 'done', review: 'done', propose: 'done' });
-      $('#mMsg').innerHTML = `Proposed. Safe tx hash <span class="num">${esc(j.safe_tx_hash || '')}</span>${j.url ? ` · <a href="${esc(j.url)}" target="_blank" rel="noopener">open in Safe ↗</a>` : ''}`;
+      $('#mMsg').innerHTML = `Proposed. Safe tx hash <span class="num">${esc(j.safe_tx_hash || '')}</span>${j.url ? ` · <a href="${esc(j.url)}" target="_blank" rel="noopener">open in Safe ↗</a>` : ''}` +
+        (j.cow_url ? `<br>CoW order placed: <a href="${esc(j.cow_url)}" target="_blank" rel="noopener">${esc(j.cow_order_uid.slice(0, 18))}… ↗</a> (fills after the Safe executes)` : '') +
+        (j.cow_warning ? `<br><b>${esc(j.cow_warning)}</b>` : '');
+      if (cur.stage2) { const pend = JSON.parse(localStorage.getItem('kpk_stage2') || '{}'); delete pend[snap.client]; localStorage.setItem('kpk_stage2', JSON.stringify(pend)); renderStage2(); }
+      if (cur.plan && cur.plan.next_stage) {
+        const pend = JSON.parse(localStorage.getItem('kpk_stage2') || '{}');
+        pend[snap.client] = { ...cur.plan.next_stage, stage1_tx: j.safe_tx_hash, cow_uid: j.cow_order_uid || null, cow_url: j.cow_url || null, created: Date.now() };
+        localStorage.setItem('kpk_stage2', JSON.stringify(pend)); renderStage2();
+      }
     } catch (e) { steps({ build: 'done', sim: 'done', review: 'done', propose: 'fail' }); $('#mMsg').className = 'modal-msg err'; $('#mMsg').textContent = 'Propose failed: ' + e.message; }
   }
 

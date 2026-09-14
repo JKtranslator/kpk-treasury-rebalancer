@@ -163,6 +163,37 @@ def ensure_latest_proposer(max_age: int = 120) -> dict:
                 remote=(g("remote", "get-url", "origin").stdout or "").strip())
 
 
+def two_stage_commands(move: dict, snap: dict) -> tuple[list[str], dict, list[str]]:
+    """Stable-to-stable rotation too big for an on-chain pool: stage 1 = withdraw + pre-signed CoW order,
+    stage 2 = deposit the bought token once the order has filled. Returns (stage1_cmds, stage2, notes)."""
+    grp = move["asset_group"]
+    frm, to = move["from"], move["to"]
+    eth_price = fnum(snap.get("eth_price_usd"))
+    to_token = underlying(to.get("asset"), grp)
+    src_token = underlying(frm.get("symbol"), grp)
+    amount = fmt_amount(fnum(move["amount_usd"]), src_token if src_token in STABLES else "ETH", eth_price)
+    if fnum(move["amount_usd"]) >= 0.99 * fnum(frm.get("usd")):
+        amount = "all"
+    cmds = []
+    if frm["kind"] != "idle":
+        fp = PROTO.get(frm["protocol"])
+        vault = f" {frm['vault']}" if frm.get("vault") and fp in ("morpho", "compound", "fluid", "gearbox") else ""
+        cmds.append(f"sky withdraw {amount} USDS" if fp == "sky" else f"{fp} withdraw {amount} {src_token}{vault}")
+    cmds.append(f"cowswap swap {amount} {src_token} {to_token}")
+    to_proto = PROTO.get(to["protocol"])
+    vault = to.get("vault") or ""
+    dep = {"morpho": f"morpho deposit all {to_token} {vault}", "compound": f"compound deposit all {to_token} {vault}".strip(),
+           "fluid": f"fluid deposit all {to_token} {vault}".strip(), "gearbox": f"gearbox deposit all {to_token} {vault}".strip(),
+           "sky": "sky deposit all USDS", "aave": f"aave deposit all {to_token}", "spark": f"spark deposit all {to_token}"}.get(to_proto)
+    if not dep:
+        raise ValueError(f"no stage-2 deposit command for {to_proto}")
+    stage2 = dict(commands=[dep], label=f"deposit all {to_token} into {to['protocol']} {to.get('asset')}", wait_for=to_token,
+                  client=move["client"], to=to)
+    notes = [f"two-stage: stage 1 withdraws and places a pre-signed CoW order {src_token} -> {to_token} (fills after the Safe "
+             f"executes); stage 2 deposits the {to_token} once it has arrived. The deposit cannot be bundled because CoW fills asynchronously."]
+    return cmds, stage2, notes
+
+
 def run_worker(slug: str, op: str, payload: dict) -> dict:
     sync = ensure_latest_proposer()
     cdir = SAFEAGENT / CLIENT_DIRS[slug]
@@ -323,6 +354,19 @@ class H(BaseHTTPRequestHandler):
             if not name or "/" in name or ".." in name or not f.exists():
                 return self._json(404, dict(error="not found"))
             return self._json(200, json.loads(f.read_text(encoding="utf-8")))
+        if self.path.startswith("/cow/"):
+            uid = self.path.split("/cow/", 1)[1].split("?")[0]
+            if not uid.startswith("0x") or len(uid) < 20:
+                return self._json(400, dict(error="bad order uid"))
+            try:
+                import urllib.request
+                with urllib.request.urlopen(f"https://api.cow.fi/mainnet/api/v1/orders/{uid}", timeout=20) as r:
+                    o = json.loads(r.read())
+                return self._json(200, dict(uid=uid, status=o.get("status"), executed_sell=o.get("executedSellAmount"),
+                                            executed_buy=o.get("executedBuyAmount"), valid_to=o.get("validTo"),
+                                            invalidated=o.get("invalidated"), url=f"https://explorer.cow.fi/orders/{uid}"))
+            except Exception as e:
+                return self._json(502, dict(error=str(e)[:200]))
         if self.path.startswith("/refresh/"):
             if not self._authorized():
                 return self._json(401, dict(error="unauthorized: set the executor token on the page"))
@@ -346,12 +390,25 @@ class H(BaseHTTPRequestHandler):
             slug = body.get("client")
             if slug not in CLIENT_DIRS:
                 return self._json(400, dict(error=f"unknown client {slug}"))
+            if body.get("commands"):   # stage 2 (or any explicit command list) from the page
+                res = run_worker(slug, "plan", dict(commands=list(body["commands"]), move=body.get("move") or {}))
+                res.setdefault("commands", body["commands"]); res["notes"] = body.get("notes") or []; res["stage"] = body.get("stage")
+                return self._json(200 if not res.get("error") else 422, res)
             try:
                 snap = load_snapshot(slug)
                 cmds, notes = commands_for(body, snap)
             except Exception as e:
                 return self._json(400, dict(error=str(e)))
             res = run_worker(slug, "plan", dict(commands=cmds, move=body))
+            if res.get("error") and "on-chain swap not viable" in res["error"]:
+                rejection = res["error"]
+                try:
+                    cmds, stage2, notes2 = two_stage_commands(body, snap)
+                except Exception as e:
+                    return self._json(422, dict(error=str(e)))
+                res = run_worker(slug, "plan", dict(commands=cmds, move=body))
+                res["stage"] = "1 of 2"; res["next_stage"] = stage2
+                notes = notes2 + ["Uniswap route rejected: " + rejection.split(". Use a CoW")[0]]
             res.setdefault("commands", cmds)
             res["notes"] = notes
             return self._json(200 if not res.get("error") else 422, res)
