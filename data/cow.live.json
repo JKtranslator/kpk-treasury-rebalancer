@@ -1,6 +1,30 @@
 {
   "client": "cow",
-  "ok": false,
-  "as_of": "2026-09-14T20:18:43+00:00",
-  "error": "ERROR: SYNCRONE_API_KEY is not set. Export it or add it to /home/runner/work/kpk-treasury-rebalancer/kpk-treasury-rebalancer/.env.local (names only in .env.example; never commit .env.local)."
+  "display_name": "CoW DAO Treasury",
+  "chain_id": 1,
+  "avatar_safe": "0x616dE58c011F8736fa20c7Ae5352F7f6FB9F0669",
+  "ok": true,
+  "as_of": "2026-09-14T20:40:59+00:00",
+  "syncrone_window": {
+    "from": "2026-09-01",
+    "to": "2026-10-01"
+  },
+  "nav_usd": 0,
+  "positions_usd": 0,
+  "idle_usd": 0,
+  "in_flight_usd": 0,
+  "onchain_idle_eth": 0.0,
+  "eth_price_usd": 0.0,
+  "groups": {},
+  "sleeves": [],
+  "idle": [],
+  "in_flight_items": [],
+  "token_check": {
+    "checked": 0,
+    "disagree": 0,
+    "etherscan_source": "etherscan"
+  },
+  "other_wallets": {},
+  "unbooked": [],
+  "flags": []
 }
