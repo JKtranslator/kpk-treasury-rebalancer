@@ -4,21 +4,21 @@
   "chain_id": 1,
   "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
   "ok": true,
-  "as_of": "2026-09-14T10:18:14+00:00",
+  "as_of": "2026-09-14T10:22:02+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 7444007,
+  "nav_usd": 7438676,
   "positions_usd": 7294829,
-  "idle_usd": 149178,
+  "idle_usd": 143847,
   "in_flight_usd": 0,
   "onchain_idle_eth": 3.140807908958729,
   "eth_price_usd": 2484.24,
   "groups": {
-    "USD": 1632596,
-    "OTHER": 5133624,
-    "ETH": 677755
+    "OTHER": 5133870,
+    "ETH": 677755,
+    "USD": 1627019
   },
   "sleeves": [
     {
@@ -105,12 +105,6 @@
   ],
   "idle": [
     {
-      "symbol": "USDC",
-      "balance": 5576.857831,
-      "usd": 5577,
-      "asset_group": "USD"
-    },
-    {
       "symbol": "MORPHO",
       "balance": 28.376777604667712,
       "usd": 62,
@@ -118,8 +112,8 @@
     },
     {
       "symbol": "cbBTC",
-      "balance": 0.00468023,
-      "usd": 359,
+      "balance": 0.00788571,
+      "usd": 604,
       "asset_group": "OTHER"
     },
     {
@@ -143,10 +137,13 @@
   ],
   "in_flight_items": [],
   "token_check": {
-    "checked": 10,
+    "checked": 9,
     "disagree": 0,
     "etherscan_source": "etherscan"
   },
   "other_wallets": {},
-  "flags": []
+  "unbooked": [],
+  "flags": [
+    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 5,576.8578 -> 0.0000; cbBTC 0.0047 -> 0.0079"
+  ]
 }
