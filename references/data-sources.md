@@ -23,9 +23,9 @@ price_usd, balance_usd}, flows, tx_hashes, metrics, children}]}]}]}]}]}`
 - Asset `id` encodes the state: `...-stake-...` is deployed, `...-withdraw_process-...` is in a
   withdrawal queue (counted as in-flight, not deployable). Children hold the underlying.
 - Org ids: see `clients.json`. Arbitrum was offboarded 2026-08.
-- Team scripts with the same pattern: `Claude/Hypernative/syncrone_v2_snapshot.py` (sanctioned),
+- Team scripts with the same pattern: `services/monitoring/syncrone_v2_snapshot.py` (sanctioned),
   `~/.claude/skills/treasury-report-core/scripts/syncrone_api.py` (monthly report path).
-  `Claude/Hypernative/syncrone_api.py` is quarantined (fabricated fallbacks); do not copy it.
+  `services/monitoring/syncrone_api.py` is quarantined (fabricated fallbacks); do not copy it.
 - Known faults from the reporting pack: `tx_hashes[].amount` is broken (use value/price);
   `net_flow_usd` includes internal rotations; Merkl rows carry null `nav_usd`.
 
@@ -83,7 +83,7 @@ curator, so `curator=kpk` filters to the kpk Morpho vaults. There is an MCP serv
 
 ## Other team sources worth knowing
 
-- `Claude/Hypernative/client_registry.py` — the same Safe addresses, plus Slack and Hypernative
+- `services/monitoring/client_registry.py` — the same Safe addresses, plus Slack and Hypernative
   channel ids per client.
 - `ENS/ens_flows.py` — Safe `all-transactions` routing to positions, to separate rebalances from
   yield when reading Syncrone PnL.

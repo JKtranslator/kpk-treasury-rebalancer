@@ -45,7 +45,7 @@ Ask only what the registry cannot know:
 If the client is ENS, load the `ens-ips-2026` skill for the policy text. Do not ask for the policy.
 
 Keys come from the environment, then `<skill>/.env.local`, then
-`Claude/Hypernative/.env.local` (the team's existing secrets file). Needed: `SYNCRONE_API_KEY`,
+`services/monitoring/.env.local` (the team's existing secrets file). Needed: `SYNCRONE_API_KEY`,
 `ETHERSCAN_API_KEY`, optionally `SAFE_API_KEY` (the legacy Safe host works without it) and
 `VAULTS_FYI_API_KEY` (benchmarks). The Strategy API needs the office network / Twingate and no key.
 

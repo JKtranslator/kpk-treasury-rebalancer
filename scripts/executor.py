@@ -29,7 +29,7 @@ from common import client, fnum, load_env, registry
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
-WORKSPACE = ROOT.parent
+WORKSPACE = ROOT.parent.parent  # .../Karpatkey (ROOT is flows/rebalancer)
 SAFEAGENT = WORKSPACE / "Codex" / "SafeAgentAll"
 PLANS = ROOT / "runs" / "plans"
 

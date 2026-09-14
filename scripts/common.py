@@ -1,7 +1,7 @@
 """Shared helpers for the rebalancer scripts: env loading, HTTP, client registry.
 
-Keys are read from the environment first, then from `.env.local` next to this skill, then from
-the Hypernative workspace `.env.local` (the team's existing secrets file). Nothing is ever
+Keys are read from the environment first, then `%USERPROFILE%/.kpk/env` (shared KPK secrets),
+then `.env.local` next to this skill, then the Hypernative workspace `.env.local` (legacy). Nothing is ever
 written back or printed. Override the fallback file with KPK_ENV_FILE=<path>.
 """
 from __future__ import annotations
@@ -20,12 +20,13 @@ for _s in (sys.stdout, sys.stderr):  # Windows consoles default to cp1252; token
     except Exception:
         pass
 
-SKILL_DIR = Path(__file__).resolve().parent.parent   # .../Karpatkey/rebalancer
+SKILL_DIR = Path(__file__).resolve().parent.parent   # .../Karpatkey/services/rebalancer
 REGISTRY_PATH = SKILL_DIR / "clients.json"
-WORKSPACE = SKILL_DIR.parent  # .../Karpatkey
+WORKSPACE = SKILL_DIR.parent.parent  # .../Karpatkey
 FALLBACK_ENV_FILES = [
+    Path.home() / ".kpk" / "env",            # shared KPK secrets, outside OneDrive (kpk/env.py)
     SKILL_DIR / ".env.local",
-    WORKSPACE / "Claude" / "Hypernative" / ".env.local",
+    WORKSPACE / "flows" / "monitoring" / ".env.local",
 ]
 
 
