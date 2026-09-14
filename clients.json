@@ -262,6 +262,36 @@
       "position": "Rocket Pool rETH (wallet-held)",
       "asset_group": "ETH",
       "symbol": "rETH"
+    },
+    "0xd5cce260e7a755ddf0fb9cdf06443d593aaeaa13": {
+      "protocol": "morphoVaults",
+      "position": "kpk USDC Yield V2",
+      "asset_group": "USD",
+      "symbol": "kpkUSDCyield"
+    },
+    "0x5dbf760b4fd0cddde0366b33aeb338b2a6d77725": {
+      "protocol": "morphoVaults",
+      "position": "kpk ETH Yield V2",
+      "asset_group": "ETH",
+      "symbol": "kpkETHyield"
+    },
+    "0x4ef53d2caa51c447fdfeeedee8f07fd1962c9ee6": {
+      "protocol": "morphoVaults",
+      "position": "kpk USDC Prime V2",
+      "asset_group": "USD",
+      "symbol": "kpkUSDCprime"
+    },
+    "0xbb50a5341368751024ddf33385ba8cf61fe65ff9": {
+      "protocol": "morphoVaults",
+      "position": "kpk ETH Prime V2",
+      "asset_group": "ETH",
+      "symbol": "kpkETHprime"
+    },
+    "0x870f0bf29a25a40e7cc087cd5c53e70c11f2c8a8": {
+      "protocol": "morphoVaults",
+      "position": "kpk USDT Prime V2",
+      "asset_group": "USD",
+      "symbol": "kpkUSDTprime"
     }
   },
   "defillama_pools": {

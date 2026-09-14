@@ -485,15 +485,26 @@ def main():
             if r["kind"] != "idle" or not r.get("price"):
                 continue
             sb = by_tok.get(r["token"])
-            if sb is None:
-                continue
-            if abs(sb["balance"] - r["balance"]) > max(1e-9, 0.005 * max(sb["balance"], r["balance"])):
-                lag.append(f"{r['symbol']} {r['balance']:,.4f} -> {sb['balance']:,.4f}")
-                r["balance"], r["usd"] = sb["balance"], sb["balance"] * r["price"]
+            live_bal = sb["balance"] if sb is not None else 0.0     # absent from the Safe = gone
+            if abs(live_bal - r["balance"]) > max(1e-9, 0.005 * max(live_bal, r["balance"])):
+                lag.append(f"{r['symbol']} {r['balance']:,.4f} -> {live_bal:,.4f}")
+                r["balance"], r["usd"] = live_bal, live_bal * r["price"]
                 r["spam"] = r["usd"] < DUST_USD
                 r["rebased_on_safe"] = True
         if lag:
             print("  idle re-based on live Safe balances (Syncrone lagging):", "; ".join(lag[:6]))
+        # receipt tokens the Safe holds that Syncrone has not booked yet (a deposit made minutes ago)
+        known = {r["token"] for r in sync_rows}
+        fresh = [(sb, reg["receipt_tokens"][sb["token"]]) for sb in safe_rows
+                 if sb["token"] in reg.get("receipt_tokens", {}) and sb["token"] not in known and sb["balance"] > 0]
+        for sb, rc in fresh:
+            sync_rows.append(dict(source="safe", kind="position", wallet=safe.lower(), protocol=rc["protocol"],
+                                  position=rc["position"] + " (not yet booked by Syncrone)", position_type="receipt_token",
+                                  position_id=f"safe-{sb['token']}", asset_id=None, in_flight=False, chain=chain_id,
+                                  token=sb["token"], symbol=sb["symbol"] or rc.get("symbol"), balance=sb["balance"], price=0.0,
+                                  usd=0.0, asset_group=rc.get("asset_group", "OTHER"), spam=False, unbooked=True))
+        if fresh:
+            print("  Safe holds receipt tokens Syncrone has not booked:", "; ".join(f"{sb['balance']:,.4f} {sb['symbol']}" for sb, _ in fresh))
     eth_rows = []
     if safe and "etherscan" not in a.skip:
         tokens = {r["token"]: r["decimals"] for r in safe_rows}
@@ -512,6 +523,10 @@ def main():
         print(f"  coingecko: priced {n_priced}/{len(priced_safe)} Safe tokens; ${sum(r['usd'] for r in priced_safe):,.0f} total (receipt tokens like aTokens/vault shares are usually unpriced here)")
         sync_rows = priced_safe  # reuse the idle-holding path downstream
     recon, nav, flags = reconcile(sync_rows, strat_rows, safe_rows, eth_rows, reg, c)
+    ub = [r for r in sync_rows if r.get("unbooked")]
+    if ub:
+        flags.append("NOTE: the Safe holds vault shares Syncrone has not booked yet (value shown as 0 until it does): "
+                     + ", ".join(f"{r['balance']:,.2f} {r['symbol']} ({r['position'].split(' (')[0]})" for r in ub))
     rb = [r for r in sync_rows if r.get("rebased_on_safe")]
     if rb:
         flags.append("NOTE: idle balances taken from the live Safe (Syncrone had not booked recent moves): "
