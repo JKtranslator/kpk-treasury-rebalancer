@@ -1,12 +1,12 @@
 {
-  "generated": "2026-09-14T10:04:09+00:00",
+  "generated": "2026-09-14T10:04:39+00:00",
   "clients": [
     {
       "client": "ens",
       "display_name": "ENS DAO Endowment",
-      "as_of": "2026-09-12T09:02:38+00:00",
-      "nav_usd": 94326868,
-      "run_folder": "2026-09-12",
+      "as_of": "2026-09-14T10:03:34+00:00",
+      "nav_usd": 93458756,
+      "run_folder": "2026-09-14",
       "file": "data/ens.json"
     },
     {
