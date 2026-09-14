@@ -77,10 +77,18 @@ def defillama_fallback(reg: dict) -> dict:
         print("  defillama:", str(e)[:120])
         return {}
     out = {}
+    by_key = {}
+    for p in pools.values():
+        if p.get("chain") == "Ethereum":
+            by_key.setdefault((p["project"], p["symbol"].upper()), []).append(p)
+    lst = lst_yields(by_key)
     for k, pid in table.items():
         p = pools.get(pid)
         if p:
-            out[k] = dict(apy=fnum(p.get("apy")) / 100, apy_base=fnum(p.get("apyBase")) / 100 if p.get("apyBase") is not None else None,
+            proto = k.split("/")[0]
+            intrinsic = lst.get(p["symbol"].upper(), 0.0) if proto in LENDING_ON_LST and p["symbol"].upper() in LST_BASE else 0.0
+            out[k] = dict(apy=fnum(p.get("apy")) / 100 + intrinsic, apy_base=(fnum(p.get("apyBase")) / 100 + intrinsic) if p.get("apyBase") is not None else None,
+                          apy_intrinsic_lst=intrinsic or None,
                           tvl_usd=fnum(p.get("tvlUsd")), pool=pid, project=p["project"], symbol=p["symbol"], chain=p["chain"],
                           source="defillama")
     return out
@@ -90,6 +98,20 @@ LLAMA_PROJECT = {"aave_v3": "aave-v3", "compound_v3": "compound-v3", "fluid": "f
                  "spark": "sparklend", "lido": "lido", "ether_fi": "ether.fi-stake", "stader": "stader", "stakewise_v3": "stakewise-v3",
                  "rocket_pool": "rocket-pool", "gearbox": "gearbox", "morphoVaults": "morpho-blue"}
 LLAMA_CHAIN = {1: "Ethereum", 100: "Gnosis", 42161: "Arbitrum", 8453: "Base"}
+# LST symbol -> the DeFiLlama pool that carries its intrinsic staking yield
+LST_BASE = {"WSTETH": ("lido", "STETH"), "STETH": ("lido", "STETH"), "WEETH": ("ether.fi-stake", "WEETH"),
+            "OSETH": ("stakewise-v3", "OSETH"), "ETHX": ("stader", "ETHX"), "RETH": ("rocket-pool", "RETH")}
+LENDING_ON_LST = {"gearbox", "aave_v3", "spark", "compound_v3", "morphoVaults"}
+
+
+def lst_yields(by_key: dict) -> dict:
+    """Current intrinsic APY per LST from DeFiLlama, as a fraction."""
+    out = {}
+    for sym, key in LST_BASE.items():
+        cands = [p for p in by_key.get(key, []) if fnum(p.get("apy")) > 0]
+        if cands:
+            out[sym] = fnum(max(cands, key=lambda x: fnum(x.get("tvlUsd")))["apy"]) / 100
+    return out
 
 
 def llama_symbol(protocol: str, asset: str) -> str | None:
@@ -136,6 +158,7 @@ def live_apy_refresh(rows: list[dict], chain_id: int) -> tuple[int, int]:
     for r in rows:
         if r["protocol"] == "morphoVaults" and (r.get("asset") or "").lower().startswith("kpk"):
             f, v = family(r); fam[f] = max(fam.get(f, 0), v)
+    lst = lst_yields(by_key)
     matched = unmatched = 0
     for r in rows:
         if r["protocol"] == "morphoVaults" and (r.get("asset") or "").lower().startswith("kpk"):
@@ -155,10 +178,13 @@ def live_apy_refresh(rows: list[dict], chain_id: int) -> tuple[int, int]:
                 r["apy_source"] = f"{r.get('apy_source') or 'cache'} (stale)"
             continue
         p = max(cands, key=lambda x: fnum(x.get("tvlUsd")))
-        r.update(apy_total=fnum(p.get("apy")) / 100, apy_base=(fnum(p.get("apyBase")) / 100) if p.get("apyBase") is not None else None,
+        # composite: market rate + the collateral LST's own staking yield (vaults.fyi's apyComposite does the same)
+        intrinsic = lst.get(sym, 0.0) if r["protocol"] in LENDING_ON_LST and sym in LST_BASE else 0.0
+        r.update(apy_total=fnum(p.get("apy")) / 100 + intrinsic, apy_base=(fnum(p.get("apyBase")) / 100 + intrinsic) if p.get("apyBase") is not None else None,
                  apy_reward=(fnum(p.get("apyReward")) / 100) if p.get("apyReward") is not None else None,
-                 apy_30d=(fnum(p.get("apyMean30d")) / 100) if p.get("apyMean30d") is not None else r.get("apy_30d"),
-                 apy_1d=fnum(p.get("apy")) / 100,   # DeFiLlama apy is the current (spot) rate
+                 apy_30d=(fnum(p.get("apyMean30d")) / 100 + intrinsic) if p.get("apyMean30d") is not None else r.get("apy_30d"),
+                 apy_1d=fnum(p.get("apy")) / 100 + intrinsic,   # DeFiLlama apy is the current (spot) rate
+                 apy_intrinsic_lst=intrinsic or None,
                  tvl_usd=fnum(p.get("tvlUsd")), priced=True, apy_source="defillama live", llama_pool=p["pool"])
         matched += 1
     return matched, unmatched
