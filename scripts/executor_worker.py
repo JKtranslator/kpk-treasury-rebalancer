@@ -122,6 +122,13 @@ def do_plan(client_dir: Path, payload: dict):
             sell_h, out_h, min_h = q["sell_amount"] / 10 ** sd, q["quote_buy_amount"] / 10 ** bd, q["min_buy_amount"] / 10 ** bd
             swap_quote = dict(q, sell_human=sell_h, quote_out_human=out_h, min_out_human=min_h,
                               impact_pct=round((sell_h - out_h) / sell_h * 100, 3) if sell_h else None)
+            MAX_IMPACT_PCT = float(os.environ.get("MAX_SWAP_IMPACT_PCT", "0.5"))
+            if swap_quote["impact_pct"] is not None and swap_quote["impact_pct"] > MAX_IMPACT_PCT:
+                fail(f"on-chain swap not viable at this size: Uniswap v3 quotes {sell_h:,.0f} {q['sell_token']} -> "
+                     f"{out_h:,.0f} {q['buy_token']} ({swap_quote['impact_pct']:.2f}% price impact, limit {MAX_IMPACT_PCT}%). "
+                     f"Use a CoW order for the swap (asynchronous, so it cannot be bundled with the deposit): "
+                     f"stage 1 withdraw + CoW swap via the proposer bot, stage 2 deposit once the {q['buy_token']} arrives.",
+                     command=cmd, swap_quote=swap_quote)
         for s in steps:
             labels.append(f"{intent['protocol']} {intent['action']}" + (f" {intent.get('amount_human')}" if intent.get("amount_human") else ""))
         intents.append(intent)
