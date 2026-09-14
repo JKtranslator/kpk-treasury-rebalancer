@@ -104,6 +104,10 @@ def llama_symbol(protocol: str, asset: str) -> str | None:
         return "SUSDS"
     if protocol == "ether_fi":
         return "WEETH"
+    if protocol == "gearbox":
+        return a.upper().replace("KPK", "").replace("MARKET", "").strip()      # "kpk wstETH" -> WSTETH
+    if protocol == "spark" and "SDAI" in a.upper():
+        return "SDAI"
     return {"eETH": "WEETH", "ETH": "WETH" if protocol in ("gearbox", "aave_v3", "spark") else "ETH"}.get(a, a.upper())
 
 
@@ -125,7 +129,7 @@ def live_apy_refresh(rows: list[dict], chain_id: int) -> tuple[int, int]:
     for r in rows:
         proj = LLAMA_PROJECT.get(r["protocol"])
         sym = llama_symbol(r["protocol"], r.get("asset")) if proj else None
-        if sym == "SUSDS":
+        if sym in ("SUSDS", "SDAI"):
             proj = "sky-lending"
         cands = [p for p in by_key.get((proj, sym), []) if fnum(p.get("apy")) > 0] if proj and sym else []
         if not cands:
