@@ -3,9 +3,9 @@
   "display_name": "Nexus Mutual DAO Treasury",
   "chain_id": 1,
   "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
-  "as_of": "2026-09-14T09:34:05+00:00",
+  "as_of": "2026-09-14T10:03:10+00:00",
   "period": "7day",
-  "vault_data_fetched_at": "2026-09-12T01:52:08.610Z",
+  "vault_data_fetched_at": "2026-09-14T01:52:48.343Z",
   "run_folder": "2026-09-14",
   "nav_usd": 7443975,
   "eth_price_usd": 2484.24,
@@ -262,9 +262,9 @@
       "symbol": "wstETH",
       "asset_group": "ETH",
       "usd": 186766.17,
-      "apy": 0.029433930000000018,
-      "apy_source": "vaults.fyi (stale)",
-      "venue_tvl_usd": 11987130.0,
+      "apy": 0.0066828,
+      "apy_source": "defillama live",
+      "venue_tvl_usd": 2632026.0,
       "untracked": false,
       "balance": null
     },
@@ -389,9 +389,9 @@
       "asset": "osETH",
       "action": "deposit",
       "asset_group": "ETH",
-      "apy": 0.021400000000000086,
-      "apy_30d": 0.02190000000000003,
-      "tvl_usd": 320210852.0,
+      "apy": 0.021600000000000064,
+      "apy_30d": 0.02180000000000004,
+      "tvl_usd": 314943083.0,
       "priced": true,
       "vault": "0x927709711794f3de5ddbf1d176bee2d55ba13c21",
       "apy_source": "vaults.fyi (stale)"
@@ -473,12 +473,12 @@
       "asset": "DSR_sDAI",
       "action": "deposit",
       "asset_group": "OTHER",
-      "apy": null,
-      "apy_30d": null,
-      "tvl_usd": null,
-      "priced": false,
+      "apy": 0.0125,
+      "apy_30d": 0.0125,
+      "tvl_usd": 202681765.0,
+      "priced": true,
       "vault": null,
-      "apy_source": null
+      "apy_source": "defillama live"
     },
     {
       "protocol": "spark",
@@ -499,7 +499,7 @@
       "asset_group": "ETH",
       "apy": 0.02200000000000002,
       "apy_30d": 0.02190000000000003,
-      "tvl_usd": 15787005.0,
+      "tvl_usd": 15550269.0,
       "priced": true,
       "vault": "0x9985df20d7e9103ecbceb16a84956434b6f06ae8",
       "apy_source": "vaults.fyi (stale)"
@@ -629,24 +629,24 @@
       "asset": "kpk WETH",
       "action": "deposit",
       "asset_group": "ETH",
-      "apy": 0.0256,
-      "apy_30d": 0.0259,
-      "tvl_usd": 2868317.0,
+      "apy": 0.026665499999999998,
+      "apy_30d": 0.029204400000000002,
+      "tvl_usd": 584380.0,
       "priced": true,
       "vault": "0x9396dcbf78fc526bb003665337c5e73b699571ef",
-      "apy_source": "vaults.fyi (stale)"
+      "apy_source": "defillama live"
     },
     {
       "protocol": "gearbox",
       "asset": "kpk wstETH",
       "action": "deposit",
       "asset_group": "ETH",
-      "apy": 0.029433930000000018,
-      "apy_30d": 0.029134999999999966,
-      "tvl_usd": 11987130.0,
+      "apy": 0.0066828,
+      "apy_30d": 0.0068027,
+      "tvl_usd": 2632026.0,
       "priced": true,
       "vault": "0xa9d17f6d3285208280a1fd9b94479c62e0aaba64",
-      "apy_source": "vaults.fyi (stale)"
+      "apy_source": "defillama live"
     },
     {
       "protocol": "lido",
@@ -665,9 +665,9 @@
       "asset": "Gauntlet USDC Prime v1",
       "action": "deposit",
       "asset_group": "USD",
-      "apy": 0.0434,
+      "apy": 0.043,
       "apy_30d": 0.0421,
-      "tvl_usd": 27812728.0,
+      "tvl_usd": 27810331.0,
       "priced": true,
       "vault": "0xdd0f28e19c1780eb6396170735d45153d261490d",
       "apy_source": "vaults.fyi (stale)"
@@ -797,9 +797,9 @@
       "asset": "Steakhouse USDC v1",
       "action": "deposit",
       "asset_group": "USD",
-      "apy": 0.0412,
-      "apy_30d": 0.04,
-      "tvl_usd": 67803972.0,
+      "apy": 0.0408,
+      "apy_30d": 0.0399,
+      "tvl_usd": 68483472.0,
       "priced": true,
       "vault": "0xbeef01735c132ada46aa9aa4c54623caa92a64cb",
       "apy_source": "vaults.fyi (stale)"
@@ -832,47 +832,47 @@
   "ops_tools": [
     {
       "asset_group": "USD",
-      "current_apy": 0.07050976292675681,
-      "recommended_apy": 0.07083498794053462,
-      "changed_usd": 59703.626952422106,
+      "current_apy": 0.07117130120836147,
+      "recommended_apy": 0.07143784933688624,
+      "changed_usd": 59720.80481881005,
       "allocations": [
         {
           "protocol": "morphoVaults",
           "venue": "kpk USDC Yield V2",
-          "usd": 1060112.0657525233,
-          "apy": 0.0718
+          "usd": 1060541.469576679,
+          "apy": 0.0726
         },
         {
           "protocol": "fluid",
           "venue": "Fluid GHO",
-          "usd": 59703.626952422106,
-          "apy": 0.0537
+          "usd": 59720.80481881005,
+          "apy": 0.0508
         }
       ]
     },
     {
       "asset_group": "ETH",
-      "current_apy": 0.029433930000000014,
-      "recommended_apy": 0.0308,
-      "changed_usd": 189429.755085902,
+      "current_apy": 0.02963510999999993,
+      "recommended_apy": 0.0299,
+      "changed_usd": 186593.7058361479,
       "allocations": [
         {
           "protocol": "morphoVaults",
           "venue": "kpk ETH Yield V2",
-          "usd": 189429.755085902,
-          "apy": 0.0308
+          "usd": 186593.7058361479,
+          "apy": 0.0299
         },
         {
           "protocol": "ether_fi",
           "venue": "ether.fi eETH",
-          "usd": 2.5123488981e-15,
-          "apy": 0.0241
+          "usd": 2.4742291e-15,
+          "apy": 0.0235
         },
         {
           "protocol": "lido",
           "venue": "Lido stETH",
-          "usd": 2.5123488981e-15,
-          "apy": 0.0227
+          "usd": 2.4742291e-15,
+          "apy": 0.0229
         }
       ]
     }
@@ -1044,6 +1044,6 @@
     "manager": "0x0F035E7ff8A21159F10994aA0186449fc852A9E7",
     "roles_modifier": "0x24Fc0B9414Bb8e99a822a45BdE3A398BcfC85A58"
   },
-  "stale_note": "Strategy API unreachable: permissions from the office cache of 2026-09-12T01:52:08.610Z; APYs refreshed live from DeFiLlama for 32 venues, 8 kept cached (stale)",
+  "stale_note": "Strategy API unreachable: permissions from the office cache of 2026-09-14T01:52:48.343Z; APYs refreshed live from DeFiLlama for 35 venues, 5 kept cached (stale)",
   "ops_tools_caveat": "Optimizer respects only tvlCapPercent per venue. It ignores policy caps/floors and swap-only venues. Reference only."
 }
