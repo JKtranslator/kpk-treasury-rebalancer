@@ -320,8 +320,15 @@ def collect_rewards(c: dict, reg: dict, chain_id: int, safe: str, safe_rows: lis
     COMP campaign, so a Merkl COMP row matching Compound's owed amount is dropped."""
     cfg = reg.get("rewards") or {}
     rows: list[dict] = []
-    price_of = {r["token"]: r["price"] for r in sync_rows if r.get("price")}
-    price_by_sym = {(r.get("symbol") or "").upper(): r["price"] for r in sync_rows if r.get("price")}
+    # Syncrone can carry a stray near-zero price row for the same token (COMP at 0.9999 next to 19.47):
+    # keep the highest price seen per token / symbol
+    price_of: dict[str, float] = {}
+    price_by_sym: dict[str, float] = {}
+    for r in sync_rows:
+        if r.get("price"):
+            price_of[r["token"]] = max(price_of.get(r["token"], 0.0), fnum(r["price"]))
+            k = (r.get("symbol") or "").upper()
+            price_by_sym[k] = max(price_by_sym.get(k, 0.0), fnum(r["price"]))
     # Merkl
     try:
         d = http_json(cfg["merkl_api"].format(safe=safe, chain_id=chain_id), timeout=60)
