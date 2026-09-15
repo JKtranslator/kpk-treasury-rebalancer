@@ -260,6 +260,8 @@
   const pairOk = (s, b) => sw.groups.some(g => g.sell.includes(s) && g.buy.includes(b));
   const buildable = sym => !sw.known || sw.known.includes(upper(sym));
   const isSettle = sym => SETTLEMENT.includes(upper(sym));
+  // default counter-asset: USDC, or WETH when selling a dollar stable, else the first buildable settlement asset
+  function defaultBuy(sell) { const bs = buyableFor(sell); const pref = ['USDC', 'USDT', 'DAI', 'USDS', 'GHO'].includes(upper(sell)) ? ['WETH', 'ETH', 'USDT', 'DAI'] : ['USDC', 'USDT', 'WETH']; for (const p of pref) { const hit = bs.find(b => upper(b) === p && buildable(b)); if (hit) return hit; } return bs.find(b => isSettle(b) && buildable(b)) || bs.find(buildable) || bs[0] || null; }
 
   async function renderSwap() {
     clearInterval(sw.timer); clearInterval(sw.tick); sw.quote = null; sw.sell = sw.buy = null;
@@ -270,7 +272,7 @@
     // sensible default: the largest idle settlement asset, into USDC (or the first permitted buy)
     const held = sells.filter(t => idleOf(t) > 0 && buildable(t)).sort((x, y) => idleOf(y) * (priceOf(y) || 0) - idleOf(x) * (priceOf(x) || 0));
     sw.sell = held[0] || sells.find(buildable) || sells[0];
-    const buys = buyableFor(sw.sell); sw.buy = buys.find(b => upper(b) === 'USDC' && buildable(b)) || buys.find(buildable) || buys[0] || null;
+    sw.buy = defaultBuy(sw.sell);
     $('#swapSellBtn').onclick = () => openPicker('sell'); $('#swapBuyBtn').onclick = () => openPicker('buy');
     $('#swapFlip').onclick = swapFlip; $('#swapRate').onclick = () => { sw.inverted = !sw.inverted; swapPaint(); };
     $('#swapAmount').oninput = () => { sw.quote = null; swapPaint(); swapSchedule(); };
@@ -380,7 +382,7 @@
     $('#swapPickerList').innerHTML = section('Settlement assets', rows.filter(r => isSettle(r.t)).sort(byVal)) + section('Other permitted', rows.filter(r => !isSettle(r.t)).sort(byVal)) || '<div class="empty">No permitted token matches.</div>';
     $('#swapPickerList').querySelectorAll('.sw-opt').forEach(b => b.onclick = () => {
       const t = b.dataset.t;
-      if (sw.picking === 'sell') { sw.sell = t; if (!sw.buy || !pairOk(t, sw.buy)) { const bs = buyableFor(t); sw.buy = bs.find(x => upper(x) === 'USDC' && buildable(x)) || bs.find(buildable) || bs[0] || null; } }
+      if (sw.picking === 'sell') { sw.sell = t; if (!sw.buy || !pairOk(t, sw.buy)) sw.buy = defaultBuy(t); }
       else sw.buy = t;
       sw.quote = null; closePicker(); swapPaint(); swapSchedule();
     });
