@@ -13,7 +13,8 @@
   const compact = v => { v = Number(v || 0); return v >= 1e9 ? '$' + (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? '$' + (v / 1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v / 1e3).toFixed(0) + 'k' : usd(v); };
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const GROUP_COLORS = { USD: '#2D8561', ETH: '#1D1D1D', EURO: '#8E6710', OTHER: '#706E66' };
-  const srcTag = b => b.apy == null ? '' : b.apy_source && b.apy_source !== 'vaults.fyi' ? `<span class="src" title="${esc(b.apy_source)}">${b.apy_source.startsWith('defillama') ? 'llama' : b.apy_source.includes('stale') ? 'stale' : b.apy_source.startsWith('vaults.fyi') ? '' : 'realised'}</span>` : '';
+  const srcTag = b => b.in_roles === false || b.apy_source === 'NOT IN ROLES' ? `<span class="src bad" title="listed by the Strategy API but not a target in the on-chain Roles (pending PUR); never proposed">not in Roles</span>`
+    : b.apy == null ? '' : b.apy_source && b.apy_source !== 'vaults.fyi' ? `<span class="src" title="${esc(b.apy_source)}">${b.apy_source.startsWith('defillama') ? 'llama' : b.apy_source.includes('stale') ? 'stale' : b.apy_source.startsWith('vaults.fyi') ? '' : 'realised'}</span>` : '';
 
   let index = null, snap = null, live = null, moves = [], executorOn = false;
   let sim = { pickupBps: 50, moveUsd: 250000, tvlCapPct: 10, basis: 'apy', exclude: new Set() };

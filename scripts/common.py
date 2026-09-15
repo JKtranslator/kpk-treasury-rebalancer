@@ -58,6 +58,27 @@ def registry() -> dict:
     return json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
 
 
+def safeagent_root() -> Path | None:
+    """The kpk-proposer checkout: KPK_SAFEAGENT, else ../../Codex/SafeAgentAll (office), else ~/kpk-proposer (box)."""
+    cands = [Path(os.environ["KPK_SAFEAGENT"])] if os.environ.get("KPK_SAFEAGENT") else []
+    cands += [Path(__file__).resolve().parent.parent.parent.parent / "Codex" / "SafeAgentAll", Path.home() / "kpk-proposer"]
+    return next((p for p in cands if p.exists()), None)
+
+
+def roles_targets(c: dict) -> set[str] | None:
+    """Lower-cased target addresses in the client's on-chain Roles permissions, as parsed by the proposer bot
+    (<safeagent>/<client dir>/Data/live_permissions.json). This is the gate every proposed venue must pass;
+    the Strategy API's 'permitted' list can run ahead of it (pending PURs). None when the file is not available."""
+    root = safeagent_root()
+    d = c.get("safeagent_dir")
+    if not root or not d:
+        return None
+    f = root / d / "Data" / "live_permissions.json"
+    if not f.exists():
+        return None
+    return {k.lower() for k in json.loads(f.read_text(encoding="utf-8")).keys()}
+
+
 def client(slug: str) -> dict:
     reg = registry()
     if slug not in reg["clients"]:

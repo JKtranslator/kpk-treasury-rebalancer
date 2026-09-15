@@ -35,3 +35,11 @@ cd ~/kpk-treasury-rebalancer && git pull --rebase && sudo systemctl restart kpk-
 ## Deploying page changes
 
 After editing anything under `assets/`, run `python scripts/stamp_assets.py` before committing: it rewrites the `?v=` on the asset links in `index.html` with a content hash so browsers and GitHub Pages fetch the new files. Without it users keep the cached `app.js` and see stale behaviour (the box only stamps data files, never the page).
+
+## Keys the box needs (names only, values in .env.local)
+
+`SYNCRONE_API_KEY`, `SAFE_API_KEY`, `ETHERSCAN_API_KEY`, `EXECUTOR_TOKEN`, plus since 2026-09-15 `VAULTS_FYI_API_KEY` (first APY tier, read live per vault address) and `DEBANK_ACCESS_KEY` (independent position cross-check in the reconciliation). Locally they live in the shared secrets file under the user profile.
+
+## Roles gate
+
+`fetch_yields.py` verifies every vault-type venue in the Strategy API permitted list against the proposer bot's parsed on-chain Roles (`<kpk-proposer>/<client dir>/Data/live_permissions.json`, path from `safeagent_dir` in the registry). Venues not in Roles are marked `NOT IN ROLES`, unpriced, and can never be proposed by either engine. The Strategy API list can run ahead of the Roles (pending PURs); only the Roles file counts.

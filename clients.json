@@ -77,7 +77,8 @@
           "ETHx",
           "OETH"
         ]
-      }
+      },
+      "safeagent_dir": "ens"
     },
     "nexus": {
       "display_name": "Nexus Mutual DAO Treasury",
@@ -93,7 +94,8 @@
           "roles_modifier": "0x24Fc0B9414Bb8e99a822a45BdE3A398BcfC85A58"
         }
       },
-      "policy": null
+      "policy": null,
+      "safeagent_dir": "nexus"
     },
     "cow": {
       "display_name": "CoW DAO Treasury",
@@ -124,7 +126,8 @@
           "manager": "0xfABCA7957D67c680d3ab2C28b8dC003A5852123a",
           "note": "CoW defence reserve; not in the Strategy API client, Syncrone may book it under the same org"
         }
-      }
+      },
+      "safeagent_dir": "cow dao"
     },
     "balancer": {
       "display_name": "Balancer DAO Treasury",
@@ -146,7 +149,8 @@
           "roles_modifier": "0x13c61a25DB73e7a94a244bD2205aDba8b4a60F4a"
         }
       },
-      "policy": null
+      "policy": null,
+      "safeagent_dir": "balancer"
     }
   },
   "protocol_aliases": {
@@ -371,5 +375,6 @@
     "uniswap_v3_manager": {
       "1": "0xC36442b4a4522E871399CD717aBDD847Ab11FE88"
     }
-  }
+  },
+  "_comment_safeagent": "safeagent_dir = client folder inside the kpk-proposer checkout (Codex/SafeAgentAll locally, ~/kpk-proposer on the box); Data/live_permissions.json there is the on-chain Roles gate for every proposed venue"
 }

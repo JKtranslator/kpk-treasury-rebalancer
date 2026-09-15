@@ -348,6 +348,12 @@ def render_md(c, h, y, book, nav, checks, perf, args) -> str:
     L.append("- APYs are vaults.fyi figures via the Strategy API for the selected period; reward-bearing wrappers (weETH, wstETH, osETH, ETHx) earn through their exchange rate even when 'idle'.")
     L.append("- Syncrone `apy_pct` is month-to-date return, not an annualised yield; it is not used here.")
     L.append("- Permitted venues without an APY feed may be better than the priced ones; they are listed, not ranked.")
+    rg = y.get("roles_gate") or {}
+    if rg.get("excluded"):
+        L.append("- **Not in on-chain Roles (excluded from every candidate list):** " + ", ".join(f"{e['protocol']}/{e['asset']}" for e in rg["excluded"])
+                 + ". The Strategy API lists them as permitted, but the Safe cannot call them until the PUR lands.")
+    elif not rg.get("checked"):
+        L.append("- ⚠️ Venues were NOT verified against the on-chain Roles file (live_permissions.json unavailable in this run).")
     L.append("- Exit liquidity is not checked here: confirm pool utilisation before sizing a withdrawal from a lending market.")
     L.append("- Sizing respects the venue TVL cap and the policy protocol cap; it does not model gas, slippage or swap routes.")
     return "\n".join(L)
@@ -368,6 +374,15 @@ def main():
     h = load(out, "holdings.json")
     y = load(out, "yields.json")
     book = build_book(h, reg)
+    # live vaults.fyi APYs (fetched in fetch_yields by vault address) override the Strategy API's cached position APYs
+    va = y.get("vault_apys") or {}
+    per = {"1h": "apy_1h", "1day": "apy_1d", "7day": "apy_7d", "30day": "apy_30d"}.get(h.get("period", "7day"), "apy_7d")
+    for b in book:
+        d = va.get((b.get("vault") or "").lower())
+        if b["kind"] == "position" and d and d.get(per) is not None:
+            b["apy"], b["apy_source"] = d[per], "vaults.fyi live"
+            if d.get("tvl_usd"):
+                b["venue_tvl_usd"] = d["tvl_usd"]
     # Off-network: Syncrone rows are the whole book; match APY from the permitted venues (vaults.fyi via
     # the last snapshot) by protocol + asset group + token, before the DeFiLlama fallback.
     if y.get("stale_note"):

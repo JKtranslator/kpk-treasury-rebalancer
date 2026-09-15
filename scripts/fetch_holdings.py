@@ -466,6 +466,72 @@ def collect_rewards(c: dict, reg: dict, chain_id: int, safe: str, safe_rows: lis
 
 
 # ---------------------------------------------------------------- reconcile
+DEBANK_CHAIN = {1: "eth", 100: "xdai", 42161: "arb", 8453: "base", 10: "op"}
+DEBANK_PROTO = {"aave3": "aave_v3", "aave2": "aave_v2", "compound3": "compound_v3", "etherfi": "ether_fi", "morphoblue": "morphoVaults",
+                "morpho": "morphoVaults", "stakewise": "stakewise_v3", "stakewise3": "stakewise_v3", "lido": "lido", "stader": "stader",
+                "fluid": "fluid", "sky": "sky", "makerdao": "sky", "spark": "spark", "merkl": "merkl", "uniswap3": "uniswap",
+                "balancer2": "balancer", "balancer": "balancer", "rocketpool": "rocket_pool", "gearbox": "gearbox", "curve": "curve",
+                "nexusmutual": "nexus_mutual", "compound": "compound_v2"}
+
+
+def fetch_debank(chain_id: int, safe: str) -> dict | None:
+    """Independent read of the Safe's DeFi positions and wallet tokens (DeBank Pro, DEBANK_ACCESS_KEY). Live prices."""
+    k = key("DEBANK_ACCESS_KEY")
+    ch = DEBANK_CHAIN.get(chain_id)
+    if not k or not ch or not safe:
+        return None
+    hdr = {"AccessKey": k}
+    try:
+        protos = http_json(f"https://pro-openapi.debank.com/v1/user/all_complex_protocol_list?id={safe}&chain_ids={ch}", headers=hdr, timeout=120)
+        toks = http_json(f"https://pro-openapi.debank.com/v1/user/token_list?id={safe}&chain_id={ch}&is_all=false", headers=hdr, timeout=120)
+    except Exception as e:
+        print("  debank:", str(e)[:120])
+        return None
+    by_proto = {}
+    for p in protos:
+        usd = sum(fnum(i.get("stats", {}).get("net_usd_value")) for i in p.get("portfolio_item_list", []))
+        by_proto[p.get("id")] = dict(name=p.get("name"), usd=usd, ours=DEBANK_PROTO.get(p.get("id"), p.get("id")),
+                                     items=[dict(name=i.get("name"), usd=fnum(i.get("stats", {}).get("net_usd_value")),
+                                                 tokens=[(t.get("symbol"), fnum(t.get("amount"))) for t in i.get("asset_token_list", [])[:4]])
+                                            for i in p.get("portfolio_item_list", [])])
+    wallet = [dict(symbol=t.get("symbol"), token=(t.get("id") or "").lower(), amount=fnum(t.get("amount")), price=fnum(t.get("price")),
+                   usd=fnum(t.get("amount")) * fnum(t.get("price")), verified=t.get("is_verified")) for t in toks]
+    return dict(protocols=by_proto, wallet=wallet,
+                protocol_nav_usd=round(sum(v["usd"] for v in by_proto.values())),
+                wallet_usd=round(sum(w["usd"] for w in wallet if w["verified"])),
+                nav_usd=round(sum(v["usd"] for v in by_proto.values()) + sum(w["usd"] for w in wallet if w["verified"])))
+
+
+def debank_crosscheck(sync_rows: list[dict], debank: dict, reg: dict) -> list[str]:
+    """Per-protocol USD compare, Syncrone vs DeBank. Prices differ by timing, so the tolerance is loose; the point
+    is to catch a protocol one source has and the other does not, which is what a missed position looks like."""
+    if not debank:
+        return []
+    aliases = reg.get("protocol_aliases", {})
+    ours: dict[str, float] = {}
+    for r in sync_rows:
+        if r["kind"] == "position" and not r.get("spam"):
+            p = aliases.get(r["protocol"].lower(), r["protocol"].lower())
+            ours[p] = ours.get(p, 0.0) + r["usd"]
+    theirs: dict[str, float] = {}
+    for v in debank["protocols"].values():
+        theirs[v["ours"]] = theirs.get(v["ours"], 0.0) + v["usd"]
+    notes = []
+    for p in sorted(set(ours) | set(theirs)):
+        a, b = ours.get(p, 0.0), theirs.get(p, 0.0)
+        if max(a, b) < 10_000:
+            continue
+        if a and not b:
+            notes.append(f"DeBank does not see {p} (Syncrone ${a:,.0f})")
+        elif b and not a:
+            notes.append(f"Syncrone does not book {p} (DeBank ${b:,.0f})")
+        else:
+            d = abs(a - b) / max(a, b)
+            if d > 0.08:
+                notes.append(f"{p}: Syncrone ${a:,.0f} vs DeBank ${b:,.0f} differ by {d:.1%}")
+    return notes
+
+
 def pct_diff(a: float, b: float) -> float | None:
     if a is None or b is None:
         return None
@@ -709,6 +775,17 @@ def main():
         if r["kind"] == "idle" and r["token"] in held_tokens:
             r["asset_group"] = "REWARDS"
     recon, nav, flags = reconcile(sync_rows, strat_rows, safe_rows, eth_rows, reg, c)
+    debank = fetch_debank(chain_id, safe) if safe else None
+    if debank:
+        nav["debank_nav_usd"] = debank["nav_usd"]
+        nav["syncrone_vs_debank_diff"] = pct_diff(nav["syncrone_nav_usd"], debank["nav_usd"])
+        print(f"  debank: {len(debank['protocols'])} protocols ${debank['protocol_nav_usd']:,.0f} + wallet ${debank['wallet_usd']:,.0f} "
+              f"= ${debank['nav_usd']:,.0f} (live prices; Syncrone ${nav['syncrone_nav_usd']:,.0f})")
+        xc = debank_crosscheck(sync_rows, debank, reg)
+        for n_ in xc:
+            flags.append("NOTE (DeBank cross-check): " + n_)
+    else:
+        print("  debank: skipped (no DEBANK_ACCESS_KEY or chain unsupported)")
     ub = [r for r in sync_rows if r.get("unbooked")]
     if ub:
         flags.append("NOTE: the Safe holds vault shares Syncrone has not booked yet (value shown as 0 until it does): "
@@ -727,9 +804,9 @@ def main():
     write_json(out / "holdings.json", dict(
         client=a.client, display_name=c["display_name"], chain_id=chain_id, avatar_safe=safe,
         as_of=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), period=a.period,
-        sources=dict(syncrone=bool(sync_org), strategy_api=bool(strat), safe=bool(safe_rows), etherscan=bool(eth_rows)),
+        sources=dict(syncrone=bool(sync_org), strategy_api=bool(strat), safe=bool(safe_rows), etherscan=bool(eth_rows), debank=bool(debank)),
         positions=positions, rewards=rewards, other_wallets_in_syncrone_org={k: round(v) for k, v in other_wallets.items() if v > DUST_USD},
-        safe_balances=safe_rows, etherscan_balances=eth_rows,
+        safe_balances=safe_rows, etherscan_balances=eth_rows, debank=debank,
         nav=nav, reconciliation=recon, flags=flags))
     dd = nav["syncrone_vs_bridge_diff"]
     print(f"  NAV syncrone ${nav['syncrone_nav_usd']:,.0f} | bridge (strategy + untracked + in-flight + idle) ${nav['bridge_usd']:,.0f}"
