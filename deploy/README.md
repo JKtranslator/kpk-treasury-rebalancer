@@ -31,3 +31,7 @@ sudo systemctl status kpk-rebalancer.service --no-pager
 tail -50 ~/kpk-treasury-rebalancer/runs/executor.stderr.log
 cd ~/kpk-treasury-rebalancer && git pull --rebase && sudo systemctl restart kpk-rebalancer.service
 ```
+
+## Deploying page changes
+
+After editing anything under `assets/`, run `python scripts/stamp_assets.py` before committing: it rewrites the `?v=` on the asset links in `index.html` with a content hash so browsers and GitHub Pages fetch the new files. Without it users keep the cached `app.js` and see stale behaviour (the box only stamps data files, never the page).
