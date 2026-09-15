@@ -3,11 +3,11 @@
   "display_name": "CoW DAO Treasury",
   "chain_id": 1,
   "avatar_safe": "0x616dE58c011F8736fa20c7Ae5352F7f6FB9F0669",
-  "as_of": "2026-09-15T10:38:24+00:00",
+  "as_of": "2026-09-15T11:13:27+00:00",
   "period": "7day",
   "vault_data_fetched_at": "2026-09-15T01:53:22.611Z",
   "run_folder": "2026-09-15",
-  "nav_usd": 18501748,
+  "nav_usd": 18513287,
   "eth_price_usd": 2456.4499,
   "reconciliation": {
     "syncrone_nav_usd": 18501363,
@@ -17,7 +17,7 @@
     "idle_usd": 395873,
     "untracked_usd": 18105471,
     "strategy_api_usd": 0,
-    "tokens_checked": 14,
+    "tokens_checked": 15,
     "tokens_disagree": 0,
     "other_wallets": {
       "0x616de58c011f8736fa20c7ae5352f7f6fb9f0669 chain 42161": 80002,
@@ -30,7 +30,8 @@
   },
   "flags": [
     "NOTE: Strategy API unreachable (failed after 3 attempts: http://ops-tools-backend.kpk/api/clients/current-strate); positions from Syncrone, APYs from the last snapshot's permitted venues (stale) and fallback sources",
-    "NOTE: positions the Strategy API / vaults.fyi does not price (kept in the book with APY unknown): morphoVaults/USD $7,472,616, aave_v3/USD $3,652,741, aave_v3/EURO $2,559,976, ether_fi/ETH $1,925,591, compound_v3/USD/ciUSDCv3 $1,000,326, stakewise_v3/ETH $730,938, lido/ETH $346,744, uniswap/OTHER $223,396, uniswap/ETH $193,143."
+    "NOTE: positions the Strategy API / vaults.fyi does not price (kept in the book with APY unknown): morphoVaults/USD $7,472,616, aave_v3/USD $3,652,741, aave_v3/EURO $2,559,976, ether_fi/ETH $1,925,591, compound_v3/USD/ciUSDCv3 $1,000,326, stakewise_v3/ETH $730,938, lido/ETH $346,744, uniswap/OTHER $223,396, uniswap/ETH $193,143.",
+    "NOTE: the Safe holds vault shares Syncrone has not booked yet (value shown as 0 until it does): 3,607,337.38 sGho (Aave Savings GHO)"
   ],
   "policy": null,
   "policy_checks": [],
@@ -47,7 +48,7 @@
       "venue": "claimable MORPHO (merkl)",
       "symbol": "MORPHO",
       "asset_group": "REWARDS",
-      "usd": 17.88,
+      "usd": 17.86,
       "apy": null,
       "apy_source": null,
       "venue_tvl_usd": null,
@@ -55,6 +56,36 @@
       "balance": 8.302223982435503,
       "claimable": true,
       "claim_cmd": "merkl claim"
+    },
+    {
+      "kind": "reward",
+      "protocol": "uniswap",
+      "venue": "claimable WETH (LP fees, position #1342394)",
+      "symbol": "WETH",
+      "asset_group": "REWARDS",
+      "usd": 6279.75,
+      "apy": null,
+      "apy_source": null,
+      "venue_tvl_usd": null,
+      "untracked": false,
+      "balance": 2.49119494323387,
+      "claimable": true,
+      "claim_cmd": "uniswap claim 1342394"
+    },
+    {
+      "kind": "reward",
+      "protocol": "uniswap",
+      "venue": "claimable COW (LP fees, position #1342394)",
+      "symbol": "COW",
+      "asset_group": "REWARDS",
+      "usd": 5258.76,
+      "apy": null,
+      "apy_source": null,
+      "venue_tvl_usd": null,
+      "untracked": false,
+      "balance": 38953.7880059051,
+      "claimable": true,
+      "claim_cmd": "uniswap claim 1342394"
     },
     {
       "kind": "idle",
@@ -1052,13 +1083,13 @@
       "source": "defillama"
     },
     "aave_v3/USD/GHO": {
-      "apy": 0.0,
-      "apy_base": null,
+      "apy": 0.045,
+      "apy_base": 0.045,
       "apy_intrinsic_lst": null,
-      "tvl_usd": 2570666.0,
-      "pool": "bf0660ab-38bf-48a4-9a6c-393ec0e2ff5f",
+      "tvl_usd": 172250294.0,
+      "pool": "19d024ed-9c70-4323-9a81-fe873ea5f0e0",
       "project": "aave-v3",
-      "symbol": "GHO",
+      "symbol": "SGHO",
       "chain": "Ethereum",
       "source": "defillama"
     },
@@ -1105,6 +1136,17 @@
       "symbol": "USDC",
       "chain": "Ethereum",
       "source": "defillama"
+    },
+    "savingsgho/USD": {
+      "apy": 0.045,
+      "apy_base": 0.045,
+      "apy_intrinsic_lst": null,
+      "tvl_usd": 172250294.0,
+      "pool": "19d024ed-9c70-4323-9a81-fe873ea5f0e0",
+      "project": "aave-v3",
+      "symbol": "SGHO",
+      "chain": "Ethereum",
+      "source": "defillama"
     }
   },
   "rewards_sweep": {
@@ -1118,6 +1160,26 @@
         "source": "merkl",
         "claimable": true,
         "claim_cmd": "merkl claim"
+      }
+    ],
+    "claim_only": [
+      {
+        "symbol": "WETH",
+        "amount": 2.49119494323387,
+        "usd": 6280,
+        "source": "uniswap",
+        "claim_cmd": "uniswap claim 1342394",
+        "token_id": 1342394,
+        "venue": "claimable WETH (LP fees, position #1342394)"
+      },
+      {
+        "symbol": "COW",
+        "amount": 38953.7880059051,
+        "usd": 5259,
+        "source": "uniswap",
+        "claim_cmd": "uniswap claim 1342394",
+        "token_id": 1342394,
+        "venue": "claimable COW (LP fees, position #1342394)"
       }
     ],
     "best_usd_venue": {
