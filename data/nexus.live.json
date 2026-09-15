@@ -4,27 +4,27 @@
   "chain_id": 1,
   "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
   "ok": true,
-  "as_of": "2026-09-15T02:37:12+00:00",
+  "as_of": "2026-09-15T03:40:42+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 7438751,
-  "positions_usd": 7294829,
-  "idle_usd": 143922,
+  "nav_usd": 7523353,
+  "positions_usd": 7377463,
+  "idle_usd": 145890,
   "in_flight_usd": 0,
   "onchain_idle_eth": 3.140807908958729,
-  "eth_price_usd": 2484.24,
+  "eth_price_usd": 2516.08,
   "groups": {
-    "USD": 1627094,
-    "OTHER": 5133870,
-    "ETH": 677755
+    "USD": 1632498,
+    "OTHER": 5201221,
+    "ETH": 689602
   },
   "sleeves": [
     {
       "protocol": "nexusmutual",
       "asset_group": "OTHER",
-      "usd": 4746744,
+      "usd": 4812188,
       "in_flight_usd": 0,
       "positions": [
         "Nexus Mutual Staked on Ethereum"
@@ -33,7 +33,7 @@
     {
       "protocol": "morphoVaults",
       "asset_group": "USD",
-      "usd": 1061153,
+      "usd": 1066589,
       "in_flight_usd": 0,
       "positions": [
         "Morpho v2 Yield on Ethereum"
@@ -42,7 +42,7 @@
     {
       "protocol": "ether_fi",
       "asset_group": "ETH",
-      "usd": 282746,
+      "usd": 287166,
       "in_flight_usd": 0,
       "positions": [
         "Etherfi Staked on Ethereum"
@@ -51,7 +51,7 @@
     {
       "protocol": "nexusmutual",
       "asset_group": "USD",
-      "usd": 256074,
+      "usd": 256115,
       "in_flight_usd": 0,
       "positions": [
         "Nexus Mutual v2 Yield on Ethereum"
@@ -60,7 +60,7 @@
     {
       "protocol": "uniswap",
       "asset_group": "OTHER",
-      "usd": 251081,
+      "usd": 251121,
       "in_flight_usd": 0,
       "positions": [
         "Uniswap v3 Liquidity Pool on Ethereum"
@@ -78,7 +78,7 @@
     {
       "protocol": "stakewise_v3",
       "asset_group": "ETH",
-      "usd": 200440,
+      "usd": 204868,
       "in_flight_usd": 0,
       "positions": [
         "Stakewise Staked on Ethereum"
@@ -87,7 +87,7 @@
     {
       "protocol": "gearbox",
       "asset_group": "ETH",
-      "usd": 186766,
+      "usd": 189665,
       "in_flight_usd": 0,
       "positions": [
         "Gearbox v3 Yield on Ethereum"
@@ -96,7 +96,7 @@
     {
       "protocol": "fluid",
       "asset_group": "USD",
-      "usd": 59692,
+      "usd": 59618,
       "in_flight_usd": 0,
       "positions": [
         "Fluid Yield on Ethereum"
@@ -119,25 +119,25 @@
     {
       "symbol": "cbBTC",
       "balance": 0.00788571,
-      "usd": 604,
+      "usd": 615,
       "asset_group": "OTHER"
     },
     {
       "symbol": "ETH",
       "balance": 3.140807908958729,
-      "usd": 7803,
+      "usd": 7903,
       "asset_group": "ETH"
     },
     {
       "symbol": "GEAR",
       "balance": 173863.4238356013,
-      "usd": 60,
+      "usd": 61,
       "asset_group": "OTHER"
     },
     {
       "symbol": "NXM",
       "balance": 2136.208426773011,
-      "usd": 135318,
+      "usd": 137174,
       "asset_group": "OTHER"
     }
   ],
@@ -150,6 +150,6 @@
   "other_wallets": {},
   "unbooked": [],
   "flags": [
-    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 5,576.8578 -> 75.3490; cbBTC 0.0047 -> 0.0079"
+    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 0.0000 -> 75.3490"
   ]
 }
