@@ -200,12 +200,15 @@ def sweep_commands(body: dict, snap: dict) -> tuple[list[str], dict, list[str]]:
     then deposit all USDC into the chosen venue (stage 2). Tokens below min_sweep_usd are skipped."""
     sw = snap.get("rewards_sweep") or {}
     min_usd = fnum(sw.get("min_usd") or 100)
-    items = [i for i in (body.get("items") or sw.get("items") or []) if fnum(i.get("usd")) >= min_usd]
+    if body.get("items"):   # the page sends an explicit selection: honour it as is
+        items = list(body["items"])
+    else:
+        items = [i for i in (sw.get("items") or []) if fnum(i.get("usd")) >= min_usd]
     if not items:
         raise ValueError(f"no reward worth sweeping (all below ${min_usd:,.0f})")
-    cmds, notes = [], []
-    for cc in sorted({i["claim_cmd"] for i in items if i.get("claimable") and i.get("claim_cmd")}):
-        cmds.append(cc)
+    notes = []
+    claims = sorted({i["claim_cmd"] for i in items if i.get("claimable") and i.get("claim_cmd")} | set(body.get("extra_commands") or []))
+    cmds = list(claims)
     by_tok: dict[str, float] = {}
     for i in items:
         by_tok[i["symbol"].upper()] = by_tok.get(i["symbol"].upper(), 0.0) + fnum(i.get("amount"))
@@ -223,7 +226,7 @@ def sweep_commands(body: dict, snap: dict) -> tuple[list[str], dict, list[str]]:
     if not dep:
         raise ValueError(f"no deposit command for {to_proto}")
     stage2 = dict(commands=[dep], label=f"deposit all USDC into {to['protocol']} {to.get('asset')}", wait_for="USDC", client=body["client"], to=to)
-    notes.append("rewards sweep: stage 1 claims (" + ", ".join(cmds[:len(cmds) - len(by_tok)]) + f") and places {len([s for s in by_tok if s != 'USDC'])} pre-signed CoW order(s) into USDC; "
+    notes.append("rewards sweep: stage 1 claims (" + (", ".join(claims) or "none") + f") and places {len([s for s in by_tok if s != 'USDC'])} pre-signed CoW order(s) into USDC; "
                  "stage 2 deposits the USDC once the orders fill. Amounts include rewards already held in the Safe.")
     return cmds, stage2, notes
 

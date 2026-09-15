@@ -204,25 +204,50 @@
   }
 
   /* ------------------------------------------------------------------ rewards sweep */
+  const rewardSel = {};   // client -> { rowKey: checked }
   function renderRewards() {
     const box = $('#rewardsBox');
     const sw = snap.rewards_sweep; const co = (sw && sw.claim_only) || [];
     if (!sw || ((!sw.items || !sw.items.length) && !co.length)) { box.innerHTML = '<p class="empty">No claimable rewards or reward tokens for this client.</p>'; return; }
     const doSwap = $('#sweepToggle').checked;
     $('#sweepToggle').onchange = renderRewards;
-    const worth = (sw.items || []).filter(i => i.usd >= sw.min_usd);
     const best = sw.best_usd_venue;
+    const n4 = v => Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: 4 });
+    // one row per claim / held token, Uniswap fee positions included (claim-only, never swapped)
+    const rows = (sw.items || []).map((i, n) => ({ key: 'i' + n + i.symbol, kind: 'sweep', item: i, source: i.source, token: i.symbol, amount: n4(i.amount), usd: i.usd,
+      claimable: i.claimable, claim_cmd: i.claim_cmd, state: (i.claimable ? 'claimable' : 'held in Safe') + (i.usd < sw.min_usd ? ' · below sweep floor' : ''), def: i.usd >= sw.min_usd }));
     const byPos = {}; co.forEach(c => { (byPos[c.token_id] = byPos[c.token_id] || []).push(c); });
-    const claimRows = Object.entries(byPos).map(([tid, cs]) => `<div class="mv"><div class="path"><b>Uniswap v3 fees</b> · position #${esc(tid)} · ${cs.map(c => `${Number(c.amount).toLocaleString('en-US', { maximumFractionDigits: 4 })} ${esc(c.symbol)}`).join(' + ')}<br><small>claim only: fees stay in the Safe as the pool tokens</small></div><div class="amt num">${usd(cs.reduce((s, c) => s + c.usd, 0))}</div><button class="btn ${executorOn ? '' : 'ghost'}" data-claim="${esc(cs[0].claim_cmd)}" type="button" ${executorOn ? '' : 'disabled'}>Claim</button></div>`).join('');
-    box.innerHTML = `<div class="grp"><div class="grp-h"><h3>Rewards</h3><div class="tot"><b>${compact(sw.total_usd)}</b> claimable or held · ${worth.length} of ${sw.items.length} above ${usd(sw.min_usd)}</div></div>
-      <div class="scroll"><table><thead><tr><th>Source</th><th>Token</th><th class="n">Amount</th><th class="n">Value</th><th>State</th></tr></thead><tbody>
-      ${sw.items.map(i => `<tr class="${i.usd < sw.min_usd ? 'inflight' : ''}"><td class="k">${esc(i.source)}</td><td>${esc(i.symbol)}</td><td class="n num">${Number(i.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 4 })}</td><td class="n num">${usd(i.usd)}</td><td>${i.claimable ? 'claimable' : 'held in Safe'}${i.usd < sw.min_usd ? ' · below sweep floor' : ''}</td></tr>`).join('')}
+    Object.entries(byPos).forEach(([tid, cs]) => rows.push({ key: 'u' + tid, kind: 'uni', source: 'uniswap v3 fees · #' + tid, token: cs.map(c => c.symbol).join(' + '), amount: cs.map(c => n4(c.amount)).join(' + '),
+      usd: cs.reduce((s, c) => s + c.usd, 0), claimable: true, claim_cmd: cs[0].claim_cmd, state: 'claim only · fees stay as pool tokens', def: true }));
+    const sel = rewardSel[snap.client] || (rewardSel[snap.client] = {});
+    rows.forEach(r => { if (!(r.key in sel)) sel[r.key] = r.def; });
+    const chosen = rows.filter(r => sel[r.key]);
+    const claimCmds = [...new Set(chosen.filter(r => r.claimable && r.claim_cmd).map(r => r.claim_cmd))];
+    const sweepItems = chosen.filter(r => r.kind === 'sweep').map(r => r.item);
+    const swapTokens = [...new Set(sweepItems.map(i => i.symbol).filter(t => t.toUpperCase() !== 'USDC'))];
+    const extra = [...new Set(chosen.filter(r => r.kind === 'uni').map(r => r.claim_cmd))];
+    const total = chosen.reduce((s, r) => s + r.usd, 0);
+    const swapMode = doSwap && sweepItems.length > 0;
+    const canRun = executorOn && chosen.length > 0 && (swapMode ? !!best : claimCmds.length > 0);
+    let title, summary;
+    if (!chosen.length) { title = 'Nothing selected'; summary = 'Tick the rewards to bundle into one transaction.'; }
+    else if (swapMode) {
+      title = 'Claim, swap and deposit';
+      summary = `${claimCmds.length ? 'claim (' + esc(claimCmds.join(', ')) + ') → ' : ''}CoW swap <b>${esc(swapTokens.join(', ') || 'nothing')}</b> to USDC → deposit into <b>${best ? esc(best.protocol + ' ' + best.asset) : 'no permitted USDC venue'}</b>${best ? ` <small>(${pct(best.apy)})</small>` : ''}<br><small>one Safe transaction bundles the claims and one pre-signed CoW order per token; the USDC deposit follows once the orders fill</small>`;
+    } else {
+      title = 'Claim only';
+      summary = `${esc(claimCmds.join(', ')) || 'nothing to claim (only held tokens selected)'}<br><small>one transaction; tokens stay in the Safe</small>`;
+    }
+    const allOn = rows.every(r => sel[r.key]);
+    box.innerHTML = `<div class="grp"><div class="grp-h"><h3>Rewards</h3><div class="tot"><b>${compact(rows.reduce((s, r) => s + r.usd, 0))}</b> claimable or held · <b>${chosen.length}</b> of ${rows.length} selected · sweep floor ${usd(sw.min_usd)}</div></div>
+      <div class="scroll"><table><thead><tr><th class="ck"><input type="checkbox" id="rwAll" ${allOn ? 'checked' : ''} title="select all"></th><th>Source</th><th>Token</th><th class="n">Amount</th><th class="n">Value</th><th>State</th></tr></thead><tbody>
+      ${rows.map(r => `<tr class="${sel[r.key] ? '' : 'inflight'}"><td class="ck"><input type="checkbox" data-k="${esc(r.key)}" ${sel[r.key] ? 'checked' : ''}></td><td class="k">${esc(r.source)}</td><td>${esc(r.token)}</td><td class="n num">${esc(r.amount)}</td><td class="n num">${usd(r.usd)}</td><td>${esc(r.state)}</td></tr>`).join('')}
       </tbody></table></div>
-      ${claimRows}
-      ${worth.length ? `<div class="mv" style="margin-top:10px"><div class="path"><b>${doSwap ? 'Claim, swap and deposit' : 'Claim only'}</b> · ${doSwap ? `claim → CoW swap to USDC → deposit into <b>${best ? esc(best.protocol + ' ' + best.asset) : 'no permitted USDC venue'}</b>${best ? ` <small>(${pct(best.apy)}, best permitted USDC venue)</small>` : ''}<br><small>two stages: claims and pre-signed CoW orders first, USDC deposit once they fill</small>` : `${[...new Set(worth.filter(i => i.claimable && i.claim_cmd).map(i => i.claim_cmd))].join(', ') || 'nothing to claim'}<br><small>one transaction; tokens stay in the Safe</small>`}</div>
-      <div class="amt num">${compact(worth.reduce((s, i) => s + i.usd, 0))}</div><button class="btn ${executorOn && (doSwap ? best : worth.some(i => i.claim_cmd)) && worth.length ? '' : 'ghost'}" id="sweepBtn" type="button" ${executorOn && (doSwap ? best : worth.some(i => i.claim_cmd)) && worth.length ? '' : 'disabled'}>Execute</button></div>` : ''}</div>`;
-    const b = $('#sweepBtn'); if (b) b.onclick = () => doSwap ? openSweep(worth, best) : openClaimOnly([...new Set(worth.filter(i => i.claimable && i.claim_cmd).map(i => i.claim_cmd))].join(' ; '));
-    box.querySelectorAll('button[data-claim]').forEach(btn => btn.onclick = () => openClaimOnly(btn.dataset.claim));
+      <div class="mv" style="margin-top:10px"><div class="path"><b>${title}</b>${chosen.length ? ' · ' : ''}${summary}</div>
+      <div class="amt num">${compact(total)}</div><button class="btn ${canRun ? '' : 'ghost'}" id="sweepBtn" type="button" ${canRun ? '' : 'disabled'}>Execute</button></div></div>`;
+    box.querySelectorAll('input[data-k]').forEach(cb => cb.onchange = () => { sel[cb.dataset.k] = cb.checked; renderRewards(); });
+    $('#rwAll').onchange = e => { rows.forEach(r => sel[r.key] = e.target.checked); renderRewards(); };
+    $('#sweepBtn').onclick = () => swapMode ? openSweep(sweepItems, best, extra) : openClaimOnly(claimCmds.join(' ; '));
   }
   function openClaimOnly(cmd) {
     const cmds = cmd.split(' ; ').map(s => s.trim()).filter(Boolean);
@@ -234,11 +259,11 @@
     $('#mMsg').textContent = 'Builds the collect() call through the bot; the fee tokens land in the Safe. No swap, no deposit.';
     $('#mBuild').disabled = !executorOn; $('#mPropose').disabled = true; steps({}); $('#modal').hidden = false;
   }
-  function openSweep(items, best) {
-    cur = { move: null, plan: null, sweep: { items, to: best } };
+  function openSweep(items, best, extra = []) {
+    cur = { move: null, plan: null, sweep: { items, to: best, extra } };
     $('#mTitle').textContent = `Execute · ${snap.display_name} · rewards sweep`;
     $('#mParams').innerHTML = [['Client / chain', `${snap.client} · ${snap.chain_id}`], ['Avatar Safe', (snap.safes && snap.safes.avatar) || snap.avatar_safe],
-      ['Action', 'CLAIM rewards → CoW swap to USDC → DEPOSIT (2 stages)'], ['Tokens', items.map(i => `${Number(i.amount).toLocaleString('en-US', { maximumFractionDigits: 4 })} ${i.symbol} (${i.source})`).join(', ')],
+      ['Action', 'CLAIM rewards → CoW swap to USDC → DEPOSIT (2 stages)'], ['Tokens', items.map(i => `${Number(i.amount).toLocaleString('en-US', { maximumFractionDigits: 4 })} ${i.symbol} (${i.source})`).join(', ')], ...(extra.length ? [['Also claim', extra.join(', ')]] : []),
       ['Deposit into', `${best.protocol} · ${best.asset}${best.vault ? ' · ' + best.vault : ''}`], ['Value', usd(items.reduce((s, i) => s + i.usd, 0))]]
       .map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
     $('#mPlan').hidden = true; $('#mSim').hidden = true; $('#mMsg').className = 'modal-msg';
@@ -492,7 +517,7 @@
     try {
       const payload = cur.claimOnly ? { client: snap.client, commands: cur.stage2.commands, notes: ['claim only'] }
         : cur.stage2 ? { client: snap.client, commands: cur.stage2.commands, stage: '2 of 2', notes: ['stage 2: deposit of the CoW fill'] }
-        : cur.sweep ? { client: snap.client, rewards_sweep: true, items: cur.sweep.items, to: cur.sweep.to } : movePayload(cur.move);
+        : cur.sweep ? { client: snap.client, rewards_sweep: true, items: cur.sweep.items, to: cur.sweep.to, extra_commands: cur.sweep.extra || [] } : movePayload(cur.move);
       let r = await fetch(EXECUTOR + '/plan', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(payload) });
       if (r.status === 401 && askToken('Executor token needed to build')) r = await fetch(EXECUTOR + '/plan', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(payload) });
       const j = await r.json();

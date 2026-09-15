@@ -364,6 +364,12 @@ def collect_rewards(c: dict, reg: dict, chain_id: int, safe: str, safe_rows: lis
             if res and len(res) >= 130:
                 token, owed = "0x" + res[26:66], int(res[66:130], 16) / 1e18
                 if owed > 0:
+                    # Compound moved COMP distribution to Merkl; CometRewards can still report an owed amount it cannot
+                    # pay (claim reverts "transfer amount exceeds balance"). Only book it here when the contract holds it.
+                    held = int(_rpc_call(chain_id, token, "0x" + _sel("balanceOf(address)") + rew[2:].lower().rjust(64, "0")), 16) / 1e18
+                    if held < owed:
+                        print(f"  compound rewards: {owed:.4f} COMP owed on {comet[:10]} but CometRewards holds {held:.4f}; claim via Merkl")
+                        continue
                     px = price_of.get(token, price_by_sym.get("COMP", 0.0))
                     rows.append(dict(source="compound", symbol="COMP", token=token, amount=owed, price=px, usd=owed * px,
                                      claimable=True, claim_cmd="compound claim", comet=comet))
