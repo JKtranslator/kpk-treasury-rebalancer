@@ -3,11 +3,11 @@
   "display_name": "Balancer DAO Treasury",
   "chain_id": 1,
   "avatar_safe": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
-  "as_of": "2026-09-15T10:40:44+00:00",
+  "as_of": "2026-09-15T11:15:48+00:00",
   "period": "7day",
   "vault_data_fetched_at": "2026-09-15T01:53:22.611Z",
   "run_folder": "2026-09-15",
-  "nav_usd": 7153369,
+  "nav_usd": 7156528,
   "eth_price_usd": 2520.7772,
   "reconciliation": {
     "syncrone_nav_usd": 7153210,
@@ -17,7 +17,7 @@
     "idle_usd": 773528,
     "untracked_usd": 6379670,
     "strategy_api_usd": 0,
-    "tokens_checked": 17,
+    "tokens_checked": 18,
     "tokens_disagree": 0,
     "other_wallets": {
       "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 42161": 2234,
@@ -27,7 +27,7 @@
   "flags": [
     "NOTE: Strategy API unreachable (failed after 3 attempts: http://ops-tools-backend.kpk/api/clients/current-strate); positions from Syncrone, APYs from the last snapshot's permitted venues (stale) and fallback sources",
     "NOTE: positions the Strategy API / vaults.fyi does not price (kept in the book with APY unknown): aave_v3/OTHER $2,510,301, morphoVaults/USD $2,054,439, ether_fi/ETH $973,281, compound_v3/USD/ciUSDCv3 $500,160, rocket_pool/ETH $184,773, stakewise_v3/ETH $135,635, balancer_v2/ETH $15,932, aave_v3/USD $5,061, compound_v3/OTHER $89.",
-    "NOTE: the Safe holds vault shares Syncrone has not booked yet (value shown as 0 until it does): 1.59 cUSDCv3 (Compound v3 USDC)"
+    "NOTE: the Safe holds vault shares Syncrone has not booked yet (value shown as 0 until it does): 1.59 cUSDCv3 (Compound v3 USDC), 0.31 sGho (Aave Savings GHO)"
   ],
   "policy": null,
   "policy_checks": [],
@@ -67,6 +67,21 @@
       "balance": 4.437404,
       "claimable": true,
       "claim_cmd": "compound claim"
+    },
+    {
+      "kind": "reward",
+      "protocol": "aave_safety_module",
+      "venue": "claimable AAVE (stkAAVE rewards)",
+      "symbol": "AAVE",
+      "asset_group": "REWARDS",
+      "usd": 3158.61,
+      "apy": null,
+      "apy_source": null,
+      "venue_tvl_usd": null,
+      "untracked": false,
+      "balance": 24.628572282141736,
+      "claimable": true,
+      "claim_cmd": "aave claim"
     },
     {
       "kind": "idle",
@@ -954,13 +969,13 @@
       "source": "defillama"
     },
     "aave_v3/USD/GHO": {
-      "apy": 0.0,
-      "apy_base": null,
+      "apy": 0.045,
+      "apy_base": 0.045,
       "apy_intrinsic_lst": null,
-      "tvl_usd": 2570666.0,
-      "pool": "bf0660ab-38bf-48a4-9a6c-393ec0e2ff5f",
+      "tvl_usd": 172250294.0,
+      "pool": "19d024ed-9c70-4323-9a81-fe873ea5f0e0",
       "project": "aave-v3",
-      "symbol": "GHO",
+      "symbol": "SGHO",
       "chain": "Ethereum",
       "source": "defillama"
     },
@@ -1007,10 +1022,21 @@
       "symbol": "USDC",
       "chain": "Ethereum",
       "source": "defillama"
+    },
+    "savingsgho/USD": {
+      "apy": 0.045,
+      "apy_base": 0.045,
+      "apy_intrinsic_lst": null,
+      "tvl_usd": 172250294.0,
+      "pool": "19d024ed-9c70-4323-9a81-fe873ea5f0e0",
+      "project": "aave-v3",
+      "symbol": "SGHO",
+      "chain": "Ethereum",
+      "source": "defillama"
     }
   },
   "rewards_sweep": {
-    "total_usd": 187,
+    "total_usd": 3345,
     "min_usd": 100,
     "items": [
       {
@@ -1028,8 +1054,17 @@
         "source": "compound",
         "claimable": true,
         "claim_cmd": "compound claim"
+      },
+      {
+        "symbol": "AAVE",
+        "amount": 24.628572282141736,
+        "usd": 3159,
+        "source": "aave_safety_module",
+        "claimable": true,
+        "claim_cmd": "aave claim"
       }
     ],
+    "claim_only": [],
     "best_usd_venue": {
       "protocol": "morphoVaults",
       "asset": "kpk USDC Yield v2",
