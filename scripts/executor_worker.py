@@ -118,7 +118,11 @@ def do_plan(client_dir: Path, payload: dict):
         except Exception as e:
             fail(f"build failed for `{cmd}`: {e}", command=cmd, trace=traceback.format_exc(limit=3))
         if extra.get("_cow_submit"):
-            cow_submits.append(extra["_cow_submit"])   # each submitted to the CoW API at propose time, like execute_plan
+            x = dict(extra["_cow_submit"])
+            x.setdefault("sell_symbol", (intent.get("token") or "").upper()); x.setdefault("buy_symbol", (intent.get("buy_token") or "").upper())
+            x.setdefault("sell_human", intent.get("amount")); x.setdefault("command", cmd)
+            extra["_cow_submit"] = x
+            cow_submits.append(x)   # each submitted to the CoW API at propose time, like execute_plan
             cow_submit = cow_submits[0]
         if extra.get("swap_quote"):
             q = extra["swap_quote"]
@@ -202,7 +206,8 @@ def do_plan(client_dir: Path, payload: dict):
     out(dict(
         plan_id=plan_id, plan_file=str(plan_file), client_dir=client_dir.name, swap_quote=swap_quote,
         cow_orders=[dict(sell_token=x.get("sell_token"), buy_token=x.get("buy_token"), sell_amount=str(x.get("sell_amount")),
-                         buy_amount=str(x.get("buy_amount")), valid_to=x.get("valid_to"), slippage_bps=x.get("slippage_bps")) for x in cow_submits],
+                         buy_amount=str(x.get("buy_amount")), valid_to=x.get("valid_to"), slippage_bps=x.get("slippage_bps"),
+                         sell_symbol=x.get("sell_symbol"), buy_symbol=x.get("buy_symbol"), sell_human=x.get("sell_human"), command=x.get("command")) for x in cow_submits],
         cow_order=(dict(sell_token=cow_submit.get("sell_token"), buy_token=cow_submit.get("buy_token"),
                         sell_amount=str(cow_submit.get("sell_amount")), buy_amount=str(cow_submit.get("buy_amount")),
                         valid_to=cow_submit.get("valid_to"), slippage_bps=cow_submit.get("slippage_bps"),

@@ -231,7 +231,7 @@ def sweep_commands(body: dict, snap: dict) -> tuple[list[str], dict, list[str]]:
     for i in items:
         by_tok[i["symbol"].upper()] = by_tok.get(i["symbol"].upper(), 0.0) + fnum(i.get("amount"))
     groups = cow_groups(body["client"])
-    held_back = []
+    held_back, orders = [], []
     for sym, amt in by_tok.items():
         if sym in ("USDC",):
             continue
@@ -239,9 +239,9 @@ def sweep_commands(body: dict, snap: dict) -> tuple[list[str], dict, list[str]]:
             allowed = sorted({b for g in groups if sym in {x.upper() for x in g["sell"]} for b in g["buy"]})
             held_back.append(f"{sym} (permitted buys: {', '.join(allowed) or 'none'})")
             continue
-        cmds.append(f"cowswap swap {amt:.6f} {sym} USDC")
+        cmds.append(f"cowswap swap {amt:.6f} {sym} USDC"); orders.append(sym)
     if held_back:
-        notes.append("no CoW route to USDC under this client's Roles permissions, claimed and held in the Safe: " + "; ".join(held_back))
+        notes.append("held in the Safe after claiming (no CoW route to USDC in this client's Roles permissions): " + "; ".join(held_back))
     to = body.get("to") or sw.get("best_usd_venue")
     if not to:
         raise ValueError("no permitted USDC venue to deposit into")
@@ -252,8 +252,8 @@ def sweep_commands(body: dict, snap: dict) -> tuple[list[str], dict, list[str]]:
     if not dep:
         raise ValueError(f"no deposit command for {to_proto}")
     stage2 = dict(commands=[dep], label=f"deposit all USDC into {to['protocol']} {to.get('asset')}", wait_for="USDC", client=body["client"], to=to)
-    notes.append("rewards sweep: stage 1 claims (" + (", ".join(claims) or "none") + f") and places {len([s for s in by_tok if s != 'USDC'])} pre-signed CoW order(s) into USDC; "
-                 "stage 2 deposits the USDC once the orders fill. Amounts include rewards already held in the Safe.")
+    notes.insert(0, "rewards sweep: stage 1 claims (" + (", ".join(claims) or "none") + f") and places {len(orders)} pre-signed CoW order(s) into USDC ({', '.join(orders) or 'none'}); "
+                 "stage 2 deposits the USDC once the orders fill. `merkl claim` collects every pending Merkl token in one call. Amounts include rewards already held in the Safe.")
     return cmds, stage2, notes
 
 
