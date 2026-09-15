@@ -490,7 +490,7 @@
         (j.stale_note ? `<br>${esc(j.stale_note)}` : '') + (j.pushed === true ? ' · pushed to the site' : j.pushed ? `<br><b>Site not updated:</b> ${esc(String(j.pushed).split('hint:')[0])}` : '');
       msg.classList.add(j.pushed === true ? 'ok' : 'warn');
       await select(snap.client);
-    } catch (e) { msg.className = 'refresh-msg err'; msg.textContent = 'Refresh failed: ' + e.message; }
+    } catch (e) { msg.className = 'refresh-msg err'; msg.textContent = 'Refresh failed: ' + e.message + (e.message === 'Failed to fetch' ? ' (the executor was unreachable or restarting mid-request; try again in a moment)' : ''); }
     finally { btn.classList.remove('busy'); btn.textContent = '↻ Refresh client'; }
   }
 
