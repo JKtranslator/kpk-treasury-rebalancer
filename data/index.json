@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-15T10:39:30+00:00",
+  "generated": "2026-09-15T10:41:49+00:00",
   "clients": [
     {
       "client": "ens",
@@ -28,9 +28,9 @@
     {
       "client": "balancer",
       "display_name": "Balancer DAO Treasury",
-      "as_of": "2026-09-12T09:08:28+00:00",
-      "nav_usd": 7062559,
-      "run_folder": "2026-09-12",
+      "as_of": "2026-09-15T10:40:44+00:00",
+      "nav_usd": 7153369,
+      "run_folder": "2026-09-15",
       "file": "data/balancer.json"
     }
   ]
