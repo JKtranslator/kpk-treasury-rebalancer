@@ -401,7 +401,7 @@
       if (r.status === 401 && askToken('Executor token needed to quote')) r = await fetch(EXECUTOR + '/quote', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body });
       const j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || r.statusText);
       if (seq !== sw.seq) return;
-      sw.quote = j; msg.textContent = `Quote ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · valid to ${j.valid_to ? new Date(j.valid_to * 1000).toISOString().slice(11, 16) + ' UTC' : 'n/a'}`;
+      sw.quote = j; msg.textContent = `Quote ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · valid to ${j.valid_to ? new Date(j.valid_to * 1000).toISOString().slice(11, 16) + ' UTC' : 'n/a'}${j.note ? ' · ' + j.note : ''}`;
       swapPaint(); swapArmRefresh();
     } catch (e) { if (seq === sw.seq) { sw.quote = null; msg.textContent = 'Quote failed: ' + e.message; swapPaint(); } }
     finally { $('#swapCta').classList.remove('busy'); }
