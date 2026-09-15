@@ -120,6 +120,37 @@ def policy_checks(book: list[dict], nav: float, pol: dict | None, reg: dict) -> 
     return out
 
 
+def _norm(s) -> str:
+    return "".join(ch for ch in (s or "").lower() if ch.isalnum())
+
+
+def same_venue(b: dict, v: dict) -> bool:
+    """Is book position `b` sitting in permitted venue `v`?
+
+    The vault address is authoritative when both sides carry one (Strategy API positions and
+    permitted venues share it, e.g. 0x4ef5… = kpk USDC Prime v2). Only when an address is missing
+    do we fall back to protocol + name matching, and that fallback is deliberately liberal: an
+    over-match shrinks the room we think we have, which is the safe direction for a risk cap.
+    """
+    if (b.get("protocol") or "").lower() != (v.get("protocol") or "").lower():
+        return False
+    bv, vv = (b.get("vault") or "").lower(), (v.get("vault") or "").lower()
+    if bv and vv:
+        return bv == vv
+    va, bs, bn = _norm(v.get("asset")), _norm(b.get("symbol")), _norm(b.get("venue"))
+    if not va:
+        return False
+    return va == bs or va in bn or (bs and bs in va)
+
+
+def venue_held_usd(book: list, v: dict) -> float:
+    """USD we already hold in this venue. The TVL threshold governs the *resulting* position, so a
+    venue we are already in has that much less room; sizing against the raw cap is what let the
+    engine propose topping up a pool we already owned 10% of."""
+    return sum(b["usd"] for b in book
+               if b["kind"] in ("position", "in_flight") and same_venue(b, v))
+
+
 def performance(book, permitted, nav, pol, args, reg):
     """Per asset group: blended APY, laggards, candidate venues, sized moves."""
     cap_pct = (pol or {}).get("protocol_cap_pct_nav")
@@ -158,11 +189,12 @@ def performance(book, permitted, nav, pol, args, reg):
             elif gap >= min_pick and b["usd"] >= args.min_move_usd:
                 laggards.append(dict(**b, reason=f"{gap*100:.2f} pts below best permitted venue {best['protocol']}/{best['asset']}", gap_to_best=gap))
         # size candidate moves: fill best venues subject to venue TVL cap and protocol cap headroom
-        headroom = {}
+        headroom, held_in = {}, {}
         for v in venues:
             p = v["protocol"]
             proto_room = (cap_pct / 100 * nav - by_proto.get(p, 0.0)) if (cap_pct and nav) else float("inf")
-            tvl_room = (args.venue_tvl_cap_pct / 100 * fnum(v["tvl_usd"])) if v["tvl_usd"] else float("inf")
+            held_in[id(v)] = venue_held_usd(book, v)
+            tvl_room = (args.venue_tvl_cap_pct / 100 * fnum(v["tvl_usd"]) - held_in[id(v)]) if v["tvl_usd"] else float("inf")
             headroom[id(v)] = max(0.0, min(proto_room, tvl_room))
         sources = [dict(b) for b in idle] + [dict(l) for l in laggards]
         for src in sources:
@@ -170,7 +202,7 @@ def performance(book, permitted, nav, pol, args, reg):
             for v in venues:
                 if remaining < args.min_move_usd and src["kind"] != "idle":
                     break
-                if v["protocol"] == src["protocol"] and v.get("asset") == src.get("symbol"):
+                if same_venue(src, v):
                     continue
                 # token compatibility: same token, or stable-to-stable (swap), or the ETH family
                 st, vt = (src.get("symbol") or "").upper(), (v.get("asset") or "").upper()
@@ -188,6 +220,7 @@ def performance(book, permitted, nav, pol, args, reg):
                                   from_apy=fnum(src["apy"]), to_protocol=v["protocol"], to_asset=v["asset"],
                                   to_action=v["action"], to_vault=v.get("vault"), to_apy=fnum(v["apy_total"]),
                                   to_apy_30d=v.get("apy_30d"), to_venue_tvl_usd=v["tvl_usd"], amount_usd=round(amt),
+                                  to_venue_held_usd=round(held_in[id(v)]), to_venue_room_usd=round(headroom[id(v)]),
                                   pickup_pts=round(pick * 100, 2), pickup_usd_per_year=round(amt * pick)))
                 headroom[id(v)] -= amt
                 remaining -= amt
@@ -201,6 +234,9 @@ def performance(book, permitted, nav, pol, args, reg):
         groups[grp] = dict(total_usd=round(total), positions=pos, idle=idle, in_flight=infl,
                            blended_apy=blended, blended_apy_after_moves=after_apy,
                            best_permitted=best, permitted_venues=venues[:10],
+                           venue_capacity=[dict(protocol=v["protocol"], asset=v.get("asset"), apy=fnum(v["apy_total"]),
+                                                tvl_usd=fnum(v["tvl_usd"]), held_usd=round(held_in[id(v)]),
+                                                room_usd=round(headroom[id(v)])) for v in venues],
                            unpriced_permitted=sorted({f"{p['protocol']}/{p['asset']}" for p in permitted
                                                       if p["asset_group"] == grp and not p["priced"] and p["action"] != "swap"}),
                            laggards=laggards, candidate_moves=moves,
@@ -270,7 +306,13 @@ def render_md(c, h, y, book, nav, checks, perf, args) -> str:
         L.append(f"### {grp} — ${g['total_usd']:,.0f}" + (f", blended APY {g['blended_apy']*100:.2f}%" if g["blended_apy"] is not None else "")
                  + (f" → {g['blended_apy_after_moves']*100:.2f}% after candidate moves (+${g['pickup_usd_per_year']:,.0f}/yr)" if g["blended_apy_after_moves"] is not None and g["candidate_moves"] else ""))
         if g["best_permitted"]:
-            L.append("Best permitted venues (priced by vaults.fyi): " + ", ".join(
+            full = [c for c in g.get("venue_capacity", []) if c["room_usd"] < 1 and c["held_usd"] > 0]
+        if full:
+            L.append(f"No room left (already at the {args.venue_tvl_cap_pct:.0f}% venue TVL threshold or the protocol cap): "
+                     + ", ".join(f"{c['protocol']}/{c['asset']} (hold ${c['held_usd']:,.0f}"
+                                 + (f" = {c['held_usd']/c['tvl_usd']*100:.1f}% of TVL)" if c["tvl_usd"] else ")")
+                                 for c in full))
+        L.append("Best permitted venues (priced by vaults.fyi): " + ", ".join(
                 f"{v['protocol']}/{v['asset']} {fnum(v['apy_total'])*100:.2f}%" + (f" (30d {fnum(v['apy_30d'])*100:.2f}%)" if v.get("apy_30d") is not None else "") + (f", TVL ${fnum(v['tvl_usd'])/1e6:,.0f}M" if v["tvl_usd"] else "")
                 for v in g["permitted_venues"][:6]))
         if g["unpriced_permitted"]:
