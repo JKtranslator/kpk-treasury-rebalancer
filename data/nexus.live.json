@@ -4,21 +4,21 @@
   "chain_id": 1,
   "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
   "ok": true,
-  "as_of": "2026-09-15T00:29:33+00:00",
+  "as_of": "2026-09-15T01:33:28+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 7438676,
+  "nav_usd": 7438751,
   "positions_usd": 7294829,
-  "idle_usd": 143847,
+  "idle_usd": 143922,
   "in_flight_usd": 0,
   "onchain_idle_eth": 3.140807908958729,
   "eth_price_usd": 2484.24,
   "groups": {
+    "USD": 1627094,
     "OTHER": 5133870,
-    "ETH": 677755,
-    "USD": 1627019
+    "ETH": 677755
   },
   "sleeves": [
     {
@@ -105,6 +105,12 @@
   ],
   "idle": [
     {
+      "symbol": "USDC",
+      "balance": 75.348952,
+      "usd": 75,
+      "asset_group": "USD"
+    },
+    {
       "symbol": "MORPHO",
       "balance": 28.376777604667712,
       "usd": 62,
@@ -137,13 +143,13 @@
   ],
   "in_flight_items": [],
   "token_check": {
-    "checked": 9,
+    "checked": 10,
     "disagree": 0,
     "etherscan_source": "etherscan"
   },
   "other_wallets": {},
   "unbooked": [],
   "flags": [
-    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 5,576.8578 -> 0.0000; cbBTC 0.0047 -> 0.0079"
+    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 5,576.8578 -> 75.3490; cbBTC 0.0047 -> 0.0079"
   ]
 }
