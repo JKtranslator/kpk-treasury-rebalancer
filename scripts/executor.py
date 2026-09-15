@@ -394,7 +394,7 @@ class H(BaseHTTPRequestHandler):
                 return self._json(404, dict(error="no strategy cache for this client"))
             raw = json.loads(f.read_text(encoding="utf-8")).get("raw_permissions") or {}
             groups = []
-            for e in (raw.get("permissions") or {}).get("cowswap") or []:
+            for e in (raw.get("allPermissions") or {}).get("cowswap") or (raw.get("permissions") or {}).get("cowswap") or []:
                 if e.get("action") == "swap" and not e.get("isTWAP"):
                     groups.append(dict(sell=sorted(set(e.get("sellAssets") or [])), buy=sorted(set(e.get("buyAssets") or []))))
             return self._json(200, dict(client=slug, groups=groups, cached_at=json.loads(f.read_text(encoding="utf-8")).get("vault_data_fetched_at")))

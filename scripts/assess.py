@@ -326,12 +326,20 @@ def main():
     # the last snapshot) by protocol + asset group + token, before the DeFiLlama fallback.
     if y.get("stale_note"):
         perm = [p for p in y.get("permitted", []) if p.get("priced")]
+        fb0 = y.get("fallback_apy") or {}
         for b in book:
             if b["kind"] != "position" or b["apy"] is not None:
                 continue
             norm = lambda s: "".join(ch for ch in (s or "").lower() if ch.isalnum())
             sym, ven = norm(b.get("symbol")), norm(b.get("venue"))
             cands = [p for p in perm if p["protocol"] == b["protocol"] and p["asset_group"] == b["asset_group"]]
+            # a savings/staked receipt (sGHO) must not inherit the lending APY of its underlying (GHO): when the
+            # registry has a DeFiLlama pool for the exact symbol and no permitted asset matches it exactly, use that
+            exact = f"{b['protocol']}/{b['asset_group']}/{b.get('symbol')}"
+            if exact in fb0 and fb0[exact]["apy"] > 0 and not any(norm(p.get("asset")) == sym for p in cands):
+                b["apy"], b["apy_source"], b["apy_pool"] = fb0[exact]["apy"], "defillama", fb0[exact]["pool"]
+                b["venue_tvl_usd"] = fb0[exact]["tvl_usd"]
+                continue
             def score(p):
                 a = norm(p.get("asset"))
                 if not a:

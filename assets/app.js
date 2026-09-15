@@ -252,7 +252,7 @@
     const sel = $('#swapSell'), buy = $('#swapBuy'), msg = $('#swapMsg');
     $('#swapOut').innerHTML = ''; $('#swapExec').disabled = true; lastQuote = null;
     try { swapGroups = (await loadJSON(EXECUTOR + '/swap-pairs/' + snap.client)).groups || []; }
-    catch (e) { try { swapGroups = (await loadJSON('data/' + snap.client + '.strategy.json')).raw_permissions.permissions.cowswap.filter(g => g.action === 'swap' && !g.isTWAP).map(g => ({ sell: g.sellAssets, buy: g.buyAssets })); } catch (e2) { swapGroups = []; } }
+    catch (e) { try { swapGroups = (await loadJSON('data/' + snap.client + '.strategy.json')).raw_permissions.allPermissions.cowswap.filter(g => g.action === 'swap' && !g.isTWAP).map(g => ({ sell: g.sellAssets, buy: g.buyAssets })); } catch (e2) { swapGroups = []; } }
     const sells = [...new Set(swapGroups.flatMap(g => g.sell))].sort();
     if (!sells.length) { msg.textContent = 'No CoW swap permission found for this client in the strategy cache.'; sel.innerHTML = buy.innerHTML = ''; return; }
     sel.innerHTML = sells.map(s => `<option>${esc(s)}</option>`).join('');
