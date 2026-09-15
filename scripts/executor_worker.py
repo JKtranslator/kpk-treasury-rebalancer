@@ -233,25 +233,32 @@ def do_quote(client_dir: Path, payload: dict):
     from token_registry import get_address, get_decimals, normalize
     from cow_api import get_quote, get_slippage_tolerance_info
     sell, buy, amount = payload["sell"].upper(), payload["buy"].upper(), str(payload["amount"])
-    raw = normalize(amount, sell)
-    sell_addr, buy_addr = get_address(sell), get_address(buy)
+    # CoW cannot sell native ETH: the bot wraps first and the order sells WETH (same rule as cowswap_builder)
+    quote_sell, note = (("WETH", "ETH is wrapped to WETH inside the bundle; the CoW order sells WETH") if sell == "ETH" else (sell, None))
+    raw = normalize(amount, quote_sell)
+    sell_addr, buy_addr = get_address(quote_sell), get_address(buy)
     try:
         q = get_quote(sell_addr, buy_addr, raw, config.SAFE_ADDRESS, int(_t.time()) + 30 * 60)
     except Exception as e:
-        fail(f"CoW quote failed for {amount} {sell} -> {buy}: {e}")
+        body = ""
+        try:
+            body = (e.response.json().get("description") or e.response.text)[:200]   # requests.HTTPError carries CoW's reason
+        except Exception:
+            pass
+        fail(f"CoW quote failed for {amount} {sell} -> {buy}: {e}" + (f" — {body}" if body else ""))
     quote = q.get("quote") or {}
     try:
         sl = get_slippage_tolerance_info(sell_addr, buy_addr, config.CHAIN_ID, sell_amount=raw)
     except Exception as e:
         sl = {"error": str(e)[:120]}
     bps = sl.get("slippage_bps") if isinstance(sl.get("slippage_bps"), int) else 50
-    sd, bd = get_decimals(sell), get_decimals(buy)
+    sd, bd = get_decimals(quote_sell), get_decimals(buy)
     buy_amt = int(quote.get("buyAmount") or 0)
     out(dict(sell=sell, buy=buy, sell_amount=raw / 10 ** sd, sell_amount_after_fee=int(quote.get("sellAmount") or raw) / 10 ** sd,
              fee=int(quote.get("feeAmount") or 0) / 10 ** sd, buy_amount=buy_amt / 10 ** bd,
              price=(buy_amt / 10 ** bd) / (raw / 10 ** sd) if raw else None, slippage_bps=bps, slippage_source=sl.get("source") or sl.get("mode"),
              slippage_info={k: v for k, v in sl.items() if k != "raw"}, min_receive=(buy_amt * (10_000 - bps) // 10_000) / 10 ** bd,
-             valid_to=quote.get("validTo"), expiration=q.get("expiration"), command=f"cowswap swap {amount} {sell} {buy}"))
+             valid_to=quote.get("validTo"), expiration=q.get("expiration"), command=f"cowswap swap {amount} {sell} {buy}", note=note))
 
 
 def do_tokens(client_dir: Path, payload: dict):
