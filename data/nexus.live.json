@@ -4,19 +4,19 @@
   "chain_id": 1,
   "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
   "ok": true,
-  "as_of": "2026-09-15T06:50:57+00:00",
+  "as_of": "2026-09-15T07:54:25+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 7523353,
+  "nav_usd": 7523356,
   "positions_usd": 7377463,
-  "idle_usd": 145890,
+  "idle_usd": 145893,
   "in_flight_usd": 0,
   "onchain_idle_eth": 3.140807908958729,
   "eth_price_usd": 2516.08,
   "groups": {
-    "USD": 1632498,
+    "USD": 1632501,
     "OTHER": 5201221,
     "ETH": 689602
   },
@@ -106,8 +106,8 @@
   "idle": [
     {
       "symbol": "USDC",
-      "balance": 75.348952,
-      "usd": 75,
+      "balance": 78.482784,
+      "usd": 78,
       "asset_group": "USD"
     },
     {
@@ -150,6 +150,6 @@
   "other_wallets": {},
   "unbooked": [],
   "flags": [
-    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 0.0000 -> 75.3490"
+    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 0.0000 -> 78.4828"
   ]
 }
