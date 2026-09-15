@@ -417,6 +417,21 @@ class H(BaseHTTPRequestHandler):
             if not name or "/" in name or ".." in name or not f.exists():
                 return self._json(404, dict(error="not found"))
             return self._json(200, json.loads(f.read_text(encoding="utf-8")))
+        if self.path.startswith("/balances/"):
+            # live Safe balances for the swap panel (Safe Transaction Service, key held on the box)
+            slug = self.path.split("/balances/", 1)[1].split("?")[0]
+            if slug not in CLIENT_DIRS:
+                return self._json(404, dict(error="unknown client"))
+            try:
+                from fetch_holdings import fetch_safe_balances
+                snap = load_snapshot(slug)
+                chain_id = int(snap.get("chain_id") or 1)
+                avatar = (snap.get("safes") or {}).get("avatar") or snap.get("avatar_safe")
+                rows = fetch_safe_balances(registry(), chain_id, avatar)
+                return self._json(200, dict(client=slug, chain_id=chain_id, safe=avatar, fetched_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                                            balances=[dict(symbol=r["symbol"], token=r["token"], balance=r["balance"], decimals=r["decimals"]) for r in rows if r["balance"] > 0]))
+            except Exception as e:
+                return self._json(502, dict(error=f"safe balances: {str(e)[:160]}"))
         if self.path.startswith("/swap-pairs/"):
             slug = self.path.split("/swap-pairs/", 1)[1].split("?")[0]
             f = ROOT / "data" / f"{slug}.strategy.json"

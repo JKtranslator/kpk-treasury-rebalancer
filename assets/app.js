@@ -279,11 +279,25 @@
   // Layout follows the common DEX pattern (Uniswap, swap.cow.fi, 1inch): sell card over buy card, flip button,
   // token picker with balances, rate line, collapsible order details, one CTA whose label is the state.
   const SETTLEMENT = ['USDC', 'USDT', 'DAI', 'USDS', 'GHO', 'ETH', 'WETH', 'WBTC', 'WSTETH', 'STETH', 'RETH'];
-  const sw = { groups: [], known: null, sell: null, buy: null, quote: null, timer: null, tick: null, inverted: false, picking: null, seq: 0 };
+  const sw = { groups: [], known: null, sell: null, buy: null, quote: null, timer: null, tick: null, inverted: false, picking: null, seq: 0, live: null, liveAt: null, liveBusy: false };
   const fmtTok = (v, d) => { v = Number(v || 0); if (d == null) d = v >= 1000 ? 2 : v >= 1 ? 4 : 6; return v.toLocaleString('en-US', { maximumFractionDigits: d }); };
   const upper = s => String(s || '').toUpperCase();
   function priceOf(sym) { let p = 0; for (const b of (snap.book || [])) if (upper(b.symbol) === upper(sym)) { const bp = b.price || (b.balance > 0 && b.usd > 0 ? b.usd / b.balance : 0); if (bp > p) p = bp; } if (!p && live) for (const r of (live.rows || live.book || [])) if (upper(r.symbol) === upper(sym) && r.price > p) p = r.price; return p || null; }
-  function idleOf(sym) { return (snap.book || []).filter(b => b.kind === 'idle' && upper(b.symbol) === upper(sym)).reduce((a, b) => a + (b.balance || 0), 0); }
+  function idleOf(sym) {
+    if (sw.live) return sw.live[upper(sym)] || 0;   // live Safe balance when fetched
+    return (snap.book || []).filter(b => b.kind === 'idle' && upper(b.symbol) === upper(sym)).reduce((a, b) => a + (b.balance || 0), 0);
+  }
+  const balLabel = () => sw.live ? `In Safe <span class="dim">(live ${sw.liveAt})</span>:` : sw.liveBusy ? 'In Safe <span class="dim">(refreshing…)</span>:' : 'In Safe <span class="dim">(snapshot)</span>:';
+  async function refreshSafeBalances() {
+    // fresh balances from the Safe Transaction Service via the executor, so the amount we size is what the Safe holds now
+    if (sw.liveBusy) return; sw.liveBusy = true; swapPaint();
+    try {
+      const j = await loadJSON(EXECUTOR + '/balances/' + snap.client);
+      const m = {}; (j.balances || []).forEach(b => { m[upper(b.symbol)] = (m[upper(b.symbol)] || 0) + b.balance; });
+      sw.live = m; sw.liveAt = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    } catch (e) { sw.live = null; $('#swapMsg').textContent = 'Live Safe balance unavailable (' + e.message + '); showing the snapshot figure.'; }
+    finally { sw.liveBusy = false; swapPaint(); }
+  }
   const sellable = () => [...new Set(sw.groups.flatMap(g => g.sell))].sort();
   const buyableFor = s => [...new Set(sw.groups.filter(g => g.sell.includes(s)).flatMap(g => g.buy))].filter(b => b !== s).sort();
   const pairOk = (s, b) => sw.groups.some(g => g.sell.includes(s) && g.buy.includes(b));
@@ -311,7 +325,7 @@
     $('#swapPickerX').onclick = closePicker; $('#swapPicker').onclick = e => { if (e.target.id === 'swapPicker') closePicker(); };
     $('#swapPickerQ').oninput = paintPicker;
     $('#swapMsg').textContent = `${sells.length} sellable tokens across ${sw.groups.length} permission group${sw.groups.length === 1 ? '' : 's'}.`;
-    swapPaint();
+    sw.live = null; swapPaint(); refreshSafeBalances();
   }
   function swapState() {
     const amt = Number($('#swapAmount').value || 0), bal = sw.sell ? idleOf(sw.sell) : 0;
@@ -329,8 +343,8 @@
     $('#swapSellBtn .sym').textContent = sw.sell || 'Select'; $('#swapBuyBtn .sym').textContent = sw.buy || 'Select';
     $('#swapSellBtn').classList.toggle('grey', !!sw.sell && !buildable(sw.sell)); $('#swapBuyBtn').classList.toggle('grey', !!sw.buy && !buildable(sw.buy));
     const bal = sw.sell ? idleOf(sw.sell) : 0;
-    $('#swapSellBal').innerHTML = sw.sell ? `Idle in Safe: <span class="num">${fmtTok(bal)}</span> ${esc(sw.sell)}${bal > 0 ? ' <button class="sw-max" type="button">Max</button>' : ''}` : '';
-    $('#swapBuyBal').innerHTML = sw.buy ? `Idle in Safe: <span class="num">${fmtTok(idleOf(sw.buy))}</span> ${esc(sw.buy)}` : '';
+    $('#swapSellBal').innerHTML = sw.sell ? `${balLabel()} <span class="num">${fmtTok(bal)}</span> ${esc(sw.sell)}${bal > 0 ? ' <button class="sw-max" type="button">Max</button>' : ''}` : '';
+    $('#swapBuyBal').innerHTML = sw.buy ? `${balLabel()} <span class="num">${fmtTok(idleOf(sw.buy))}</span> ${esc(sw.buy)}` : '';
     $('#swapSellUsd').textContent = amt > 0 && ps ? usd(amt * ps, 2) : amt > 0 ? 'price unknown' : '';
     const outAmt = q ? q.buy_amount : 0;
     $('#swapBuyAmt').textContent = q ? fmtTok(outAmt) : (amt > 0 && ps && pb ? '≈ ' + fmtTok(amt * ps / pb) : '0');
@@ -377,7 +391,7 @@
     $('#swapFlip').disabled = !(sw.sell && sw.buy && pairOk(sw.buy, sw.sell)); $('#swapFlip').title = $('#swapFlip').disabled ? 'Reverse direction is not permitted' : 'Switch sell and buy';
   }
   function swapSchedule() { clearTimeout(sw.debounce); if (Number($('#swapAmount').value || 0) > 0 && token()) sw.debounce = setTimeout(swapQuote, 700); }
-  function swapFlip() { if ($('#swapFlip').disabled) return; const s = sw.sell; sw.sell = sw.buy; sw.buy = s; sw.quote = null; $('#swapAmount').value = ''; swapPaint(); }
+  function swapFlip() { if ($('#swapFlip').disabled) return; const s = sw.sell; sw.sell = sw.buy; sw.buy = s; sw.quote = null; $('#swapAmount').value = ''; swapPaint(); refreshSafeBalances(); }
   async function swapQuote() {
     const amount = Number($('#swapAmount').value || 0); if (!(amount > 0) || !sw.sell || !sw.buy) return;
     const seq = ++sw.seq, msg = $('#swapMsg'); msg.textContent = 'Quoting on CoW through the bot…'; $('#swapCta').classList.add('busy');
@@ -398,7 +412,7 @@
     paintCount(); sw.tick = setInterval(() => { left -= 1; paintCount(); }, 1000);
     sw.timer = setInterval(() => { if ($('#swapSection').offsetParent && !$('#modal').offsetParent) swapQuote(); }, 30000);
   }
-  function swapCtaClick() { const st = swapState(); if (st === 'quote') swapQuote(); else if (st === 'review') openSwapExec(sw.quote); }
+  async function swapCtaClick() { const st = swapState(); if (st === 'quote') { refreshSafeBalances(); swapQuote(); } else if (st === 'review') { await refreshSafeBalances(); if (swapState() === 'review') openSwapExec(sw.quote); } }
   function openPicker(side) {
     sw.picking = side; $('#swapPickerTitle').textContent = side === 'sell' ? 'Sell which token?' : `Buy with ${sw.sell}`; $('#swapPickerQ').value = ''; $('#swapPicker').hidden = false; paintPicker(); $('#swapPickerQ').focus();
   }
@@ -414,7 +428,7 @@
       const t = b.dataset.t;
       if (sw.picking === 'sell') { sw.sell = t; if (!sw.buy || !pairOk(t, sw.buy)) sw.buy = defaultBuy(t); }
       else sw.buy = t;
-      sw.quote = null; closePicker(); swapPaint(); swapSchedule();
+      sw.quote = null; closePicker(); swapPaint(); swapSchedule(); refreshSafeBalances();
     });
   }
   function openSwapExec(q) {
