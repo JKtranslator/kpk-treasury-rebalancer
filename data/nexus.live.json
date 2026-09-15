@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
   "ok": true,
-  "as_of": "2026-09-15T12:59:08+00:00",
+  "as_of": "2026-09-15T14:35:49+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -153,16 +153,16 @@
   "rewards": [
     {
       "source": "merkl",
-      "symbol": "GEAR",
-      "amount": 68868.82542998996,
-      "usd": 24,
-      "claimable": true
-    },
-    {
-      "source": "compound",
       "symbol": "COMP",
       "amount": 0.560618,
       "usd": 11,
+      "claimable": true
+    },
+    {
+      "source": "merkl",
+      "symbol": "GEAR",
+      "amount": 68868.82542998996,
+      "usd": 23,
       "claimable": true
     },
     {
