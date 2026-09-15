@@ -1,6 +1,172 @@
 {
   "client": "ens",
-  "ok": false,
-  "as_of": "2026-09-15T19:00:59+00:00",
-  "error": "ERROR: SYNCRONE_API_KEY is not set. Export it or add it to /home/runner/.kpk/env (names only in .env.example; never commit .env.local)."
+  "display_name": "ENS DAO Endowment",
+  "chain_id": 1,
+  "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
+  "ok": true,
+  "as_of": "2026-09-15T19:55:54+00:00",
+  "syncrone_window": {
+    "from": "2026-09-01",
+    "to": "2026-10-01"
+  },
+  "nav_usd": 94379911,
+  "positions_usd": 92996385,
+  "idle_usd": 1383525,
+  "in_flight_usd": 0,
+  "onchain_idle_eth": 548.8487272534044,
+  "eth_price_usd": 2520.7772,
+  "groups": {
+    "ETH": 59100462,
+    "USD": 35279232,
+    "OTHER": 163
+  },
+  "sleeves": [
+    {
+      "protocol": "ether_fi",
+      "asset_group": "ETH",
+      "usd": 20665966,
+      "in_flight_usd": 0,
+      "positions": [
+        "Etherfi Staked on Ethereum"
+      ]
+    },
+    {
+      "protocol": "fluid",
+      "asset_group": "USD",
+      "usd": 19214065,
+      "in_flight_usd": 0,
+      "positions": [
+        "Fluid Yield on Ethereum"
+      ]
+    },
+    {
+      "protocol": "stakewise_v3",
+      "asset_group": "ETH",
+      "usd": 17927279,
+      "in_flight_usd": 0,
+      "positions": [
+        "Stakewise Lending on Ethereum"
+      ]
+    },
+    {
+      "protocol": "stader",
+      "asset_group": "ETH",
+      "usd": 16544576,
+      "in_flight_usd": 0,
+      "positions": [
+        "Stader Staked on Ethereum"
+      ]
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset_group": "USD",
+      "usd": 7926207,
+      "in_flight_usd": 0,
+      "positions": [
+        "Morpho v2 Yield on Ethereum"
+      ]
+    },
+    {
+      "protocol": "aave_v3",
+      "asset_group": "USD",
+      "usd": 3369004,
+      "in_flight_usd": 0,
+      "positions": [
+        "Aave v3 Lending on Ethereum"
+      ]
+    },
+    {
+      "protocol": "sky",
+      "asset_group": "USD",
+      "usd": 3261347,
+      "in_flight_usd": 0,
+      "positions": [
+        "Sky Yield on Ethereum"
+      ]
+    },
+    {
+      "protocol": "lido",
+      "asset_group": "ETH",
+      "usd": 2579116,
+      "in_flight_usd": 0,
+      "positions": [
+        "Lido Staked on Ethereum"
+      ]
+    },
+    {
+      "protocol": "compound_v3",
+      "asset_group": "USD",
+      "usd": 1507108,
+      "in_flight_usd": 0,
+      "positions": [
+        "Compound v3 Lending on Ethereum"
+      ]
+    },
+    {
+      "protocol": "merkl",
+      "asset_group": "USD",
+      "usd": 1501,
+      "in_flight_usd": 0,
+      "positions": [
+        "Merkl Merkl Reward on Ethereum"
+      ]
+    },
+    {
+      "protocol": "compound_v3",
+      "asset_group": "OTHER",
+      "usd": 163,
+      "in_flight_usd": 0,
+      "positions": [
+        "Compound v3 Lending on Ethereum"
+      ]
+    }
+  ],
+  "idle": [
+    {
+      "symbol": "ETH",
+      "balance": 548.8487272534044,
+      "usd": 1383525,
+      "asset_group": "ETH"
+    }
+  ],
+  "in_flight_items": [],
+  "token_check": {
+    "checked": 8,
+    "disagree": 0,
+    "etherscan_source": "etherscan"
+  },
+  "other_wallets": {},
+  "unbooked": [],
+  "rewards": [
+    {
+      "source": "merkl",
+      "symbol": "GHO",
+      "amount": 1614.113557877527,
+      "usd": 1612,
+      "claimable": true
+    },
+    {
+      "source": "merkl",
+      "symbol": "COMP",
+      "amount": 8.382076,
+      "usd": 159,
+      "claimable": true
+    },
+    {
+      "source": "uniswap",
+      "symbol": "WETH",
+      "amount": 0.000924978132289274,
+      "usd": 2,
+      "claimable": true
+    },
+    {
+      "source": "uniswap",
+      "symbol": "sETH2",
+      "amount": 0.000946616781569995,
+      "usd": 2,
+      "claimable": true
+    }
+  ],
+  "rewards_usd": 1775,
+  "flags": []
 }
