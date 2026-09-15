@@ -1,6 +1,195 @@
 {
   "client": "cow",
-  "ok": false,
-  "as_of": "2026-09-15T22:14:19+00:00",
-  "error": "ERROR: SYNCRONE_API_KEY is not set. Export it or add it to /home/runner/.kpk/env (names only in .env.example; never commit .env.local)."
+  "display_name": "CoW DAO Treasury",
+  "chain_id": 1,
+  "avatar_safe": "0x616dE58c011F8736fa20c7Ae5352F7f6FB9F0669",
+  "ok": true,
+  "as_of": "2026-09-15T23:07:32+00:00",
+  "syncrone_window": {
+    "from": "2026-09-01",
+    "to": "2026-10-01"
+  },
+  "nav_usd": 18506622,
+  "positions_usd": 18105490,
+  "idle_usd": 401132,
+  "in_flight_usd": 0,
+  "onchain_idle_eth": 0.0,
+  "eth_price_usd": 2456.4499,
+  "groups": {
+    "OTHER": 607607,
+    "USD": 12142603,
+    "ETH": 3196803,
+    "EURO": 2559976
+  },
+  "sleeves": [
+    {
+      "protocol": "morphoVaults",
+      "asset_group": "USD",
+      "usd": 7472616,
+      "in_flight_usd": 0,
+      "positions": [
+        "Morpho v2 Yield on Ethereum"
+      ]
+    },
+    {
+      "protocol": "aave_v3",
+      "asset_group": "USD",
+      "usd": 3652741,
+      "in_flight_usd": 0,
+      "positions": [
+        "Aave v3 Staked on Ethereum"
+      ]
+    },
+    {
+      "protocol": "aave_v3",
+      "asset_group": "EURO",
+      "usd": 2559976,
+      "in_flight_usd": 0,
+      "positions": [
+        "Aave v3 Lending on Ethereum"
+      ]
+    },
+    {
+      "protocol": "ether_fi",
+      "asset_group": "ETH",
+      "usd": 1925591,
+      "in_flight_usd": 0,
+      "positions": [
+        "Etherfi Staked on Ethereum"
+      ]
+    },
+    {
+      "protocol": "compound_v3",
+      "asset_group": "USD",
+      "usd": 1000326,
+      "in_flight_usd": 0,
+      "positions": [
+        "Compound v3 Institutional USDC (ciUSDCv3)"
+      ]
+    },
+    {
+      "protocol": "stakewise_v3",
+      "asset_group": "ETH",
+      "usd": 731325,
+      "in_flight_usd": 0,
+      "positions": [
+        "Stakewise Lending on Ethereum"
+      ]
+    },
+    {
+      "protocol": "lido",
+      "asset_group": "ETH",
+      "usd": 346744,
+      "in_flight_usd": 0,
+      "positions": [
+        "Lido Staked on Ethereum"
+      ]
+    },
+    {
+      "protocol": "uniswap",
+      "asset_group": "OTHER",
+      "usd": 223396,
+      "in_flight_usd": 0,
+      "positions": [
+        "Uniswap v3 Liquidity Pool on Ethereum"
+      ]
+    },
+    {
+      "protocol": "uniswap",
+      "asset_group": "ETH",
+      "usd": 193143,
+      "in_flight_usd": 0,
+      "positions": [
+        "Uniswap v3 Liquidity Pool on Ethereum"
+      ]
+    }
+  ],
+  "idle": [
+    {
+      "symbol": "BAL",
+      "balance": 199999.99999999997,
+      "usd": 22761,
+      "asset_group": "OTHER"
+    },
+    {
+      "symbol": "DAI",
+      "balance": 2625.742220095646,
+      "usd": 2626,
+      "asset_group": "USD"
+    },
+    {
+      "symbol": "USDT",
+      "balance": 152.306225,
+      "usd": 152,
+      "asset_group": "USD"
+    },
+    {
+      "symbol": "USDC",
+      "balance": 14142.962281,
+      "usd": 14143,
+      "asset_group": "USD"
+    },
+    {
+      "symbol": "COW",
+      "balance": 2677405.034091315,
+      "usd": 361450,
+      "asset_group": "OTHER"
+    }
+  ],
+  "in_flight_items": [],
+  "token_check": {
+    "checked": 14,
+    "disagree": 0,
+    "etherscan_source": "etherscan"
+  },
+  "other_wallets": {
+    "0x616de58c011f8736fa20c7ae5352f7f6fb9f0669 chain 100": 2235290,
+    "0x616de58c011f8736fa20c7ae5352f7f6fb9f0669 chain 42161": 80002,
+    "0x616de58c011f8736fa20c7ae5352f7f6fb9f0669 chain 8453": 81915,
+    "0x9009b4411d0e1171cc042b77d7701f46b737fdb9 chain 100": 1447031,
+    "0x523732d31b4432bcdd4baad108f7ebe54ad478b0 chain 1": 4502789,
+    "0x7f8987d6a8bee31bd7be80e877732579e2582a28 chain 100": 5324314
+  },
+  "unbooked": [],
+  "rewards": [
+    {
+      "source": "merkl",
+      "symbol": "COMP",
+      "amount": 5.9e-05,
+      "usd": 0,
+      "claimable": true
+    },
+    {
+      "source": "merkl",
+      "symbol": "MORPHO",
+      "amount": 8.302223982435503,
+      "usd": 17,
+      "claimable": true
+    },
+    {
+      "source": "merkl",
+      "symbol": "stkGHO",
+      "amount": 0.06394816155406367,
+      "usd": 0,
+      "claimable": true
+    },
+    {
+      "source": "uniswap",
+      "symbol": "WETH",
+      "amount": 0.002626672870185068,
+      "usd": 7,
+      "claimable": true
+    },
+    {
+      "source": "uniswap",
+      "symbol": "COW",
+      "amount": 79.33121857862027,
+      "usd": 11,
+      "claimable": true
+    }
+  ],
+  "rewards_usd": 35,
+  "flags": [
+    "NOTE: idle re-based on the live Safe (Syncrone lagging): COW 2,638,451.2416 -> 2,677,405.0341"
+  ]
 }
