@@ -210,7 +210,7 @@
   function renderRewards() {
     const box = $('#rewardsBox');
     const sw = snap.rewards_sweep; const co = (sw && sw.claim_only) || [];
-    if (!sw || ((!sw.items || !sw.items.length) && !co.length)) { box.innerHTML = '<p class="empty">No claimable rewards or reward tokens for this client.</p>'; return; }
+    if (!sw || ((!sw.items || !sw.items.length) && !co.length)) { box.innerHTML = '<p class="empty">Nothing claimable for this client right now. Reward tokens already in the Safe are listed under Holdings → REWARDS and can be sold from the Swap panel.</p>'; return; }
     const doSwap = $('#sweepToggle').checked;
     $('#sweepToggle').onchange = renderRewards;
     const best = sw.best_usd_venue;
@@ -234,7 +234,7 @@
     const swapMode = doSwap && sweepItems.length > 0;
     const canRun = executorOn && chosen.length > 0 && (swapMode ? !!best : claimCmds.length > 0);
     let title, summary;
-    if (!chosen.length) { title = 'Nothing selected'; summary = 'Tick the rewards to bundle into one transaction.'; }
+    if (!chosen.length) { title = 'Nothing selected'; summary = ' · tick the claims to bundle into one transaction'; }
     else if (swapMode) {
       title = 'Claim, swap and deposit';
       summary = `${claimCmds.length ? 'claim (' + esc(claimCmds.join(', ')) + ') → ' : ''}CoW swap <b>${esc(swapTokens.join(', ') || 'nothing')}</b> to USDC${heldBack.length ? ` <small>(${esc(heldBack.join(', '))}: no permitted route to USDC, claimed and held)</small>` : ''} → deposit into <b>${best ? esc(best.protocol + ' ' + best.asset) : 'no permitted USDC venue'}</b>${best ? ` <small>(${pct(best.apy)})</small>` : ''}<br><small>one Safe transaction bundles the claims and one pre-signed CoW order per token; the USDC deposit follows once the orders fill</small>`;
@@ -243,7 +243,7 @@
       summary = `${esc(claimCmds.join(', ')) || 'nothing to claim (only held tokens selected)'}<br><small>one transaction; tokens stay in the Safe</small>`;
     }
     const allOn = rows.every(r => sel[r.key]);
-    box.innerHTML = `<div class="grp"><div class="grp-h"><h3>Rewards</h3><div class="tot"><b>${compact(rows.reduce((s, r) => s + r.usd, 0))}</b> claimable or held · <b>${chosen.length}</b> of ${rows.length} selected · sweep floor ${usd(sw.min_usd)}</div></div>
+    box.innerHTML = `<div class="grp"><div class="grp-h"><h3>Rewards</h3><div class="tot"><b>${compact(rows.reduce((s, r) => s + r.usd, 0))}</b> claimable · <b>${chosen.length}</b> of ${rows.length} selected · sweep floor ${usd(sw.min_usd)}</div></div>
       <div class="scroll"><table><thead><tr><th class="ck"><input type="checkbox" id="rwAll" ${allOn ? 'checked' : ''} title="select all"></th><th>Source</th><th>Token</th><th class="n">Amount</th><th class="n">Value</th><th>State</th></tr></thead><tbody>
       ${rows.map(r => `<tr class="${sel[r.key] ? '' : 'inflight'}"><td class="ck"><input type="checkbox" data-k="${esc(r.key)}" ${sel[r.key] ? 'checked' : ''}></td><td class="k">${esc(r.source)}</td><td>${esc(r.token)}</td><td class="n num">${esc(r.amount)}</td><td class="n num">${usd(r.usd)}</td><td>${esc(r.state)}</td></tr>`).join('')}
       </tbody></table></div>

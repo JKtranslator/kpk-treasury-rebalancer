@@ -253,7 +253,7 @@ def sweep_commands(body: dict, snap: dict) -> tuple[list[str], dict, list[str]]:
         raise ValueError(f"no deposit command for {to_proto}")
     stage2 = dict(commands=[dep], label=f"deposit all USDC into {to['protocol']} {to.get('asset')}", wait_for="USDC", client=body["client"], to=to)
     notes.insert(0, "rewards sweep: stage 1 claims (" + (", ".join(claims) or "none") + f") and places {len(orders)} pre-signed CoW order(s) into USDC ({', '.join(orders) or 'none'}); "
-                 "stage 2 deposits the USDC once the orders fill. `merkl claim` collects every pending Merkl token in one call. Amounts include rewards already held in the Safe.")
+                 "stage 2 deposits the USDC once the orders fill. `merkl claim` collects every pending Merkl token in one call; the CoW orders sell exactly the claimed amounts.")
     return cmds, stage2, notes
 
 

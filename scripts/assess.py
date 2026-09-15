@@ -386,7 +386,9 @@ def main():
     perf = performance(book, y["permitted"], nav, c.get("policy"), args, reg)
     # rewards sweep: claim everything claimable + held reward tokens, swap to USDC via CoW, deposit in the best USD venue
     rew_all = [b for b in book if b["asset_group"] == "REWARDS"]
-    rew = [b for b in rew_all if not b.get("claim_only")]
+    # only claimable rewards belong in the claim section; reward tokens already in the wallet are holdings
+    # (Holdings tab, REWARDS category) and can be sold from the Swap panel
+    rew = [b for b in rew_all if not b.get("claim_only") and b["kind"] == "reward"]
     claim_only = [dict(symbol=b["symbol"], amount=b.get("balance"), usd=round(b["usd"]), source=b["protocol"], claim_cmd=b.get("claim_cmd"),
                        token_id=b.get("token_id"), venue=b["venue"]) for b in rew_all if b.get("claim_only")]
     usd_venues = sorted([p for p in y.get("permitted", []) if p["asset_group"] == "USD" and p["priced"] and p["action"] == "deposit"
