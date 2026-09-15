@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x616dE58c011F8736fa20c7Ae5352F7f6FB9F0669",
   "ok": true,
-  "as_of": "2026-09-15T13:00:10+00:00",
+  "as_of": "2026-09-15T14:38:08+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -154,6 +154,13 @@
   "rewards": [
     {
       "source": "merkl",
+      "symbol": "COMP",
+      "amount": 5.9e-05,
+      "usd": 0,
+      "claimable": true
+    },
+    {
+      "source": "merkl",
       "symbol": "MORPHO",
       "amount": 8.302223982435503,
       "usd": 18,
@@ -167,17 +174,10 @@
       "claimable": true
     },
     {
-      "source": "compound",
-      "symbol": "COMP",
-      "amount": 5.9e-05,
-      "usd": 0,
-      "claimable": true
-    },
-    {
       "source": "uniswap",
       "symbol": "WETH",
-      "amount": 2.491763773856123,
-      "usd": 6281,
+      "amount": 2.4938946167127534,
+      "usd": 6287,
       "claimable": true
     },
     {
@@ -188,6 +188,6 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 11558,
+  "rewards_usd": 11563,
   "flags": []
 }
