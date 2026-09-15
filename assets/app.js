@@ -206,16 +206,30 @@
   /* ------------------------------------------------------------------ rewards sweep */
   function renderRewards() {
     let box = $('#rewardsBox'); if (!box) { box = document.createElement('div'); box.id = 'rewardsBox'; $('#simMoves').parentNode.insertBefore(box, $('#simMoves')); }
-    const sw = snap.rewards_sweep; if (!sw || !sw.items || !sw.items.length) { box.innerHTML = ''; return; }
-    const worth = sw.items.filter(i => i.usd >= sw.min_usd);
+    const sw = snap.rewards_sweep; const co = (sw && sw.claim_only) || [];
+    if (!sw || ((!sw.items || !sw.items.length) && !co.length)) { box.innerHTML = ''; return; }
+    const worth = (sw.items || []).filter(i => i.usd >= sw.min_usd);
     const best = sw.best_usd_venue;
+    const byPos = {}; co.forEach(c => { (byPos[c.token_id] = byPos[c.token_id] || []).push(c); });
+    const claimRows = Object.entries(byPos).map(([tid, cs]) => `<div class="mv"><div class="path"><b>Uniswap v3 fees</b> · position #${esc(tid)} · ${cs.map(c => `${Number(c.amount).toLocaleString('en-US', { maximumFractionDigits: 4 })} ${esc(c.symbol)}`).join(' + ')}<br><small>claim only: fees stay in the Safe as the pool tokens</small></div><div class="amt num">${usd(cs.reduce((s, c) => s + c.usd, 0))}</div><button class="btn ${executorOn ? '' : 'ghost'}" data-claim="${esc(cs[0].claim_cmd)}" type="button" ${executorOn ? '' : 'disabled'}>Claim</button></div>`).join('');
     box.innerHTML = `<div class="grp"><div class="grp-h"><h3>Rewards</h3><div class="tot"><b>${compact(sw.total_usd)}</b> claimable or held · ${worth.length} of ${sw.items.length} above ${usd(sw.min_usd)}</div></div>
       <div class="scroll"><table><thead><tr><th>Source</th><th>Token</th><th class="n">Amount</th><th class="n">Value</th><th>State</th></tr></thead><tbody>
       ${sw.items.map(i => `<tr class="${i.usd < sw.min_usd ? 'inflight' : ''}"><td class="k">${esc(i.source)}</td><td>${esc(i.symbol)}</td><td class="n num">${Number(i.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 4 })}</td><td class="n num">${usd(i.usd)}</td><td>${i.claimable ? 'claimable' : 'held in Safe'}${i.usd < sw.min_usd ? ' · below sweep floor' : ''}</td></tr>`).join('')}
       </tbody></table></div>
-      <div class="mv" style="margin-top:10px"><div class="path"><b>Sweep</b> · claim → CoW swap to USDC → deposit into <b>${best ? esc(best.protocol + ' ' + best.asset) : 'no permitted USDC venue'}</b>${best ? ` <small>(${pct(best.apy)}, best permitted USDC venue)</small>` : ''}<br><small>two stages: claims and pre-signed CoW orders first, USDC deposit once they fill</small></div>
-      <div class="amt num">${compact(worth.reduce((s, i) => s + i.usd, 0))}</div><button class="btn ${executorOn && best && worth.length ? '' : 'ghost'}" id="sweepBtn" type="button" ${executorOn && best && worth.length ? '' : 'disabled'}>Execute</button></div></div>`;
+      ${claimRows}
+      ${worth.length ? `<div class="mv" style="margin-top:10px"><div class="path"><b>Sweep</b> · claim → CoW swap to USDC → deposit into <b>${best ? esc(best.protocol + ' ' + best.asset) : 'no permitted USDC venue'}</b>${best ? ` <small>(${pct(best.apy)}, best permitted USDC venue)</small>` : ''}<br><small>two stages: claims and pre-signed CoW orders first, USDC deposit once they fill</small></div>
+      <div class="amt num">${compact(worth.reduce((s, i) => s + i.usd, 0))}</div><button class="btn ${executorOn && best && worth.length ? '' : 'ghost'}" id="sweepBtn" type="button" ${executorOn && best && worth.length ? '' : 'disabled'}>Execute</button></div>` : ''}</div>`;
     const b = $('#sweepBtn'); if (b) b.onclick = () => openSweep(worth, best);
+    box.querySelectorAll('button[data-claim]').forEach(btn => btn.onclick = () => openClaimOnly(btn.dataset.claim));
+  }
+  function openClaimOnly(cmd) {
+    cur = { move: null, plan: null, stage2: { commands: [cmd], label: cmd, wait_for: '' }, claimOnly: true };
+    $('#mTitle').textContent = `Execute · ${snap.display_name} · claim`;
+    $('#mParams').innerHTML = [['Client / chain', `${snap.client} · ${snap.chain_id}`], ['Avatar Safe', (snap.safes && snap.safes.avatar) || snap.avatar_safe], ['Action', 'CLAIM only'], ['Command', cmd]]
+      .map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
+    $('#mPlan').hidden = true; $('#mSim').hidden = true; $('#mMsg').className = 'modal-msg';
+    $('#mMsg').textContent = 'Builds the collect() call through the bot; the fee tokens land in the Safe. No swap, no deposit.';
+    $('#mBuild').disabled = !executorOn; $('#mPropose').disabled = true; steps({}); $('#modal').hidden = false;
   }
   function openSweep(items, best) {
     cur = { move: null, plan: null, sweep: { items, to: best } };
@@ -320,7 +334,8 @@
   async function buildAndSimulate() {
     if (!cur) return; steps({ build: 'cur' }); $('#mBuild').disabled = true; $('#mMsg').className = 'modal-msg'; $('#mMsg').textContent = 'Building…';
     try {
-      const payload = cur.stage2 ? { client: snap.client, commands: cur.stage2.commands, stage: '2 of 2', notes: ['stage 2: deposit of the CoW fill'] }
+      const payload = cur.claimOnly ? { client: snap.client, commands: cur.stage2.commands, notes: ['claim only'] }
+        : cur.stage2 ? { client: snap.client, commands: cur.stage2.commands, stage: '2 of 2', notes: ['stage 2: deposit of the CoW fill'] }
         : cur.sweep ? { client: snap.client, rewards_sweep: true, items: cur.sweep.items, to: cur.sweep.to } : movePayload(cur.move);
       let r = await fetch(EXECUTOR + '/plan', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(payload) });
       if (r.status === 401 && askToken('Executor token needed to build')) r = await fetch(EXECUTOR + '/plan', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(payload) });
@@ -361,7 +376,7 @@
       $('#mMsg').innerHTML = `Proposed. Safe tx hash <span class="num">${esc(j.safe_tx_hash || '')}</span>${j.url ? ` · <a href="${esc(j.url)}" target="_blank" rel="noopener">open in Safe ↗</a>` : ''}` +
         (j.cow_orders && j.cow_orders.length ? `<br>CoW order${j.cow_orders.length > 1 ? 's' : ''} placed: ` + j.cow_orders.map(o => `<a href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.uid.slice(0, 14))}… ↗</a>`).join(', ') + ' (fill after the Safe executes)' : '') +
         (j.cow_warning ? `<br><b>${esc(j.cow_warning)}</b>` : '');
-      if (cur.stage2) { const pend = JSON.parse(localStorage.getItem('kpk_stage2') || '{}'); delete pend[snap.client]; localStorage.setItem('kpk_stage2', JSON.stringify(pend)); renderStage2(); }
+      if (cur.stage2 && !cur.claimOnly) { const pend = JSON.parse(localStorage.getItem('kpk_stage2') || '{}'); delete pend[snap.client]; localStorage.setItem('kpk_stage2', JSON.stringify(pend)); renderStage2(); }
       if (cur.plan && cur.plan.next_stage) {
         const pend = JSON.parse(localStorage.getItem('kpk_stage2') || '{}');
         pend[snap.client] = { ...cur.plan.next_stage, stage1_tx: j.safe_tx_hash, cow_uid: j.cow_order_uid || null, cow_url: j.cow_url || null, created: Date.now() };

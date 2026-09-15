@@ -293,6 +293,12 @@
       "position": "kpk USDT Prime V2",
       "asset_group": "USD",
       "symbol": "kpkUSDTprime"
+    },
+    "0xe1753f2e00940cc31213dd92013cf019dfe4ca1d": {
+      "protocol": "aave_v3",
+      "position": "Aave Savings GHO (sGHO, yield accrues in share price)",
+      "asset_group": "USD",
+      "symbol": "sGHO"
     }
   },
   "defillama_pools": {
@@ -308,11 +314,12 @@
     "uniswap/USD": "206440c7-5614-4afd-bd1a-d9bc4acdcbfe",
     "gnosis/OTHER": "13392973-be6e-4b2f-bce9-4f7dd53d1c3a",
     "aave_v3/EURO": "eb089ddf-77ba-459c-8e87-7a66c7fc3f27",
-    "aave_v3/USD/GHO": "bf0660ab-38bf-48a4-9a6c-393ec0e2ff5f",
+    "aave_v3/USD/GHO": "19d024ed-9c70-4323-9a81-fe873ea5f0e0",
     "aave_v3/OTHER/AAVE": "7ee6c38b-ac42-4388-88dc-389140276cf8",
     "spark/USD": "0ed981dc-b49d-426d-ade5-6014728b1ef9",
     "compound_v3/USD/ciUSDCv3": "7da72d09-56ca-4ec5-a45f-59114353e487",
-    "compound_v3/USD": "7da72d09-56ca-4ec5-a45f-59114353e487"
+    "compound_v3/USD": "7da72d09-56ca-4ec5-a45f-59114353e487",
+    "savingsgho/USD": "19d024ed-9c70-4323-9a81-fe873ea5f0e0"
   },
   "rewards": {
     "_comment": "Claimable-reward sources and the reward tokens the simulator may sweep (claim -> CoW swap to USDC -> deposit).",
@@ -349,6 +356,18 @@
       "MERKL",
       "KING"
     ],
-    "min_sweep_usd": 100
+    "min_sweep_usd": 100,
+    "safety_module": {
+      "1": {
+        "0x4da27a545c0c5b758a6ba100e3a049001de870f5": "stkAAVE",
+        "0x1a88df1cfe15af22b3c4c783d4e6f7f9e0c1885d": "stkGHO v1"
+      }
+    },
+    "aave_token": {
+      "1": "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9"
+    },
+    "uniswap_v3_manager": {
+      "1": "0xC36442b4a4522E871399CD717aBDD847Ab11FE88"
+    }
   }
 }

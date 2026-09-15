@@ -297,8 +297,11 @@ def rebase_idle_on_safe(sync_rows: list[dict], safe_rows: list[dict], reg: dict,
 
 
 # ---------------------------------------------------------------- rewards
-def _rpc_call(chain_id: int, to: str, data: str) -> str:
-    d = http_json(PUBLIC_RPC[chain_id], data={"jsonrpc": "2.0", "id": 1, "method": "eth_call", "params": [{"to": to, "data": data}, "latest"]})
+def _rpc_call(chain_id: int, to: str, data: str, sender: str | None = None) -> str:
+    call = {"to": to, "data": data}
+    if sender:
+        call["from"] = sender
+    d = http_json(PUBLIC_RPC[chain_id], data={"jsonrpc": "2.0", "id": 1, "method": "eth_call", "params": [call, "latest"]})
     if "error" in d:
         raise RuntimeError(f"rpc: {d['error']}")
     return d["result"]
@@ -379,6 +382,60 @@ def collect_rewards(c: dict, reg: dict, chain_id: int, safe: str, safe_rows: lis
                     rows.append(dict(source="aave", symbol=sym, token=tok, amount=amt, price=px, usd=amt * px, claimable=True, claim_cmd="aave claim"))
     except Exception as e:
         print("  aave rewards:", str(e)[:100])
+    # Aave Safety Module (stkAAVE, stkGHO v1): getTotalRewardsBalance(user) -> AAVE
+    try:
+        aave_tok = (cfg.get("aave_token") or {}).get(str(chain_id))
+        sel = _sel("getTotalRewardsBalance(address)")
+        for contract, label in ((cfg.get("safety_module") or {}).get(str(chain_id)) or {}).items():
+            res = _rpc_call(chain_id, contract, "0x" + sel + safe[2:].lower().rjust(64, "0"))
+            pend = int(res, 16) / 1e18 if res and res != "0x" else 0.0
+            if pend > 0:
+                px = price_of.get(aave_tok, price_by_sym.get("AAVE", 0.0))
+                rows.append(dict(source="aave_safety_module", symbol="AAVE", token=aave_tok, amount=pend, price=px, usd=pend * px,
+                                 claimable=True, claim_cmd="aave claim", contract=contract, note=f"{label} rewards"))
+    except Exception as e:
+        print("  safety module rewards:", str(e)[:100])
+    # Uniswap v3 LP fees: enumerate the Safe's position NFTs, simulate collect() as the Safe to get the fees
+    try:
+        mgr = (cfg.get("uniswap_v3_manager") or {}).get(str(chain_id))
+        if mgr:
+            n = int(_rpc_call(chain_id, mgr, "0x" + _sel("balanceOf(address)") + safe[2:].lower().rjust(64, "0")), 16)
+            dec_cache: dict[str, int] = {r["token"]: r.get("decimals", 18) for r in safe_rows}
+            sym_cache: dict[str, str] = {r["token"]: r.get("symbol") for r in safe_rows}
+            for r in sync_rows:
+                sym_cache.setdefault(r["token"], r.get("symbol"))
+            def tok_meta(addr):
+                if addr not in dec_cache:
+                    try:
+                        dec_cache[addr] = int(_rpc_call(chain_id, addr, "0x" + _sel("decimals()")), 16)
+                    except Exception:
+                        dec_cache[addr] = 18
+                if not sym_cache.get(addr):
+                    try:
+                        raw = _rpc_call(chain_id, addr, "0x" + _sel("symbol()"))
+                        sym_cache[addr] = bytes.fromhex(raw[2:])[64:].rstrip(b"\x00")[:32].decode(errors="ignore").strip() or addr[:8]
+                    except Exception:
+                        sym_cache[addr] = addr[:8]
+                return dec_cache[addr], sym_cache[addr]
+            for i in range(min(n, 25)):
+                tid = int(_rpc_call(chain_id, mgr, "0x" + _sel("tokenOfOwnerByIndex(address,uint256)") + safe[2:].lower().rjust(64, "0") + hex(i)[2:].rjust(64, "0")), 16)
+                pos = _rpc_call(chain_id, mgr, "0x" + _sel("positions(uint256)") + hex(tid)[2:].rjust(64, "0"))[2:]
+                w = [pos[k:k + 64] for k in range(0, len(pos), 64)]
+                t0, t1, liq = "0x" + w[2][24:], "0x" + w[3][24:], int(w[7], 16)
+                mx = hex(2 ** 128 - 1)[2:].rjust(64, "0")
+                data = "0x" + _sel("collect((uint256,address,uint128,uint128))") + hex(tid)[2:].rjust(64, "0") + safe[2:].lower().rjust(64, "0") + mx + mx
+                res = _rpc_call(chain_id, mgr, data, sender=safe)[2:]
+                a0, a1 = int(res[:64], 16), int(res[64:128], 16)
+                for addr, amt_raw in ((t0, a0), (t1, a1)):
+                    if amt_raw == 0:
+                        continue
+                    dec, sym = tok_meta(addr)
+                    amt = amt_raw / 10 ** dec
+                    px = price_of.get(addr, price_by_sym.get((sym or "").upper(), 0.0))
+                    rows.append(dict(source="uniswap", symbol=sym, token=addr, amount=amt, price=px, usd=amt * px, claimable=True,
+                                     claim_cmd=f"uniswap claim {tid}", token_id=tid, claim_only=True, note=f"LP fees, position #{tid}" + ("" if liq else " (no liquidity left)")))
+    except Exception as e:
+        print("  uniswap fees:", str(e)[:120])
     # reward tokens already in the wallet
     rt = {s.upper() for s in cfg.get("reward_tokens", [])}
     for r in safe_rows:

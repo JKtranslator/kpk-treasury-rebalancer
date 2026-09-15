@@ -48,9 +48,9 @@ def build_book(h: dict, reg: dict) -> list[dict]:
                              venue_tvl_usd=fnum(r.get("venue_tvl_usd")), source="strategy_api"))
     for r in h.get("rewards") or []:
         if r["usd"] >= 1 and r["claimable"]:
-            book.append(dict(kind="reward", protocol=r["source"], venue=f"claimable {r['symbol']} ({r['source']})", symbol=r["symbol"],
+            book.append(dict(kind="reward", protocol=r["source"], venue=f"claimable {r['symbol']} ({r.get('note') or r['source']})", symbol=r["symbol"],
                              asset_group="REWARDS", usd=r["usd"], apy=None, apy_base=None, balance=r["amount"], source="rewards",
-                             claimable=True, claim_cmd=r.get("claim_cmd")))
+                             claimable=True, claim_cmd=r.get("claim_cmd"), claim_only=r.get("claim_only", False), token_id=r.get("token_id")))
     has_strat = any(b["source"] == "strategy_api" for b in book)
     for r in h["positions"]:
         if r["source"] not in ("syncrone", "coingecko"):
@@ -377,12 +377,16 @@ def main():
     checks = policy_checks(book, nav, c.get("policy"), reg)
     perf = performance(book, y["permitted"], nav, c.get("policy"), args, reg)
     # rewards sweep: claim everything claimable + held reward tokens, swap to USDC via CoW, deposit in the best USD venue
-    rew = [b for b in book if b["asset_group"] == "REWARDS"]
+    rew_all = [b for b in book if b["asset_group"] == "REWARDS"]
+    rew = [b for b in rew_all if not b.get("claim_only")]
+    claim_only = [dict(symbol=b["symbol"], amount=b.get("balance"), usd=round(b["usd"]), source=b["protocol"], claim_cmd=b.get("claim_cmd"),
+                       token_id=b.get("token_id"), venue=b["venue"]) for b in rew_all if b.get("claim_only")]
     usd_venues = sorted([p for p in y.get("permitted", []) if p["asset_group"] == "USD" and p["priced"] and p["action"] == "deposit"
                          and "USDC" in (p.get("asset") or "").upper()], key=lambda p: -fnum(p["apy_total"]))
     sweep = dict(total_usd=round(sum(b["usd"] for b in rew)), min_usd=reg.get("rewards", {}).get("min_sweep_usd", 100),
                  items=[dict(symbol=b["symbol"], amount=b.get("balance"), usd=round(b["usd"]), source=b["protocol"], claimable=b["kind"] == "reward",
                              claim_cmd=b.get("claim_cmd")) for b in rew],
+                 claim_only=claim_only,
                  best_usd_venue=(dict(protocol=usd_venues[0]["protocol"], asset=usd_venues[0]["asset"], vault=usd_venues[0].get("vault"),
                                       apy=usd_venues[0]["apy_total"]) if usd_venues else None))
     write_json(out / "assessment.json", dict(client=args.client, nav_usd=round(nav), book=book, policy_checks=checks,
