@@ -3,11 +3,11 @@
   "display_name": "Balancer DAO Treasury",
   "chain_id": 1,
   "avatar_safe": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
-  "as_of": "2026-09-15T13:45:59+00:00",
+  "as_of": "2026-09-15T14:00:18+00:00",
   "period": "7day",
   "vault_data_fetched_at": "2026-09-15T01:53:22.611Z",
   "run_folder": "2026-09-15",
-  "nav_usd": 7156451,
+  "nav_usd": 7156453,
   "eth_price_usd": 2520.7772,
   "reconciliation": {
     "syncrone_nav_usd": 7153210,
@@ -73,12 +73,12 @@
       "venue": "claimable AAVE (stkAAVE rewards)",
       "symbol": "AAVE",
       "asset_group": "REWARDS",
-      "usd": 3174.38,
+      "usd": 3175.9,
       "apy": null,
       "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
-      "balance": 24.75153388075288,
+      "balance": 24.763322475273352,
       "claimable": true,
       "claim_cmd": "aave claim"
     },
@@ -1046,7 +1046,7 @@
     }
   },
   "rewards_sweep": {
-    "total_usd": 3268,
+    "total_usd": 3270,
     "min_usd": 100,
     "items": [
       {
@@ -1067,8 +1067,8 @@
       },
       {
         "symbol": "AAVE",
-        "amount": 24.75153388075288,
-        "usd": 3174,
+        "amount": 24.763322475273352,
+        "usd": 3176,
         "source": "aave_safety_module",
         "claimable": true,
         "claim_cmd": "aave claim"
