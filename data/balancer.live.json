@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
   "ok": true,
-  "as_of": "2026-09-15T11:16:57+00:00",
+  "as_of": "2026-09-15T11:39:59+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -144,7 +144,7 @@
   ],
   "in_flight_items": [],
   "token_check": {
-    "checked": 18,
+    "checked": 16,
     "disagree": 0,
     "etherscan_source": "etherscan"
   },
@@ -152,18 +152,7 @@
     "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 42161": 2234,
     "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 100": 2206325
   },
-  "unbooked": [
-    {
-      "symbol": "cUSDCv3",
-      "balance": 1.589709,
-      "position": "Compound v3 USDC (cUSDCv3) (not yet booked by Syncrone)"
-    },
-    {
-      "symbol": "sGho",
-      "balance": 0.30887378922416286,
-      "position": "Aave Savings GHO (sGHO, yield accrues in share price) (not yet booked by Syncrone)"
-    }
-  ],
+  "unbooked": [],
   "rewards": [
     {
       "source": "merkl",
@@ -182,8 +171,8 @@
     {
       "source": "aave_safety_module",
       "symbol": "AAVE",
-      "amount": 24.629554665210353,
-      "usd": 3159,
+      "amount": 24.648383674025354,
+      "usd": 3161,
       "claimable": true
     },
     {
@@ -222,8 +211,6 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 3346,
-  "flags": [
-    "NOTE: Safe holds vault shares Syncrone has not booked yet: 1.59 cUSDCv3, 0.31 sGho"
-  ]
+  "rewards_usd": 3349,
+  "flags": []
 }
