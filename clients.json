@@ -211,7 +211,8 @@
       "EURC",
       "aEthEURC",
       "KPK_EURC_Yield"
-    ]
+    ],
+    "REWARDS": []
   },
   "spam_dust_usd": 50,
   "roles_permissions_ground_truth": {
@@ -312,5 +313,42 @@
     "spark/USD": "0ed981dc-b49d-426d-ade5-6014728b1ef9",
     "compound_v3/USD/ciUSDCv3": "7da72d09-56ca-4ec5-a45f-59114353e487",
     "compound_v3/USD": "7da72d09-56ca-4ec5-a45f-59114353e487"
+  },
+  "rewards": {
+    "_comment": "Claimable-reward sources and the reward tokens the simulator may sweep (claim -> CoW swap to USDC -> deposit).",
+    "merkl_api": "https://api.merkl.xyz/v4/users/{safe}/rewards?chainId={chain_id}",
+    "compound_rewards": {
+      "1": "0x1B0e765F6224C21223AeA2af16c1C46E38885a40"
+    },
+    "compound_comets": {
+      "1": [
+        "0xc3d688B66703497DAA19211EEdff47f25384cdc3",
+        "0x3Afdc9BCA9213A35503b077a6072F3D0d5AB0840",
+        "0x5D409e56D886231aDAf00c8775665AD0f9897b56"
+      ]
+    },
+    "aave_rewards_controller": {
+      "1": "0x8164Cc65827dcFe994AB23944CBC90e0aa80bFcb"
+    },
+    "reward_tokens": [
+      "COMP",
+      "MORPHO",
+      "GEAR",
+      "CRV",
+      "CVX",
+      "AURA",
+      "SWISE",
+      "SD",
+      "RPL",
+      "LDO",
+      "ETHFI",
+      "FLUID",
+      "GHO",
+      "ARB",
+      "OP",
+      "MERKL",
+      "KING"
+    ],
+    "min_sweep_usd": 100
   }
 }

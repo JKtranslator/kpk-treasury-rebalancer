@@ -194,6 +194,39 @@ def two_stage_commands(move: dict, snap: dict) -> tuple[list[str], dict, list[st
     return cmds, stage2, notes
 
 
+def sweep_commands(body: dict, snap: dict) -> tuple[list[str], dict, list[str]]:
+    """Rewards sweep: claim everything claimable, place one CoW order per reward token into USDC (stage 1),
+    then deposit all USDC into the chosen venue (stage 2). Tokens below min_sweep_usd are skipped."""
+    sw = snap.get("rewards_sweep") or {}
+    min_usd = fnum(sw.get("min_usd") or 100)
+    items = [i for i in (body.get("items") or sw.get("items") or []) if fnum(i.get("usd")) >= min_usd]
+    if not items:
+        raise ValueError(f"no reward worth sweeping (all below ${min_usd:,.0f})")
+    cmds, notes = [], []
+    for cc in sorted({i["claim_cmd"] for i in items if i.get("claimable") and i.get("claim_cmd")}):
+        cmds.append(cc)
+    by_tok: dict[str, float] = {}
+    for i in items:
+        by_tok[i["symbol"].upper()] = by_tok.get(i["symbol"].upper(), 0.0) + fnum(i.get("amount"))
+    for sym, amt in by_tok.items():
+        if sym in ("USDC",):
+            continue
+        cmds.append(f"cowswap swap {amt:.6f} {sym} USDC")
+    to = body.get("to") or sw.get("best_usd_venue")
+    if not to:
+        raise ValueError("no permitted USDC venue to deposit into")
+    to_proto = PROTO.get(to["protocol"])
+    vault = to.get("vault") or ""
+    dep = {"morpho": f"morpho deposit all USDC {vault}", "compound": f"compound deposit all USDC {vault}".strip(), "fluid": f"fluid deposit all USDC {vault}".strip(),
+           "aave": "aave deposit all USDC", "spark": "spark deposit all USDC", "gearbox": f"gearbox deposit all USDC {vault}".strip()}.get(to_proto)
+    if not dep:
+        raise ValueError(f"no deposit command for {to_proto}")
+    stage2 = dict(commands=[dep], label=f"deposit all USDC into {to['protocol']} {to.get('asset')}", wait_for="USDC", client=body["client"], to=to)
+    notes.append("rewards sweep: stage 1 claims (" + ", ".join(cmds[:len(cmds) - len(by_tok)]) + f") and places {len([s for s in by_tok if s != 'USDC'])} pre-signed CoW order(s) into USDC; "
+                 "stage 2 deposits the USDC once the orders fill. Amounts include rewards already held in the Safe.")
+    return cmds, stage2, notes
+
+
 def run_worker(slug: str, op: str, payload: dict) -> dict:
     sync = ensure_latest_proposer()
     cdir = SAFEAGENT / CLIENT_DIRS[slug]
@@ -390,6 +423,15 @@ class H(BaseHTTPRequestHandler):
             slug = body.get("client")
             if slug not in CLIENT_DIRS:
                 return self._json(400, dict(error=f"unknown client {slug}"))
+            if body.get("rewards_sweep"):
+                try:
+                    snap = load_snapshot(slug)
+                    cmds, stage2, notes = sweep_commands(body, snap)
+                except Exception as e:
+                    return self._json(400, dict(error=str(e)))
+                res = run_worker(slug, "plan", dict(commands=cmds, move=body))
+                res.setdefault("commands", cmds); res["notes"] = notes; res["stage"] = "1 of 2"; res["next_stage"] = stage2
+                return self._json(200 if not res.get("error") else 422, res)
             if body.get("commands"):   # stage 2 (or any explicit command list) from the page
                 res = run_worker(slug, "plan", dict(commands=list(body["commands"]), move=body.get("move") or {}))
                 res.setdefault("commands", body["commands"]); res["notes"] = body.get("notes") or []; res["stage"] = body.get("stage")

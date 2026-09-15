@@ -96,6 +96,7 @@ def do_plan(client_dir: Path, payload: dict):
     intents, all_steps, labels = [], [], []
     swap_quote = None
     cow_submit = None
+    cow_submits: list = []
     for cmd in commands:
         if "__SWAP_OUT__" in cmd:
             if not swap_quote:
@@ -115,9 +116,8 @@ def do_plan(client_dir: Path, payload: dict):
         except Exception as e:
             fail(f"build failed for `{cmd}`: {e}", command=cmd, trace=traceback.format_exc(limit=3))
         if extra.get("_cow_submit"):
-            if cow_submit:
-                fail("only one CoW order per plan", command=cmd)
-            cow_submit = extra["_cow_submit"]   # submitted to the CoW API at propose time, exactly like execute_plan
+            cow_submits.append(extra["_cow_submit"])   # each submitted to the CoW API at propose time, like execute_plan
+            cow_submit = cow_submits[0]
         if extra.get("swap_quote"):
             q = extra["swap_quote"]
             from token_registry import get_decimals
@@ -143,7 +143,7 @@ def do_plan(client_dir: Path, payload: dict):
     # The bot's pre-flight balance check reads current balances per intent. In a chained plan the
     # deposit leg is funded by the withdraw leg inside the same bundle, so the check would reject it
     # before Tenderly runs; simulate-bundle carries state between legs, so skip the pre-check there.
-    chained = len(intents) > 1 and any(i.get("action") in ("withdraw", "redeem", "unwrap") for i in intents[:-1])
+    chained = len(intents) > 1 and any(i.get("action") in ("withdraw", "redeem", "unwrap", "claim") for i in intents[:-1])
     skip = chained or any(i.get("wrap_eth") for i in intents)
     sim = simulate(manager_tx, all_steps=all_steps, skip_balance_check=skip)
     if chained:
@@ -182,7 +182,7 @@ def do_plan(client_dir: Path, payload: dict):
     plan_file = plans_dir / f"{plan_id}.json"
     record = dict(plan_id=plan_id, client_dir=str(client_dir), created=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                   commands=commands, intents=intents, steps=all_steps, manager_tx=manager_tx, simulation=sim, tenderly=tl, swap_quote=swap_quote,
-                  cow_submit=cow_submit,
+                  cow_submit=cow_submit, cow_submits=cow_submits,
                   safe=config.SAFE_ADDRESS, manager_safe=config.MANAGER_SAFE, roles_modifier=config.ROLES_MODIFIER, chain_id=config.CHAIN_ID)
     plan_file.write_text(json.dumps(record, default=str, indent=1), encoding="utf-8")
 
@@ -199,6 +199,8 @@ def do_plan(client_dir: Path, payload: dict):
                     selector=data[:10], data_preview=data[:74] + ("…" if len(data) > 74 else ""), data_len=len(data))
     out(dict(
         plan_id=plan_id, plan_file=str(plan_file), client_dir=client_dir.name, swap_quote=swap_quote,
+        cow_orders=[dict(sell_token=x.get("sell_token"), buy_token=x.get("buy_token"), sell_amount=str(x.get("sell_amount")),
+                         buy_amount=str(x.get("buy_amount")), valid_to=x.get("valid_to"), slippage_bps=x.get("slippage_bps")) for x in cow_submits],
         cow_order=(dict(sell_token=cow_submit.get("sell_token"), buy_token=cow_submit.get("buy_token"),
                         sell_amount=str(cow_submit.get("sell_amount")), buy_amount=str(cow_submit.get("buy_amount")),
                         valid_to=cow_submit.get("valid_to"), slippage_bps=cow_submit.get("slippage_bps"),
@@ -230,14 +232,19 @@ def do_propose(client_dir: Path, payload: dict):
     # CoW leg, same order as execute_plan: submit the pre-signed order to the CoW API, then propose the
     # Safe tx that sets the presignature. If the API refuses, store the order for `cow resubmit`.
     cow_uid = cow_url = cow_warning = None
-    cow_submit = rec.get("cow_submit")
-    if cow_submit:
+    cow_uids: list = []
+    submits = rec.get("cow_submits") or ([rec["cow_submit"]] if rec.get("cow_submit") else [])
+    cow_submit = submits[0] if submits else None
+    if submits:
         from cow_api import submit_presign_order, order_url
-        try:
-            cow_uid = submit_presign_order(**cow_submit)
-            cow_url = order_url(cow_uid)
-        except Exception as e:
-            cow_warning = f"CoW API submission failed ({str(e)[:160]}); order stored for `cow resubmit <safe tx hash>` after execution"
+        for sub in submits:
+            try:
+                uid = submit_presign_order(**sub)
+                cow_uids.append(dict(uid=uid, url=order_url(uid), sell_token=sub.get("sell_token")))
+            except Exception as e:
+                cow_warning = f"CoW API submission failed for {sub.get('sell_token')} ({str(e)[:120]}); order stored for `cow resubmit <safe tx hash>` after execution"
+        if cow_uids:
+            cow_uid, cow_url = cow_uids[0]["uid"], cow_uids[0]["url"]
     try:
         tx = propose_manager_tx(rec["manager_tx"])
     except Exception as e:
@@ -251,7 +258,7 @@ def do_propose(client_dir: Path, payload: dict):
     rec["proposed"] = dict(at=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), tx=tx, cow_order_uid=cow_uid, cow_url=cow_url)
     pf.write_text(json.dumps(rec, default=str, indent=1), encoding="utf-8")
     out(dict(plan_id=rec["plan_id"], safe_tx_hash=tx.get("hash"), url=tx.get("url"), nonce=tx.get("nonce"), safe=tx.get("safe"),
-             cow_order_uid=cow_uid, cow_url=cow_url, cow_warning=cow_warning))
+             cow_order_uid=cow_uid, cow_url=cow_url, cow_orders=cow_uids, cow_warning=cow_warning))
 
 
 def main():

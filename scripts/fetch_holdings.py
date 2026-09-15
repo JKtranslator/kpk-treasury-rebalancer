@@ -296,6 +296,97 @@ def rebase_idle_on_safe(sync_rows: list[dict], safe_rows: list[dict], reg: dict,
     return lag, fresh
 
 
+# ---------------------------------------------------------------- rewards
+def _rpc_call(chain_id: int, to: str, data: str) -> str:
+    d = http_json(PUBLIC_RPC[chain_id], data={"jsonrpc": "2.0", "id": 1, "method": "eth_call", "params": [{"to": to, "data": data}, "latest"]})
+    if "error" in d:
+        raise RuntimeError(f"rpc: {d['error']}")
+    return d["result"]
+
+
+def _sel(sig: str) -> str:
+    from hashlib import sha3_256  # noqa: F401  (fallback below if eth_utils is absent)
+    try:
+        from eth_utils import keccak
+        return keccak(text=sig)[:4].hex()
+    except Exception:
+        import sha3  # pysha3, if present
+        return sha3.keccak_256(sig.encode()).hexdigest()[:8]
+
+
+def collect_rewards(c: dict, reg: dict, chain_id: int, safe: str, safe_rows: list[dict], sync_rows: list[dict]) -> list[dict]:
+    """Claimable rewards (Merkl, Compound v3, Aave v3 incentives) plus reward tokens already held in the
+    Safe. Each row: source, symbol, token, amount, price, usd, claimable(bool). Merkl mirrors Compound's
+    COMP campaign, so a Merkl COMP row matching Compound's owed amount is dropped."""
+    cfg = reg.get("rewards") or {}
+    rows: list[dict] = []
+    price_of = {r["token"]: r["price"] for r in sync_rows if r.get("price")}
+    price_by_sym = {(r.get("symbol") or "").upper(): r["price"] for r in sync_rows if r.get("price")}
+    # Merkl
+    try:
+        d = http_json(cfg["merkl_api"].format(safe=safe, chain_id=chain_id), timeout=60)
+        for ch in d or []:
+            for r in ch.get("rewards") or []:
+                t = r.get("token") or {}
+                dec = int(t.get("decimals") or 18)
+                claimable = (int(r.get("amount") or 0) - int(r.get("claimed") or 0)) / 10 ** dec
+                if claimable <= 0:
+                    continue
+                px = fnum(t.get("price")) or price_of.get((t.get("address") or "").lower(), 0.0)
+                rows.append(dict(source="merkl", symbol=t.get("symbol"), token=(t.get("address") or "").lower(), amount=claimable,
+                                 price=px, usd=claimable * px, claimable=True, claim_cmd="merkl claim"))
+    except Exception as e:
+        print("  merkl rewards:", str(e)[:100])
+    # Compound v3 (CometRewards.getRewardOwed(comet, account) -> (token, owed))
+    try:
+        rew = (cfg.get("compound_rewards") or {}).get(str(chain_id))
+        sel = _sel("getRewardOwed(address,address)")
+        for comet in (cfg.get("compound_comets") or {}).get(str(chain_id), []) if rew else []:
+            res = _rpc_call(chain_id, rew, "0x" + sel + comet[2:].lower().rjust(64, "0") + safe[2:].lower().rjust(64, "0"))
+            if res and len(res) >= 130:
+                token, owed = "0x" + res[26:66], int(res[66:130], 16) / 1e18
+                if owed > 0:
+                    px = price_of.get(token, price_by_sym.get("COMP", 0.0))
+                    rows.append(dict(source="compound", symbol="COMP", token=token, amount=owed, price=px, usd=owed * px,
+                                     claimable=True, claim_cmd="compound claim", comet=comet))
+    except Exception as e:
+        print("  compound rewards:", str(e)[:100])
+    # Aave v3 incentives (getAllUserRewards(address[] assets, address user) -> (address[] rewards, uint256[] amounts))
+    try:
+        ctl = (cfg.get("aave_rewards_controller") or {}).get(str(chain_id))
+        atoks = [r["token"] for r in safe_rows if (r.get("symbol") or "").lower().startswith("aeth") and r["balance"] > 0]
+        if ctl and atoks:
+            sel = _sel("getAllUserRewards(address[],address)")
+            head = "0x" + sel + hex(64)[2:].rjust(64, "0") + safe[2:].lower().rjust(64, "0")
+            arr = hex(len(atoks))[2:].rjust(64, "0") + "".join(a[2:].lower().rjust(64, "0") for a in atoks)
+            res = _rpc_call(chain_id, ctl, head + arr)[2:]
+            words = [res[i:i + 64] for i in range(0, len(res), 64)]
+            off1, off2 = int(words[0], 16) // 32, int(words[1], 16) // 32
+            n = int(words[off1], 16)
+            for i in range(n):
+                tok = "0x" + words[off1 + 1 + i][24:]
+                amt = int(words[off2 + 1 + i], 16) / 1e18
+                if amt > 0:
+                    sym = next((r["symbol"] for r in safe_rows if r["token"] == tok), tok[:8])
+                    px = price_of.get(tok, price_by_sym.get((sym or "").upper(), 0.0))
+                    rows.append(dict(source="aave", symbol=sym, token=tok, amount=amt, price=px, usd=amt * px, claimable=True, claim_cmd="aave claim"))
+    except Exception as e:
+        print("  aave rewards:", str(e)[:100])
+    # reward tokens already in the wallet
+    rt = {s.upper() for s in cfg.get("reward_tokens", [])}
+    for r in safe_rows:
+        sym = (r.get("symbol") or "").upper()
+        if sym in rt and r["balance"] > 0 and r["token"] != ZERO:
+            px = price_of.get(r["token"], price_by_sym.get(sym, 0.0))
+            rows.append(dict(source="wallet", symbol=r["symbol"], token=r["token"], amount=r["balance"], price=px, usd=r["balance"] * px, claimable=False))
+    # de-duplicate Merkl's mirror of the Compound COMP campaign
+    comp = [r for r in rows if r["source"] == "compound"]
+    if comp:
+        rows = [r for r in rows if not (r["source"] == "merkl" and (r.get("symbol") or "").upper() == "COMP"
+                                        and any(abs(r["amount"] - c["amount"]) <= 0.01 * max(c["amount"], 1e-9) for c in comp))]
+    return rows
+
+
 # ---------------------------------------------------------------- reconcile
 def pct_diff(a: float, b: float) -> float | None:
     if a is None or b is None:
@@ -531,6 +622,14 @@ def main():
         n_priced = sum(1 for r in priced_safe if r["priced"])
         print(f"  coingecko: priced {n_priced}/{len(priced_safe)} Safe tokens; ${sum(r['usd'] for r in priced_safe):,.0f} total (receipt tokens like aTokens/vault shares are usually unpriced here)")
         sync_rows = priced_safe  # reuse the idle-holding path downstream
+    rewards = collect_rewards(c, reg, chain_id, safe, safe_rows, sync_rows) if (safe and safe_rows) else []
+    if rewards:
+        print(f"  rewards: {len(rewards)} rows, ${sum(r['usd'] for r in rewards):,.0f} (" + ", ".join(f"{r['symbol']} {r['amount']:,.2f} {'claimable' if r['claimable'] else 'held'}" for r in rewards[:6]) + ")")
+    # reward tokens already in the wallet were counted as idle by Syncrone: move them to the REWARDS group
+    held_tokens = {r["token"] for r in rewards if r["source"] == "wallet"}
+    for r in sync_rows:
+        if r["kind"] == "idle" and r["token"] in held_tokens:
+            r["asset_group"] = "REWARDS"
     recon, nav, flags = reconcile(sync_rows, strat_rows, safe_rows, eth_rows, reg, c)
     ub = [r for r in sync_rows if r.get("unbooked")]
     if ub:
@@ -551,7 +650,7 @@ def main():
         client=a.client, display_name=c["display_name"], chain_id=chain_id, avatar_safe=safe,
         as_of=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), period=a.period,
         sources=dict(syncrone=bool(sync_org), strategy_api=bool(strat), safe=bool(safe_rows), etherscan=bool(eth_rows)),
-        positions=positions, other_wallets_in_syncrone_org={k: round(v) for k, v in other_wallets.items() if v > DUST_USD},
+        positions=positions, rewards=rewards, other_wallets_in_syncrone_org={k: round(v) for k, v in other_wallets.items() if v > DUST_USD},
         safe_balances=safe_rows, etherscan_balances=eth_rows,
         nav=nav, reconciliation=recon, flags=flags))
     dd = nav["syncrone_vs_bridge_diff"]

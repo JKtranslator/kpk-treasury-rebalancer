@@ -46,6 +46,11 @@ def build_book(h: dict, reg: dict) -> list[dict]:
                              symbol=r["symbol"], asset_group=r["asset_group"], usd=r["usd"],
                              apy=fnum(r.get("apy_total")), apy_base=fnum(r.get("apy_base")),
                              venue_tvl_usd=fnum(r.get("venue_tvl_usd")), source="strategy_api"))
+    for r in h.get("rewards") or []:
+        if r["usd"] >= 1 and r["claimable"]:
+            book.append(dict(kind="reward", protocol=r["source"], venue=f"claimable {r['symbol']} ({r['source']})", symbol=r["symbol"],
+                             asset_group="REWARDS", usd=r["usd"], apy=None, apy_base=None, balance=r["amount"], source="rewards",
+                             claimable=True, claim_cmd=r.get("claim_cmd")))
     has_strat = any(b["source"] == "strategy_api" for b in book)
     for r in h["positions"]:
         if r["source"] not in ("syncrone", "coingecko"):
@@ -127,8 +132,8 @@ def performance(book, permitted, nav, pol, args, reg):
     STABLE_SYMS = {"USDC", "USDT", "USDS", "DAI", "GHO", "EURC", "PYUSD", "RLUSD"}
     IDLE_FLOOR_USD = 5_000     # smaller idle balances are noise, not actions
     for grp in sorted({b["asset_group"] for b in book} | {p["asset_group"] for p in permitted}):
-        if grp == "OTHER":
-            continue            # governance / non-yield tokens are never rotated by the simulator
+        if grp in ("OTHER", "REWARDS"):
+            continue            # governance / non-yield tokens are never rotated; rewards go through the sweep
         pos = [b for b in book if b["asset_group"] == grp and b["kind"] == "position" and b["usd"] > 1000]
         idle = [b for b in book if b["asset_group"] == grp and b["kind"] == "idle" and b["usd"] >= IDLE_FLOOR_USD]
         infl = [b for b in book if b["asset_group"] == grp and b["kind"] == "in_flight"]
@@ -249,6 +254,14 @@ def render_md(c, h, y, book, nav, checks, perf, args) -> str:
         L.append("## Policy checks")
         L.append("No investment policy configured for this client in clients.json: pure yield optimisation within the Roles permissions.")
         L.append("")
+    if rew_lines := [b for b in book if b["asset_group"] == "REWARDS"]:
+        L.append("## Rewards")
+        L.append("| Source | Token | Amount | Value USD | State |")
+        L.append("|---|---|---:|---:|---|")
+        for b in rew_lines:
+            L.append(f"| {b['protocol']} | {b['symbol']} | {fnum(b.get('balance')):,.4f} | {b['usd']:,.0f} | {'claimable' if b['kind'] == 'reward' else 'held in Safe'} |")
+        L.append("Sweep = claim, swap to USDC on CoW (stage 1), deposit into the best permitted USDC venue (stage 2).")
+        L.append("")
     L.append("## Yield assessment (within permissions)")
     L.append(f"Thresholds: pickup ≥ {args.min_pickup_bps} bps, move ≥ ${args.min_move_usd:,.0f}, venue TVL cap {args.venue_tvl_cap_pct}% per venue"
              + (f", excluded venues: {', '.join(args.exclude)}" if args.exclude else "") + ".")
@@ -363,8 +376,17 @@ def main():
     nav = sum(b["usd"] for b in book)
     checks = policy_checks(book, nav, c.get("policy"), reg)
     perf = performance(book, y["permitted"], nav, c.get("policy"), args, reg)
+    # rewards sweep: claim everything claimable + held reward tokens, swap to USDC via CoW, deposit in the best USD venue
+    rew = [b for b in book if b["asset_group"] == "REWARDS"]
+    usd_venues = sorted([p for p in y.get("permitted", []) if p["asset_group"] == "USD" and p["priced"] and p["action"] == "deposit"
+                         and "USDC" in (p.get("asset") or "").upper()], key=lambda p: -fnum(p["apy_total"]))
+    sweep = dict(total_usd=round(sum(b["usd"] for b in rew)), min_usd=reg.get("rewards", {}).get("min_sweep_usd", 100),
+                 items=[dict(symbol=b["symbol"], amount=b.get("balance"), usd=round(b["usd"]), source=b["protocol"], claimable=b["kind"] == "reward",
+                             claim_cmd=b.get("claim_cmd")) for b in rew],
+                 best_usd_venue=(dict(protocol=usd_venues[0]["protocol"], asset=usd_venues[0]["asset"], vault=usd_venues[0].get("vault"),
+                                      apy=usd_venues[0]["apy_total"]) if usd_venues else None))
     write_json(out / "assessment.json", dict(client=args.client, nav_usd=round(nav), book=book, policy_checks=checks,
-                                              performance=perf, thresholds=vars(args)))
+                                              performance=perf, rewards_sweep=sweep, thresholds=vars(args)))
     md = render_md(c, h, y, book, nav, checks, perf, args)
     (out / "assessment.md").write_text(md, encoding="utf-8")
     print(f"[{args.client}] NAV ${nav:,.0f}; policy: " + (", ".join(f"{k['status']}" for k in checks) or "none") +

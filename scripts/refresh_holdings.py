@@ -22,7 +22,7 @@ import traceback
 from pathlib import Path
 
 from common import client, fnum, load_env, registry, write_json
-from fetch_holdings import (DUST_USD, ZERO, fetch_etherscan, fetch_safe_balances, fetch_syncrone,
+from fetch_holdings import (DUST_USD, ZERO, collect_rewards, fetch_etherscan, fetch_safe_balances, fetch_syncrone,
                             rebase_idle_on_safe, reconcile, scope_syncrone, syncrone_rows)
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -42,6 +42,11 @@ def live_snapshot(slug: str, reg: dict) -> dict:
         if r["token"] and r["token"] not in tokens and (r["kind"] == "position" or not r["spam"]):
             tokens[r["token"]] = 18
     eth_rows = fetch_etherscan(chain_id, safe, tokens)
+    rewards = collect_rewards(c, reg, chain_id, safe, safe_rows, rows)
+    held = {r["token"] for r in rewards if r["source"] == "wallet"}
+    for r in rows:
+        if r["kind"] == "idle" and r["token"] in held:
+            r["asset_group"] = "REWARDS"
     recon, nav, flags = reconcile(rows, [], safe_rows, eth_rows, reg, c)
     aliases = reg["protocol_aliases"]
     by_sleeve: dict[str, dict] = {}
@@ -80,6 +85,8 @@ def live_snapshot(slug: str, reg: dict) -> dict:
                          etherscan_source=(eth_rows[1].get("explorer") if len(eth_rows) > 1 else "etherscan")),
         other_wallets={k: round(v) for k, v in other_w.items() if v > DUST_USD},
         unbooked=[dict(symbol=r["symbol"], balance=r["balance"], position=r["position"]) for r in fresh],
+        rewards=[dict(source=r["source"], symbol=r["symbol"], amount=r["amount"], usd=round(r["usd"]), claimable=r["claimable"]) for r in rewards],
+        rewards_usd=round(sum(r["usd"] for r in rewards)),
         flags=[f for f in flags if not f.startswith("NOTE: positions the Strategy API")]
               + ([f"NOTE: idle re-based on the live Safe (Syncrone lagging): {'; '.join(lag[:6])}"] if lag else [])
               + ([f"NOTE: Safe holds vault shares Syncrone has not booked yet: " + ", ".join(f"{r['balance']:,.2f} {r['symbol']}" for r in fresh)] if fresh else []))

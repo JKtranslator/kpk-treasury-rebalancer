@@ -37,7 +37,8 @@ def snapshot(slug: str, run: Path) -> dict:
     book = [dict(kind=b["kind"], protocol=b["protocol"], venue=b["venue"], symbol=b.get("symbol"),
                  asset_group=b["asset_group"], usd=round(fnum(b["usd"]), 2),
                  apy=b.get("apy"), apy_source=b.get("apy_source"), venue_tvl_usd=b.get("venue_tvl_usd"),
-                 untracked=b.get("untracked", False), balance=b.get("balance")) for b in a["book"] if fnum(b["usd"]) >= 1]
+                 untracked=b.get("untracked", False), balance=b.get("balance"), claimable=b.get("claimable", False),
+                 claim_cmd=b.get("claim_cmd")) for b in a["book"] if fnum(b["usd"]) >= 1]
     permitted = [dict(protocol=p["protocol"], asset=p["asset"], action=p["action"], asset_group=p["asset_group"],
                       apy=p.get("apy_total"), apy_30d=p.get("apy_30d"), apy_1d=p.get("apy_1d"), tvl_usd=p.get("tvl_usd"), priced=p["priced"],
                       vault=p.get("vault"), apy_source=p.get("apy_source")) for p in y.get("permitted", []) if p["action"] in ("deposit", "stake", "swap")]
@@ -65,6 +66,7 @@ def snapshot(slug: str, run: Path) -> dict:
         thresholds=dict(min_pickup_bps=a["thresholds"]["min_pickup_bps"], min_move_usd=a["thresholds"]["min_move_usd"],
                         venue_tvl_cap_pct=a["thresholds"]["venue_tvl_cap_pct"], exclude=a["thresholds"]["exclude"]),
         book=book, permitted=permitted, ops_tools=ops, fallback_apy=y.get("fallback_apy") or {},
+        rewards_sweep=a.get("rewards_sweep"),
         safes=c["safes"].get(str(h["chain_id"]), {}), stale_note=y.get("stale_note"),
         ops_tools_caveat=y.get("ops_tools_caveat"))
 
