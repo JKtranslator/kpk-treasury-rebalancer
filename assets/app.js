@@ -141,7 +141,7 @@
     $('#exclude').innerHTML = protos.map(p => `<button data-p="${esc(p)}" aria-pressed="${sim.exclude.has(p)}">${esc(p)}</button>`).join('');
     $('#exclude').onclick = e => { const b = e.target.closest('button'); if (!b) return; sim.exclude.has(b.dataset.p) ? sim.exclude.delete(b.dataset.p) : sim.exclude.add(b.dataset.p); b.setAttribute('aria-pressed', sim.exclude.has(b.dataset.p)); simulate(); };
     $('#basis').onclick = e => { const b = e.target.closest('button'); if (!b) return; [...$('#basis').children].forEach(x => x.setAttribute('aria-pressed', x === b)); sim.basis = b.dataset.b; simulate(); };
-    bindRange('#pickup', 'pickupBps', v => v + ' bps'); bindRange('#move', 'moveUsd', v => compact(v)); bindRange('#tvl', 'tvlCapPct', v => v + '% of venue TVL');
+    bindRange('#pickup', 'pickupBps', v => v + ' bps'); bindRange('#move', 'moveUsd', v => compact(v)); bindRange('#tvl', 'tvlCapPct', v => v + '% of venue TVL (incl. holdings)');
     simulate();
 
     $('#opsCaveat').textContent = snap.ops_tools_caveat || '';
@@ -153,12 +153,32 @@
   function weightedApy(rows) { const d = rows.reduce((s, b) => s + b.usd, 0); return d ? rows.reduce((s, b) => s + b.usd * b.apy, 0) / d : null; }
   function bindRange(sel, key, fmt) { const el = $(sel); el.value = sim[key]; const lab = $(sel + 'Val'); lab.textContent = fmt(sim[key]); el.oninput = () => { sim[key] = Number(el.value); lab.textContent = fmt(sim[key]); simulate(); }; }
 
+  /* Matches same_venue() in scripts/assess.py: the vault address decides when both sides carry one,
+     otherwise protocol + name. Used both to skip the venue a source already sits in and to work out
+     how much of a venue we already own, which the TVL threshold has to account for. */
+  const normv = s => String(s ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  function sameVenue(b, v) {
+    if (String(b.protocol || '').toLowerCase() !== String(v.protocol || '').toLowerCase()) return false;
+    const bv = String(b.vault || '').toLowerCase(), vv = String(v.vault || '').toLowerCase();
+    if (bv && vv) return bv === vv;
+    const va = normv(v.asset), bs = normv(b.symbol), bn = normv(b.venue);
+    if (!va) return false;
+    return va === bs || bn.includes(va) || (!!bs && va.includes(bs));
+  }
+  const heldIn = v => snap.book.filter(b => (b.kind === 'position' || b.kind === 'in_flight') && sameVenue(b, v))
+    .reduce((s, b) => s + b.usd, 0);
+  /* Supplying into a lending market spreads the same borrower interest over a bigger base, so the rate
+     we actually receive is below the headline. Assuming borrow demand is unchanged in the short run,
+     the pool rate falls to r x TVL / (TVL + what we add). Our existing stake in that venue dilutes too. */
+  const diluted = (r, tvl, added) => (tvl && added > 0) ? r * tvl / (tvl + added) : r;
+
   /* Same method as scripts/assess.py: per asset group, fill the best permitted venues from idle
      balances and laggards, bounded by venue TVL cap and policy protocol-cap headroom. */
   function simulate() {
     const nav = snap.nav_usd; const cap = snap.policy?.protocol_cap_pct_nav;
     const byProto = {}; snap.book.forEach(b => { if (b.kind !== 'idle') byProto[b.protocol] = (byProto[b.protocol] || 0) + b.usd; });
     const minPick = sim.pickupBps / 1e4; moves = []; let before = 0, den = 0, idleDeployed = 0;
+    const heldMap = new Map(), dep = new Map();   // venue -> what we already hold / what this plan adds
     const apyOf = p => (sim.basis === 'apy_30d' && p.apy_30d != null) ? p.apy_30d : (sim.basis === 'apy_1d' && p.apy_1d != null) ? p.apy_1d : p.apy;
     const STABLE_SYMS = ['USDC', 'USDT', 'USDS', 'DAI', 'GHO', 'EURC', 'PYUSD', 'RLUSD'];
     const isStable = s => STABLE_SYMS.some(t => (s || '').toUpperCase().includes(t));
@@ -171,33 +191,49 @@
       pos.forEach(b => { before += b.usd * b.apy; den += b.usd; });
       if (!venues.length) continue;
       const best = apyOf(venues[0]);
-      const headroom = new Map(venues.map(v => [v, Math.max(0, Math.min(cap ? cap / 100 * nav - (byProto[v.protocol] || 0) : Infinity, v.tvl_usd ? sim.tvlCapPct / 100 * v.tvl_usd : Infinity))]));
+      venues.forEach(v => { if (!heldMap.has(v)) heldMap.set(v, heldIn(v)); });
+      // the threshold governs the resulting position, so subtract what we already own in the venue
+      const headroom = new Map(venues.map(v => [v, Math.max(0, Math.min(cap ? cap / 100 * nav - (byProto[v.protocol] || 0) : Infinity, v.tvl_usd ? sim.tvlCapPct / 100 * v.tvl_usd - heldMap.get(v) : Infinity))]));
       const sources = [...idle.map(b => ({ ...b, apy: 0 })), ...pos.filter(b => sim.exclude.has(b.protocol) || (best - b.apy >= minPick && b.usd >= sim.moveUsd)).sort((a, b) => a.apy - b.apy)];
       for (const src of sources) {
         let rem = src.usd;
         for (const v of venues) {
           if (rem < sim.moveUsd && src.kind !== 'idle') break;
-          if (v.protocol === src.protocol && v.asset === src.symbol) continue;
+          if (sameVenue(src, v)) continue;
           const st = (src.symbol || '').toUpperCase(), vt = (v.asset || '').toUpperCase();
           const compatible = st === vt || (isStable(st) && isStable(vt)) || g === 'ETH';
           if (!compatible) continue;
-          const pick = apyOf(v) - src.apy;
-          if (pick < minPick && src.kind === 'position' && !sim.exclude.has(src.protocol)) break;
           const amt = Math.min(rem, headroom.get(v));
+          // the pickup is judged on the rate we would actually receive once this money lands
+          const pick = diluted(apyOf(v), v.tvl_usd, (dep.get(v) || 0) + Math.max(amt, 0)) - src.apy;
+          if (pick < minPick && src.kind === 'position' && !sim.exclude.has(src.protocol)) break;
           if (amt < Math.min(sim.moveUsd, rem) || amt <= 0) continue;
           moves.push({ id: moves.length, g, from: src, to: v, amt, pick, toApy: apyOf(v), forced: sim.exclude.has(src.protocol) });
+          dep.set(v, (dep.get(v) || 0) + amt);
           headroom.set(v, headroom.get(v) - amt); rem -= amt; if (src.kind === 'idle') idleDeployed += amt;
           if (rem <= 0) break;
         }
       }
     }
-    const pickup = moves.reduce((s, m) => s + m.amt * m.pick, 0); const after = before + pickup; den += idleDeployed;
+    // several moves can land in the same venue, so settle every rate against that venue's plan total
+    let dilutionCost = 0;
+    for (const [v, added] of dep) dilutionCost += (heldMap.get(v) || 0) * (apyOf(v) - diluted(apyOf(v), v.tvl_usd, added));
+    moves.forEach(m => {
+      const added = dep.get(m.to) || 0;
+      m.toApyDiluted = diluted(apyOf(m.to), m.to.tvl_usd, added);
+      m.pick = m.toApyDiluted - m.from.apy;
+      m.shareAfter = m.to.tvl_usd ? ((heldMap.get(m.to) || 0) + added) / (m.to.tvl_usd + added) : null;
+    });
+    const gross = moves.reduce((s, m) => s + m.amt * m.pick, 0);
+    const pickup = gross - dilutionCost; const after = before + pickup; den += idleDeployed;
+    const headlineGross = moves.reduce((s, m) => s + m.amt * (m.toApy - m.from.apy), 0);
     $('#simOut').innerHTML = [
       ['Candidate moves', moves.length], ['Capital moved', compact(moves.reduce((s, m) => s + m.amt, 0))],
       ['Blended APY before', den ? pct(before / (den - idleDeployed)) : 'n/a'], ['Blended APY after', den ? pct(after / den) : 'n/a'],
+      ['Yield dilution', headlineGross ? '-' + compact(headlineGross - gross + dilutionCost) : '$0'],
       ['Pickup per year', compact(pickup)],
     ].map(([t, v]) => `<div class="o"><div class="t">${t}</div><div class="v num">${v}</div></div>`).join('');
-    $('#simMoves').innerHTML = moves.length ? moves.map(m => `<div class="mv ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path"><b>${m.g}</b> · ${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → ${pct(m.toApy)}${m.to.apy_1d != null && sim.basis !== 'apy_1d' ? ` (spot ${pct(m.to.apy_1d)})` : ''}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.forced ? ' · excluded venue: exit is mandatory' : ''}</small></div><div class="amt num">${usd(m.amt)}<small>+${usd(m.amt * m.pick)}/yr</small></div><button class="btn ${executorOn ? '' : 'ghost'}" data-exec="${m.id}" type="button" title="${executorOn ? 'Build, simulate and propose via the local SafeAgent executor' : 'Start scripts/executor.py to enable'}">Execute</button></div>`).join('')
+    $('#simMoves').innerHTML = moves.length ? moves.map(m => `<div class="mv ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path"><b>${m.g}</b> · ${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → <b>${pct(m.toApyDiluted)}</b>${m.toApyDiluted < m.toApy - 1e-6 ? ` after dilution (${pct(m.toApy)} headline)` : ''}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.shareAfter != null ? ` · our share after ${(m.shareAfter * 100).toFixed(1)}%` : ''}${m.forced ? ' · excluded venue: exit is mandatory' : ''}</small></div><div class="amt num">${usd(m.amt)}<small>+${usd(m.amt * m.pick)}/yr</small></div><button class="btn ${executorOn ? '' : 'ghost'}" data-exec="${m.id}" type="button" title="${executorOn ? 'Build, simulate and propose via the local SafeAgent executor' : 'Start scripts/executor.py to enable'}">Execute</button></div>`).join('')
       : '<p class="empty">No move clears these thresholds. Laggards are noted, not traded.</p>';
     $('#simMoves').onclick = e => { const b = e.target.closest('button[data-exec]'); if (b) openModal(moves[Number(b.dataset.exec)]); };
     renderRewards(); renderStage2(); renderSwap();
@@ -516,7 +552,7 @@
       ['Client / chain', `${snap.client} · ${snap.chain_id}`], ['Avatar Safe', s.avatar || snap.avatar_safe], ['Roles Modifier', s.roles_modifier || '—'],
       ['Action', m.from.kind === 'idle' ? 'DEPLOY idle' : 'WITHDRAW then DEPOSIT'],
       ['From', `${m.from.protocol} · ${m.from.venue}`], ['To', `${m.to.protocol} · ${m.to.asset} (${m.to.action})${m.to.vault ? ' · ' + m.to.vault : ''}`],
-      ['Amount', `${usd(m.amt)} of ${m.from.symbol || m.g}`], ['Yield', `${pct(m.from.apy)} → ${pct(m.toApy)} · +${usd(m.amt * m.pick)}/yr`],
+      ['Amount', `${usd(m.amt)} of ${m.from.symbol || m.g}`], ['Yield', `${pct(m.from.apy)} → ${pct(m.toApyDiluted != null ? m.toApyDiluted : m.toApy)} after dilution (${pct(m.toApy)} headline) · +${usd(m.amt * m.pick)}/yr`],
     ].map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
     $('#mPlan').hidden = true; $('#mSim').hidden = true; $('#mMsg').className = 'modal-msg'; $('#mMsg').textContent = executorOn ? 'Ready. Build & simulate constructs the transaction through the SafeAgent builders and permission engine, then runs it on Tenderly. Nothing is proposed until you confirm.' : 'Executor offline. Start it locally:  python scripts/executor.py   (needs the client .env with RPC, Tenderly and, for proposing, the agent key).';
     $('#mBuild').disabled = !executorOn; $('#mPropose').disabled = true;
