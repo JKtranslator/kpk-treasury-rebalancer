@@ -247,49 +247,153 @@
   }
 
   /* ------------------------------------------------------------------ swap (CoW, within permissions) */
-  let swapGroups = [], lastQuote = null;
+  // Layout follows the common DEX pattern (Uniswap, swap.cow.fi, 1inch): sell card over buy card, flip button,
+  // token picker with balances, rate line, collapsible order details, one CTA whose label is the state.
+  const SETTLEMENT = ['USDC', 'USDT', 'DAI', 'USDS', 'GHO', 'ETH', 'WETH', 'WBTC', 'WSTETH', 'STETH', 'RETH'];
+  const sw = { groups: [], known: null, sell: null, buy: null, quote: null, timer: null, tick: null, inverted: false, picking: null, seq: 0 };
+  const fmtTok = (v, d) => { v = Number(v || 0); if (d == null) d = v >= 1000 ? 2 : v >= 1 ? 4 : 6; return v.toLocaleString('en-US', { maximumFractionDigits: d }); };
+  const upper = s => String(s || '').toUpperCase();
+  function priceOf(sym) { let p = 0; for (const b of (snap.book || [])) if (upper(b.symbol) === upper(sym) && b.price > p) p = b.price; if (!p && live) for (const r of (live.rows || live.book || [])) if (upper(r.symbol) === upper(sym) && r.price > p) p = r.price; return p || null; }
+  function idleOf(sym) { return (snap.book || []).filter(b => b.kind === 'idle' && upper(b.symbol) === upper(sym)).reduce((a, b) => a + (b.balance || 0), 0); }
+  const sellable = () => [...new Set(sw.groups.flatMap(g => g.sell))].sort();
+  const buyableFor = s => [...new Set(sw.groups.filter(g => g.sell.includes(s)).flatMap(g => g.buy))].filter(b => b !== s).sort();
+  const pairOk = (s, b) => sw.groups.some(g => g.sell.includes(s) && g.buy.includes(b));
+  const buildable = sym => !sw.known || sw.known.includes(upper(sym));
+  const isSettle = sym => SETTLEMENT.includes(upper(sym));
+
   async function renderSwap() {
-    const sel = $('#swapSell'), buy = $('#swapBuy'), msg = $('#swapMsg');
-    $('#swapOut').innerHTML = ''; $('#swapExec').disabled = true; lastQuote = null;
-    try { swapGroups = (await loadJSON(EXECUTOR + '/swap-pairs/' + snap.client)).groups || []; }
-    catch (e) { try { swapGroups = (await loadJSON('data/' + snap.client + '.strategy.json')).raw_permissions.allPermissions.cowswap.filter(g => g.action === 'swap' && !g.isTWAP).map(g => ({ sell: g.sellAssets, buy: g.buyAssets })); } catch (e2) { swapGroups = []; } }
-    const sells = [...new Set(swapGroups.flatMap(g => g.sell))].sort();
-    if (!sells.length) { msg.textContent = 'No CoW swap permission found for this client in the strategy cache.'; sel.innerHTML = buy.innerHTML = ''; return; }
-    sel.innerHTML = sells.map(s => `<option>${esc(s)}</option>`).join('');
-    const fillBuy = () => { const s = sel.value; const buys = [...new Set(swapGroups.filter(g => g.sell.includes(s)).flatMap(g => g.buy))].filter(b => b !== s).sort(); buy.innerHTML = buys.map(b => `<option>${esc(b)}</option>`).join(''); fillMax(); };
-    const fillMax = () => { const s = sel.value; const held = snap.book.filter(b => b.kind === 'idle' && (b.symbol || '').toUpperCase() === s.toUpperCase()).reduce((a, b) => a + (b.balance || 0), 0); $('#swapMax').textContent = held ? `in Safe: ${held.toLocaleString('en-US', { maximumFractionDigits: 6 })} ${s}` : 'in Safe: none idle (withdraw first or the order will not fill)'; $('#swapAmount').dataset.max = held; };
-    sel.onchange = fillBuy; fillBuy();
-    $('#swapMax').onclick = () => { if ($('#swapAmount').dataset.max > 0) { $('#swapAmount').value = $('#swapAmount').dataset.max; } };
-    $('#swapQuote').onclick = getSwapQuote;
-    $('#swapExec').onclick = () => { if (lastQuote) openSwapExec(lastQuote); };
-    msg.textContent = `${sells.length} sellable tokens from the permissions cache.`;
+    clearInterval(sw.timer); clearInterval(sw.tick); sw.quote = null; sw.sell = sw.buy = null;
+    try { const r = await loadJSON(EXECUTOR + '/swap-pairs/' + snap.client); sw.groups = r.groups || []; sw.known = r.known_tokens && r.known_tokens.length ? r.known_tokens : null; }
+    catch (e) { sw.known = null; try { sw.groups = (await loadJSON('data/' + snap.client + '.strategy.json')).raw_permissions.allPermissions.cowswap.filter(g => g.action === 'swap' && !g.isTWAP).map(g => ({ sell: g.sellAssets, buy: g.buyAssets })); } catch (e2) { sw.groups = []; } }
+    const sells = sellable();
+    if (!sells.length) { $('#swapMsg').textContent = 'No CoW swap permission found for this client in the strategy cache.'; swapPaint(); return; }
+    // sensible default: the largest idle settlement asset, into USDC (or the first permitted buy)
+    const held = sells.filter(t => idleOf(t) > 0 && buildable(t)).sort((x, y) => idleOf(y) * (priceOf(y) || 0) - idleOf(x) * (priceOf(x) || 0));
+    sw.sell = held[0] || sells.find(buildable) || sells[0];
+    const buys = buyableFor(sw.sell); sw.buy = buys.find(b => upper(b) === 'USDC' && buildable(b)) || buys.find(buildable) || buys[0] || null;
+    $('#swapSellBtn').onclick = () => openPicker('sell'); $('#swapBuyBtn').onclick = () => openPicker('buy');
+    $('#swapFlip').onclick = swapFlip; $('#swapRate').onclick = () => { sw.inverted = !sw.inverted; swapPaint(); };
+    $('#swapAmount').oninput = () => { sw.quote = null; swapPaint(); swapSchedule(); };
+    $('#swapSellBal').onclick = e => { if (e.target.classList.contains('sw-max')) { $('#swapAmount').value = idleOf(sw.sell) || ''; sw.quote = null; swapPaint(); swapQuote(); } };
+    $('#swapCta').onclick = swapCtaClick;
+    $('#swapPickerX').onclick = closePicker; $('#swapPicker').onclick = e => { if (e.target.id === 'swapPicker') closePicker(); };
+    $('#swapPickerQ').oninput = paintPicker;
+    $('#swapMsg').textContent = `${sells.length} sellable tokens across ${sw.groups.length} permission group${sw.groups.length === 1 ? '' : 's'}.`;
+    swapPaint();
   }
-  async function getSwapQuote() {
-    const sell = $('#swapSell').value, buy = $('#swapBuy').value, amount = Number($('#swapAmount').value);
-    const out = $('#swapOut'), msg = $('#swapMsg');
-    if (!sell || !buy || !(amount > 0)) { msg.textContent = 'Pick a pair and an amount.'; return; }
-    msg.textContent = 'Quoting on CoW through the bot…'; out.innerHTML = ''; $('#swapExec').disabled = true;
+  function swapState() {
+    const amt = Number($('#swapAmount').value || 0), bal = sw.sell ? idleOf(sw.sell) : 0;
+    if (!sw.sell || !sw.buy) return 'select';
+    if (!buildable(sw.sell) || !buildable(sw.buy)) return 'unbuildable';
+    if (!(amt > 0)) return 'amount';
+    if (!sw.quote) return 'quote';
+    if (amt > bal + 1e-9) return 'insufficient';
+    if (!executorOn) return 'offline';
+    return 'review';
+  }
+  function swapPaint() {
+    const amt = Number($('#swapAmount').value || 0), q = sw.quote;
+    const ps = sw.sell ? priceOf(sw.sell) : null, pb = sw.buy ? priceOf(sw.buy) : null;
+    $('#swapSellBtn .sym').textContent = sw.sell || 'Select'; $('#swapBuyBtn .sym').textContent = sw.buy || 'Select';
+    $('#swapSellBtn').classList.toggle('grey', !!sw.sell && !buildable(sw.sell)); $('#swapBuyBtn').classList.toggle('grey', !!sw.buy && !buildable(sw.buy));
+    const bal = sw.sell ? idleOf(sw.sell) : 0;
+    $('#swapSellBal').innerHTML = sw.sell ? `Idle in Safe: <span class="num">${fmtTok(bal)}</span> ${esc(sw.sell)}${bal > 0 ? ' <button class="sw-max" type="button">Max</button>' : ''}` : '';
+    $('#swapBuyBal').innerHTML = sw.buy ? `Idle in Safe: <span class="num">${fmtTok(idleOf(sw.buy))}</span> ${esc(sw.buy)}` : '';
+    $('#swapSellUsd').textContent = amt > 0 && ps ? usd(amt * ps, 2) : amt > 0 ? 'price unknown' : '';
+    const outAmt = q ? q.buy_amount : 0;
+    $('#swapBuyAmt').textContent = q ? fmtTok(outAmt) : (amt > 0 && ps && pb ? '≈ ' + fmtTok(amt * ps / pb) : '0');
+    $('#swapBuyAmt').classList.toggle('est', !q);
+    const buyUsd = q ? (pb ? outAmt * pb : (ps ? (q.sell_amount_after_fee || q.sell_amount) * ps : null)) : null;
+    $('#swapBuyUsd').textContent = q && buyUsd != null ? usd(buyUsd, 2) + (pb ? '' : ' (from sell side)') : '';
+    // rate line
+    const rate = $('#swapRate');
+    if (q && q.price) {
+      const r = sw.inverted ? 1 / q.price : q.price, a = sw.inverted ? sw.buy : sw.sell, b = sw.inverted ? sw.sell : sw.buy, pu = sw.inverted ? pb : ps;
+      rate.hidden = false; rate.innerHTML = `1 ${esc(a)} = <span class="num">${fmtTok(r)}</span> ${esc(b)}${pu ? ` <span class="dim">(${usd(pu, 2)})</span>` : ''} <span class="dim" id="swapCount"></span>`;
+    } else { rate.hidden = true; }
+    // details
+    const det = $('#swapDetails');
+    if (q) {
+      det.hidden = false;
+      const impact = ps && pb ? q.price / (ps / pb) - 1 : null;
+      const impactCls = impact == null ? '' : impact < -0.03 ? 'bad' : impact < -0.01 ? 'warn' : 'good';
+      $('#swapSummary').innerHTML = `Slippage <b>${(q.slippage_bps / 100).toFixed(2)}%</b> · fee <b>${fmtTok(q.fee)} ${esc(q.sell)}</b>${impact != null ? ` · impact <b class="${impactCls}">${(impact * 100).toFixed(2)}%</b>` : ''}`;
+      $('#swapKv').innerHTML = [
+        ['Expected output', `${fmtTok(q.buy_amount)} ${esc(q.buy)}`],
+        ['Minimum received', `${fmtTok(q.min_receive)} ${esc(q.buy)} <span class="dim">after slippage</span>`],
+        ['Slippage tolerance', `${(q.slippage_bps / 100).toFixed(2)}% <span class="dim">CoW dynamic${q.slippage_source ? ' · ' + esc(String(q.slippage_source)) : ''}</span>`],
+        ['Network fee', `${fmtTok(q.fee)} ${esc(q.sell)}${ps ? ` <span class="dim">(${usd(q.fee * ps, 2)})</span>` : ''} <span class="dim">paid in the sell token, no gas for the Safe</span>`],
+        ['Price impact vs spot', impact == null ? '<span class="dim">no spot price for both tokens</span>' : `<span class="${impactCls}">${(impact * 100).toFixed(2)}%</span> <span class="dim">quote vs Syncrone marks</span>`],
+        ['Order type', 'Market sell, fill-or-kill, pre-signed by the Safe'],
+        ['Valid for', '30 min from the moment the proposal is built'],
+        ['Receiver', `<span class="num">${esc((snap.safes && snap.safes.avatar) || snap.avatar_safe || '')}</span>`],
+        ['Route', 'CoW Protocol batch auction (solvers)'],
+        ['Bot command', `<span class="num">${esc(q.command)}</span>`],
+      ].map(([k, v]) => `<div class="r"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('');
+    } else det.hidden = true;
+    // notes
+    const note = $('#swapNote'); const notes = [];
+    if (sw.sell && sw.buy && !isSettle(sw.sell) && !isSettle(sw.buy)) notes.push(`<b>Unusual pair.</b> ${esc(sw.sell)} → ${esc(sw.buy)} is allowed on-chain because both sit in the same Roles group (any sell asset of a group may be swapped into any of its buy assets), but the group's purpose is converting into settlement assets. Confirm the intent before proposing.`);
+    if (sw.sell && !buildable(sw.sell)) notes.push(`The bot's token registry for this client has no entry for <b>${esc(sw.sell)}</b>; the order cannot be built from here.`);
+    if (sw.buy && !buildable(sw.buy)) notes.push(`The bot's token registry for this client has no entry for <b>${esc(sw.buy)}</b>; the order cannot be built from here.`);
+    if (sw.quote && amt > bal + 1e-9) notes.push(`Only <b>${fmtTok(bal)} ${esc(sw.sell)}</b> is idle in the Safe. Withdraw from a position in the Rebalancing section first, or the order will sit unfilled.`);
+    note.hidden = !notes.length; note.innerHTML = notes.map(n => `<div>${n}</div>`).join('');
+    // CTA
+    const st = swapState(), cta = $('#swapCta');
+    cta.textContent = { select: 'Select tokens', unbuildable: 'Token not in bot registry', amount: 'Enter an amount', quote: 'Get quote', insufficient: 'Insufficient idle balance', offline: 'Executor offline', review: 'Review swap' }[st];
+    cta.disabled = !['quote', 'review'].includes(st); cta.classList.toggle('ghost', st !== 'review');
+    $('#swapFlip').disabled = !(sw.sell && sw.buy && pairOk(sw.buy, sw.sell)); $('#swapFlip').title = $('#swapFlip').disabled ? 'Reverse direction is not permitted' : 'Switch sell and buy';
+  }
+  function swapSchedule() { clearTimeout(sw.debounce); if (Number($('#swapAmount').value || 0) > 0 && token()) sw.debounce = setTimeout(swapQuote, 700); }
+  function swapFlip() { if ($('#swapFlip').disabled) return; const s = sw.sell; sw.sell = sw.buy; sw.buy = s; sw.quote = null; $('#swapAmount').value = ''; swapPaint(); }
+  async function swapQuote() {
+    const amount = Number($('#swapAmount').value || 0); if (!(amount > 0) || !sw.sell || !sw.buy) return;
+    const seq = ++sw.seq, msg = $('#swapMsg'); msg.textContent = 'Quoting on CoW through the bot…'; $('#swapCta').classList.add('busy');
+    const body = JSON.stringify({ client: snap.client, sell: sw.sell, buy: sw.buy, amount });
     try {
-      let r = await fetch(EXECUTOR + '/quote', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ client: snap.client, sell, buy, amount }) });
-      if (r.status === 401 && askToken('Executor token needed to quote')) r = await fetch(EXECUTOR + '/quote', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ client: snap.client, sell, buy, amount }) });
+      let r = await fetch(EXECUTOR + '/quote', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body });
+      if (r.status === 401 && askToken('Executor token needed to quote')) r = await fetch(EXECUTOR + '/quote', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body });
       const j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || r.statusText);
-      lastQuote = j;
-      const f = (v, d = 6) => Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: d });
-      out.innerHTML = [['You sell', `${f(j.sell_amount)} ${esc(j.sell)}`], ['You receive (quote)', `${f(j.buy_amount)} ${esc(j.buy)}`], ['Price', `${f(j.price, 6)} ${esc(j.buy)}/${esc(j.sell)}`],
-        ['Network fee', `${f(j.fee)} ${esc(j.sell)}`], ['Slippage (dynamic)', `${j.slippage_bps} bps${j.slippage_source ? ' · ' + esc(String(j.slippage_source)) : ''}`], ['Min. receive', `${f(j.min_receive)} ${esc(j.buy)}`]]
-        .map(([t, v]) => `<div class="o"><div class="t">${t}</div><div class="v num" style="font-size:15px">${v}</div></div>`).join('');
-      msg.textContent = `Quote valid to ${j.valid_to ? new Date(j.valid_to * 1000).toISOString().slice(11, 16) + ' UTC' : 'n/a'} · command: ${j.command}`;
-      $('#swapExec').disabled = !executorOn;
-    } catch (e) { msg.textContent = 'Quote failed: ' + e.message; }
+      if (seq !== sw.seq) return;
+      sw.quote = j; msg.textContent = `Quote ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · valid to ${j.valid_to ? new Date(j.valid_to * 1000).toISOString().slice(11, 16) + ' UTC' : 'n/a'}`;
+      swapPaint(); swapArmRefresh();
+    } catch (e) { if (seq === sw.seq) { sw.quote = null; msg.textContent = 'Quote failed: ' + e.message; swapPaint(); } }
+    finally { $('#swapCta').classList.remove('busy'); }
+  }
+  function swapArmRefresh() {
+    clearInterval(sw.timer); clearInterval(sw.tick); let left = 30;
+    const paintCount = () => { const c = $('#swapCount'); if (c) c.textContent = `· refreshes in ${left}s`; };
+    paintCount(); sw.tick = setInterval(() => { left -= 1; paintCount(); }, 1000);
+    sw.timer = setInterval(() => { if ($('#swapSection').offsetParent && !$('#modal').offsetParent) swapQuote(); }, 30000);
+  }
+  function swapCtaClick() { const st = swapState(); if (st === 'quote') swapQuote(); else if (st === 'review') openSwapExec(sw.quote); }
+  function openPicker(side) {
+    sw.picking = side; $('#swapPickerTitle').textContent = side === 'sell' ? 'Sell which token?' : `Buy with ${sw.sell}`; $('#swapPickerQ').value = ''; $('#swapPicker').hidden = false; paintPicker(); $('#swapPickerQ').focus();
+  }
+  function closePicker() { $('#swapPicker').hidden = true; sw.picking = null; }
+  function paintPicker() {
+    const q = upper($('#swapPickerQ').value.trim()); const list = sw.picking === 'sell' ? sellable() : buyableFor(sw.sell);
+    const rows = list.filter(t => !q || upper(t).includes(q)).map(t => ({ t, bal: idleOf(t), px: priceOf(t), ok: buildable(t) }));
+    const section = (title, items) => items.length ? `<div class="sw-grp">${title}</div>` + items.map(i => `<button class="sw-opt ${i.ok ? '' : 'grey'}" type="button" data-t="${esc(i.t)}" ${i.ok ? '' : 'title="not in the bot token registry"'}>
+        <span class="sym">${esc(i.t)}</span><span class="bal num">${i.bal > 0 ? fmtTok(i.bal) + (i.px ? ` <span class="dim">${usd(i.bal * i.px, 0)}</span>` : '') : '<span class="dim">–</span>'}</span></button>`).join('') : '';
+    const byVal = (x, y) => (y.bal * (y.px || 0)) - (x.bal * (x.px || 0)) || x.t.localeCompare(y.t);
+    $('#swapPickerList').innerHTML = section('Settlement assets', rows.filter(r => isSettle(r.t)).sort(byVal)) + section('Other permitted', rows.filter(r => !isSettle(r.t)).sort(byVal)) || '<div class="empty">No permitted token matches.</div>';
+    $('#swapPickerList').querySelectorAll('.sw-opt').forEach(b => b.onclick = () => {
+      const t = b.dataset.t;
+      if (sw.picking === 'sell') { sw.sell = t; if (!sw.buy || !pairOk(t, sw.buy)) { const bs = buyableFor(t); sw.buy = bs.find(x => upper(x) === 'USDC' && buildable(x)) || bs.find(buildable) || bs[0] || null; } }
+      else sw.buy = t;
+      sw.quote = null; closePicker(); swapPaint(); swapSchedule();
+    });
   }
   function openSwapExec(q) {
+    clearInterval(sw.timer); clearInterval(sw.tick);
     cur = { move: null, plan: null, stage2: { commands: [q.command], label: q.command, wait_for: '' }, claimOnly: true };
     $('#mTitle').textContent = `Execute · ${snap.display_name} · swap`;
-    $('#mParams').innerHTML = [['Client / chain', `${snap.client} · ${snap.chain_id}`], ['Avatar Safe', (snap.safes && snap.safes.avatar) || snap.avatar_safe], ['Action', 'CoW SWAP (pre-signed order)'],
-      ['Sell', `${q.sell_amount} ${q.sell}`], ['Buy (quote)', `${q.buy_amount} ${q.buy}`], ['Slippage', `${q.slippage_bps} bps (dynamic, CoW)`], ['Min. receive', `${q.min_receive} ${q.buy}`], ['Command', q.command]]
+    $('#mParams').innerHTML = [['Client / chain', `${snap.client} · ${snap.chain_id}`], ['Avatar Safe', (snap.safes && snap.safes.avatar) || snap.avatar_safe], ['Action', 'CoW SWAP (market sell, pre-signed order)'],
+      ['Sell', `${fmtTok(q.sell_amount)} ${q.sell}`], ['Buy (quote)', `${fmtTok(q.buy_amount)} ${q.buy}`], ['Slippage', `${(q.slippage_bps / 100).toFixed(2)}% (dynamic, CoW)`], ['Min. receive', `${fmtTok(q.min_receive)} ${q.buy}`], ['Fee', `${fmtTok(q.fee)} ${q.sell}`], ['Command', q.command]]
       .map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(String(v))}</dd></div>`).join('');
     $('#mPlan').hidden = true; $('#mSim').hidden = true; $('#mMsg').className = 'modal-msg';
-    $('#mMsg').textContent = 'Build & simulate re-quotes through the bot and builds the approval + setPreSignature steps. Propose submits the order to CoW and the Safe transaction to the signers.';
+    $('#mMsg').textContent = 'Build & simulate re-quotes through the bot and builds the approval + setPreSignature steps under Roles. Propose submits the order to CoW and the Safe transaction to the signers.';
     $('#mBuild').disabled = !executorOn; $('#mPropose').disabled = true; steps({}); $('#modal').hidden = false;
   }
 

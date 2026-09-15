@@ -35,6 +35,7 @@ PLANS = ROOT / "runs" / "plans"
 
 # rebalancer client slug -> SafeAgent client folder
 CLIENT_DIRS = {"ens": "ens", "nexus": "nexus", "cow": "cow dao", "balancer": "balancer"}
+KNOWN_TOKENS: dict[str, list] = {}   # slug -> symbols in the bot's token registry (per process cache)
 
 # Strategy API protocol key -> bot protocol word
 PROTO = {"morphoVaults": "morpho", "aave_v3": "aave", "compound_v3": "compound", "fluid": "fluid", "sky": "sky",
@@ -397,7 +398,14 @@ class H(BaseHTTPRequestHandler):
             for e in (raw.get("allPermissions") or {}).get("cowswap") or (raw.get("permissions") or {}).get("cowswap") or []:
                 if e.get("action") == "swap" and not e.get("isTWAP"):
                     groups.append(dict(sell=sorted(set(e.get("sellAssets") or [])), buy=sorted(set(e.get("buyAssets") or []))))
-            return self._json(200, dict(client=slug, groups=groups, cached_at=json.loads(f.read_text(encoding="utf-8")).get("vault_data_fetched_at")))
+            known = KNOWN_TOKENS.get(slug)
+            if known is None:
+                res = run_worker(slug, "tokens", {})
+                known = res.get("tokens") or []
+                if known:
+                    KNOWN_TOKENS[slug] = known
+            return self._json(200, dict(client=slug, groups=groups, known_tokens=known,
+                                        cached_at=json.loads(f.read_text(encoding="utf-8")).get("vault_data_fetched_at")))
         if self.path.startswith("/cow/"):
             uid = self.path.split("/cow/", 1)[1].split("?")[0]
             if not uid.startswith("0x") or len(uid) < 20:

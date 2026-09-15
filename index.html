@@ -120,17 +120,46 @@
       <section id="swapSection">
         <div class="eyebrow">Swap</div>
         <h2>CoW swap within the client's permissions</h2>
-        <div class="sim">
-          <div class="sim-grid">
-            <div class="field"><label>Sell</label><select id="swapSell"></select></div>
-            <div class="field"><label>Buy</label><select id="swapBuy"></select></div>
-            <div class="field"><label>Amount <span class="val" id="swapMax"></span></label><input type="number" id="swapAmount" min="0" step="any" placeholder="0.0"></div>
-            <div class="field"><label>&nbsp;</label><button class="btn" id="swapQuote" type="button">Get quote</button></div>
+        <div class="sw-wrap">
+          <div class="sw-card">
+            <div class="sw-box">
+              <div class="sw-lbl">Sell</div>
+              <div class="sw-row">
+                <input id="swapAmount" class="sw-in num" inputmode="decimal" autocomplete="off" placeholder="0">
+                <button class="sw-tok" id="swapSellBtn" type="button"><span class="sym">Select</span><span class="chev">&#9662;</span></button>
+              </div>
+              <div class="sw-sub"><span id="swapSellUsd" class="num"></span><span id="swapSellBal"></span></div>
+            </div>
+            <button class="sw-flip" id="swapFlip" type="button" title="Switch sell and buy">&#8645;</button>
+            <div class="sw-box">
+              <div class="sw-lbl">Buy</div>
+              <div class="sw-row">
+                <div id="swapBuyAmt" class="sw-in num sw-ro">0</div>
+                <button class="sw-tok" id="swapBuyBtn" type="button"><span class="sym">Select</span><span class="chev">&#9662;</span></button>
+              </div>
+              <div class="sw-sub"><span id="swapBuyUsd" class="num"></span><span id="swapBuyBal"></span></div>
+            </div>
+            <button class="sw-rate" id="swapRate" type="button" hidden></button>
+            <details class="sw-details" id="swapDetails" hidden>
+              <summary><span id="swapSummary">Order details</span><span class="chev">&#9662;</span></summary>
+              <div class="sw-kv" id="swapKv"></div>
+            </details>
+            <div class="sw-note" id="swapNote" hidden></div>
+            <button class="btn sw-cta" id="swapCta" type="button" disabled>Select tokens</button>
+            <div class="fine sw-msg" id="swapMsg"></div>
           </div>
-          <div class="out" id="swapOut"></div>
-          <div id="swapMsg" class="fine"></div>
-          <div style="margin-top:10px;display:flex;justify-content:flex-end"><button class="btn" id="swapExec" type="button" disabled>Execute swap</button></div>
-          <p class="fine">Pairs come from the client's CoW swap permissions (the bot's Roles allow-list). Quote and dynamic slippage come from CoW through the bot; the order is pre-signed by the Safe and fills when solvers match it.</p>
+          <div class="sw-side">
+            <p class="fine">Sell and buy lists are the CoW <b>swap</b> groups of this client's Roles permissions: any token in a group's sell set may be sold for any token in its buy set. TWAP groups are excluded. Tokens the bot's registry cannot build are greyed out.</p>
+            <p class="fine">Quote, fee and slippage come from CoW through the bot (the same call the Telegram flow makes); slippage is CoW's dynamic tolerance for the pair and size. The quote refreshes every 30 s while the panel is open.</p>
+            <p class="fine">Execute builds the approval and <code>setPreSignature</code> steps under Roles, simulates them on Tenderly and, after your approval in the popup, proposes the Safe transaction and submits the order to CoW. It fills asynchronously once solvers match it; nothing is signed on this page.</p>
+          </div>
+        </div>
+        <div class="sw-picker" id="swapPicker" hidden>
+          <div class="sw-picker-card">
+            <div class="sw-picker-h"><b id="swapPickerTitle">Select a token</b><button class="x" id="swapPickerX" type="button">&times;</button></div>
+            <input id="swapPickerQ" class="sw-picker-q" placeholder="Search symbol" autocomplete="off">
+            <div class="sw-picker-list" id="swapPickerList"></div>
+          </div>
         </div>
       </section>
 

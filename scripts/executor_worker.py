@@ -249,6 +249,13 @@ def do_quote(client_dir: Path, payload: dict):
              valid_to=quote.get("validTo"), expiration=q.get("expiration"), command=f"cowswap swap {amount} {sell} {buy}"))
 
 
+def do_tokens(client_dir: Path, payload: dict):
+    """Symbols the client's bot token registry knows: the swap panel greys out everything else."""
+    load_runtime(client_dir)
+    from token_registry import TOKENS
+    out(dict(tokens=sorted(TOKENS.keys())))
+
+
 def do_propose(client_dir: Path, payload: dict):
     load_runtime(client_dir)
     from propose_tx import propose_manager_tx
@@ -295,11 +302,11 @@ def do_propose(client_dir: Path, payload: dict):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--client-dir", required=True)
-    ap.add_argument("op", choices=["plan", "propose", "quote"])
+    ap.add_argument("op", choices=["plan", "propose", "quote", "tokens"])
     a = ap.parse_args()
     payload = json.loads(sys.stdin.read() or "{}")
     try:
-        {"plan": do_plan, "propose": do_propose, "quote": do_quote}[a.op](Path(a.client_dir).resolve(), payload)
+        {"plan": do_plan, "propose": do_propose, "quote": do_quote, "tokens": do_tokens}[a.op](Path(a.client_dir).resolve(), payload)
     except SystemExit:
         raise
     except Exception as e:
