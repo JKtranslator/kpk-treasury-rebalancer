@@ -31,7 +31,7 @@
       <button class="btn ghost" id="refreshBtn" type="button" title="Re-run live holdings, yields and the assessment for this client, then reload">↻ Refresh client</button>
       <div class="seg views" id="viewTabs" role="tablist" aria-label="View">
         <button data-v="holdings" aria-pressed="true">Holdings</button>
-        <button data-v="strategies" aria-pressed="false">Strategies</button>
+        <button data-v="strategies" aria-pressed="false">Execution</button>
       </div>
     </div>
   </div>
@@ -86,7 +86,7 @@
       </section>
 
       <section>
-        <div class="eyebrow">Simulator</div>
+        <div class="eyebrow">Rebalancing</div>
         <h2>Permitted moves under your thresholds</h2>
         <div class="sim">
           <div class="sim-grid">
@@ -107,6 +107,30 @@
             or swap routes, and untracked positions are never moved. <b>Execute</b> hands a move to the local
             SafeAgent executor: it builds the Roles transaction, simulates it on Tenderly and, only after you approve
             in the popup, proposes it to the Safe. Nothing is signed or sent from this page.</p>
+        </div>
+      </section>
+
+      <section id="rewardsSection">
+        <div class="eyebrow">Rewards</div>
+        <h2>Claim rewards</h2>
+        <p class="lead"><label style="cursor:pointer"><input type="checkbox" id="sweepToggle" checked> Swap claimed rewards to USDC on CoW and deposit into the permitted USDC venue with the highest yield (two stages). Unchecked: claim only, tokens stay in the Safe.</label></p>
+        <div id="rewardsBox"></div>
+      </section>
+
+      <section id="swapSection">
+        <div class="eyebrow">Swap</div>
+        <h2>CoW swap within the client's permissions</h2>
+        <div class="sim">
+          <div class="sim-grid">
+            <div class="field"><label>Sell</label><select id="swapSell"></select></div>
+            <div class="field"><label>Buy</label><select id="swapBuy"></select></div>
+            <div class="field"><label>Amount <span class="val" id="swapMax"></span></label><input type="number" id="swapAmount" min="0" step="any" placeholder="0.0"></div>
+            <div class="field"><label>&nbsp;</label><button class="btn" id="swapQuote" type="button">Get quote</button></div>
+          </div>
+          <div class="out" id="swapOut"></div>
+          <div id="swapMsg" class="fine"></div>
+          <div style="margin-top:10px;display:flex;justify-content:flex-end"><button class="btn" id="swapExec" type="button" disabled>Execute swap</button></div>
+          <p class="fine">Pairs come from the client's CoW swap permissions (the bot's Roles allow-list). Quote and dynamic slippage come from CoW through the bot; the order is pre-signed by the Safe and fills when solvers match it.</p>
         </div>
       </section>
 

@@ -319,7 +319,8 @@
     "spark/USD": "0ed981dc-b49d-426d-ade5-6014728b1ef9",
     "compound_v3/USD/ciUSDCv3": "7da72d09-56ca-4ec5-a45f-59114353e487",
     "compound_v3/USD": "7da72d09-56ca-4ec5-a45f-59114353e487",
-    "savingsgho/USD": "19d024ed-9c70-4323-9a81-fe873ea5f0e0"
+    "savingsgho/USD": "19d024ed-9c70-4323-9a81-fe873ea5f0e0",
+    "aave_v3/USD/sGHO": "19d024ed-9c70-4323-9a81-fe873ea5f0e0"
   },
   "rewards": {
     "_comment": "Claimable-reward sources and the reward tokens the simulator may sweep (claim -> CoW swap to USDC -> deposit).",

@@ -93,12 +93,16 @@ def syncrone_rows(org: dict, reg: dict) -> list[dict]:
                     days = max(1.0, (dt.date.today() - dt.date.today().replace(day=1)).days + dt.datetime.now(dt.timezone.utc).hour / 24)
                     base_val = fnum(i0.get("balance_usd")) or fnum(f.get("balance_usd"))
                     realised = (fnum(m.get("yield_pnl_usd")) / base_val) * (365.0 / days) if base_val > 1000 else None
+                    sym = tok.get("symbol")
+                    # Syncrone books Aave Savings GHO as "Aave v3 Staked ... GHO": the position is sGHO, a savings vault
+                    if pn.lower() == "aave" and (sym or "").upper() == "GHO" and "staked" in (pos.get("position_name") or "").lower():
+                        sym = "sGHO"
                     rows.append(dict(source="syncrone", kind="position", wallet=wa, protocol=pn,
                                      position=pos.get("position_name") or "",
                                      position_type=pos.get("position_type"),
                                      position_id=pos.get("id"), asset_id=a.get("id"),
                                      in_flight=in_flight, chain=pos.get("chain_id"),
-                                     token=(tok.get("address") or "").lower(), symbol=tok.get("symbol"),
+                                     token=(tok.get("address") or "").lower(), symbol=sym,
                                      balance=fnum(f.get("balance")), price=fnum(f.get("price_usd")),
                                      usd=fnum(f.get("balance_usd")),
                                      mtd_roi_pct=m.get("roi_pct"), mtd_apy_pct=m.get("apy_pct"),
@@ -283,10 +287,14 @@ def rebase_idle_on_safe(sync_rows: list[dict], safe_rows: list[dict], reg: dict,
             r["spam"] = r["usd"] < DUST_USD
             r["rebased_on_safe"] = True
     known = {r["token"] for r in sync_rows}
+    # Syncrone books Compound / Sky / Aave positions under the underlying token, so a receipt token missing
+    # from its rows only counts as "unbooked" when Syncrone has no position for that protocol at all
+    aliases = reg.get("protocol_aliases", {})
+    booked = {aliases.get(r["protocol"].lower(), r["protocol"].lower()) for r in sync_rows if r["kind"] == "position"}
     fresh = []
     for sb in safe_rows:
         rc = reg.get("receipt_tokens", {}).get(sb["token"])
-        if rc and sb["token"] not in known and sb["balance"] > 0:
+        if rc and sb["token"] not in known and sb["balance"] > 0 and rc["protocol"] not in booked:
             row = dict(source="safe", kind="position", wallet=safe.lower(), protocol=rc["protocol"],
                        position=rc["position"] + " (not yet booked by Syncrone)", position_type="receipt_token",
                        position_id=f"safe-{sb['token']}", asset_id=None, in_flight=False, chain=chain_id,

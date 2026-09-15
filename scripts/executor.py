@@ -387,6 +387,17 @@ class H(BaseHTTPRequestHandler):
             if not name or "/" in name or ".." in name or not f.exists():
                 return self._json(404, dict(error="not found"))
             return self._json(200, json.loads(f.read_text(encoding="utf-8")))
+        if self.path.startswith("/swap-pairs/"):
+            slug = self.path.split("/swap-pairs/", 1)[1].split("?")[0]
+            f = ROOT / "data" / f"{slug}.strategy.json"
+            if slug not in CLIENT_DIRS or not f.exists():
+                return self._json(404, dict(error="no strategy cache for this client"))
+            raw = json.loads(f.read_text(encoding="utf-8")).get("raw_permissions") or {}
+            groups = []
+            for e in (raw.get("permissions") or {}).get("cowswap") or []:
+                if e.get("action") == "swap" and not e.get("isTWAP"):
+                    groups.append(dict(sell=sorted(set(e.get("sellAssets") or [])), buy=sorted(set(e.get("buyAssets") or []))))
+            return self._json(200, dict(client=slug, groups=groups, cached_at=json.loads(f.read_text(encoding="utf-8")).get("vault_data_fetched_at")))
         if self.path.startswith("/cow/"):
             uid = self.path.split("/cow/", 1)[1].split("?")[0]
             if not uid.startswith("0x") or len(uid) < 20:
@@ -417,8 +428,14 @@ class H(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(n) or b"{}")
         except json.JSONDecodeError:
             return self._json(400, dict(error="bad json"))
-        if self.path.startswith(("/plan", "/propose")) and not self._authorized():
+        if self.path.startswith(("/plan", "/propose", "/quote")) and not self._authorized():
             return self._json(401, dict(error="unauthorized: set the executor token on the page"))
+        if self.path.startswith("/quote"):
+            slug = body.get("client")
+            if slug not in CLIENT_DIRS:
+                return self._json(400, dict(error=f"unknown client {slug}"))
+            res = run_worker(slug, "quote", dict(sell=body.get("sell"), buy=body.get("buy"), amount=body.get("amount")))
+            return self._json(200 if not res.get("error") else 422, res)
         if self.path.startswith("/plan"):
             slug = body.get("client")
             if slug not in CLIENT_DIRS:

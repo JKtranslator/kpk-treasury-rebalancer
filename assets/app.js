@@ -200,14 +200,16 @@
     $('#simMoves').innerHTML = moves.length ? moves.map(m => `<div class="mv ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path"><b>${m.g}</b> · ${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → ${pct(m.toApy)}${m.to.apy_1d != null && sim.basis !== 'apy_1d' ? ` (spot ${pct(m.to.apy_1d)})` : ''}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.forced ? ' · excluded venue: exit is mandatory' : ''}</small></div><div class="amt num">${usd(m.amt)}<small>+${usd(m.amt * m.pick)}/yr</small></div><button class="btn ${executorOn ? '' : 'ghost'}" data-exec="${m.id}" type="button" title="${executorOn ? 'Build, simulate and propose via the local SafeAgent executor' : 'Start scripts/executor.py to enable'}">Execute</button></div>`).join('')
       : '<p class="empty">No move clears these thresholds. Laggards are noted, not traded.</p>';
     $('#simMoves').onclick = e => { const b = e.target.closest('button[data-exec]'); if (b) openModal(moves[Number(b.dataset.exec)]); };
-    renderRewards(); renderStage2();
+    renderRewards(); renderStage2(); renderSwap();
   }
 
   /* ------------------------------------------------------------------ rewards sweep */
   function renderRewards() {
-    let box = $('#rewardsBox'); if (!box) { box = document.createElement('div'); box.id = 'rewardsBox'; $('#simMoves').parentNode.insertBefore(box, $('#simMoves')); }
+    const box = $('#rewardsBox');
     const sw = snap.rewards_sweep; const co = (sw && sw.claim_only) || [];
-    if (!sw || ((!sw.items || !sw.items.length) && !co.length)) { box.innerHTML = ''; return; }
+    if (!sw || ((!sw.items || !sw.items.length) && !co.length)) { box.innerHTML = '<p class="empty">No claimable rewards or reward tokens for this client.</p>'; return; }
+    const doSwap = $('#sweepToggle').checked;
+    $('#sweepToggle').onchange = renderRewards;
     const worth = (sw.items || []).filter(i => i.usd >= sw.min_usd);
     const best = sw.best_usd_venue;
     const byPos = {}; co.forEach(c => { (byPos[c.token_id] = byPos[c.token_id] || []).push(c); });
@@ -217,13 +219,14 @@
       ${sw.items.map(i => `<tr class="${i.usd < sw.min_usd ? 'inflight' : ''}"><td class="k">${esc(i.source)}</td><td>${esc(i.symbol)}</td><td class="n num">${Number(i.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 4 })}</td><td class="n num">${usd(i.usd)}</td><td>${i.claimable ? 'claimable' : 'held in Safe'}${i.usd < sw.min_usd ? ' · below sweep floor' : ''}</td></tr>`).join('')}
       </tbody></table></div>
       ${claimRows}
-      ${worth.length ? `<div class="mv" style="margin-top:10px"><div class="path"><b>Sweep</b> · claim → CoW swap to USDC → deposit into <b>${best ? esc(best.protocol + ' ' + best.asset) : 'no permitted USDC venue'}</b>${best ? ` <small>(${pct(best.apy)}, best permitted USDC venue)</small>` : ''}<br><small>two stages: claims and pre-signed CoW orders first, USDC deposit once they fill</small></div>
-      <div class="amt num">${compact(worth.reduce((s, i) => s + i.usd, 0))}</div><button class="btn ${executorOn && best && worth.length ? '' : 'ghost'}" id="sweepBtn" type="button" ${executorOn && best && worth.length ? '' : 'disabled'}>Execute</button></div>` : ''}</div>`;
-    const b = $('#sweepBtn'); if (b) b.onclick = () => openSweep(worth, best);
+      ${worth.length ? `<div class="mv" style="margin-top:10px"><div class="path"><b>${doSwap ? 'Claim, swap and deposit' : 'Claim only'}</b> · ${doSwap ? `claim → CoW swap to USDC → deposit into <b>${best ? esc(best.protocol + ' ' + best.asset) : 'no permitted USDC venue'}</b>${best ? ` <small>(${pct(best.apy)}, best permitted USDC venue)</small>` : ''}<br><small>two stages: claims and pre-signed CoW orders first, USDC deposit once they fill</small>` : `${[...new Set(worth.filter(i => i.claimable && i.claim_cmd).map(i => i.claim_cmd))].join(', ') || 'nothing to claim'}<br><small>one transaction; tokens stay in the Safe</small>`}</div>
+      <div class="amt num">${compact(worth.reduce((s, i) => s + i.usd, 0))}</div><button class="btn ${executorOn && (doSwap ? best : worth.some(i => i.claim_cmd)) && worth.length ? '' : 'ghost'}" id="sweepBtn" type="button" ${executorOn && (doSwap ? best : worth.some(i => i.claim_cmd)) && worth.length ? '' : 'disabled'}>Execute</button></div>` : ''}</div>`;
+    const b = $('#sweepBtn'); if (b) b.onclick = () => doSwap ? openSweep(worth, best) : openClaimOnly([...new Set(worth.filter(i => i.claimable && i.claim_cmd).map(i => i.claim_cmd))].join(' ; '));
     box.querySelectorAll('button[data-claim]').forEach(btn => btn.onclick = () => openClaimOnly(btn.dataset.claim));
   }
   function openClaimOnly(cmd) {
-    cur = { move: null, plan: null, stage2: { commands: [cmd], label: cmd, wait_for: '' }, claimOnly: true };
+    const cmds = cmd.split(' ; ').map(s => s.trim()).filter(Boolean);
+    cur = { move: null, plan: null, stage2: { commands: cmds, label: cmd, wait_for: '' }, claimOnly: true };
     $('#mTitle').textContent = `Execute · ${snap.display_name} · claim`;
     $('#mParams').innerHTML = [['Client / chain', `${snap.client} · ${snap.chain_id}`], ['Avatar Safe', (snap.safes && snap.safes.avatar) || snap.avatar_safe], ['Action', 'CLAIM only'], ['Command', cmd]]
       .map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
@@ -240,6 +243,53 @@
       .map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
     $('#mPlan').hidden = true; $('#mSim').hidden = true; $('#mMsg').className = 'modal-msg';
     $('#mMsg').textContent = 'Stage 1 builds the claim steps and one pre-signed CoW order per reward token; stage 2 (deposit) is offered once the orders fill.';
+    $('#mBuild').disabled = !executorOn; $('#mPropose').disabled = true; steps({}); $('#modal').hidden = false;
+  }
+
+  /* ------------------------------------------------------------------ swap (CoW, within permissions) */
+  let swapGroups = [], lastQuote = null;
+  async function renderSwap() {
+    const sel = $('#swapSell'), buy = $('#swapBuy'), msg = $('#swapMsg');
+    $('#swapOut').innerHTML = ''; $('#swapExec').disabled = true; lastQuote = null;
+    try { swapGroups = (await loadJSON(EXECUTOR + '/swap-pairs/' + snap.client)).groups || []; }
+    catch (e) { try { swapGroups = (await loadJSON('data/' + snap.client + '.strategy.json')).raw_permissions.permissions.cowswap.filter(g => g.action === 'swap' && !g.isTWAP).map(g => ({ sell: g.sellAssets, buy: g.buyAssets })); } catch (e2) { swapGroups = []; } }
+    const sells = [...new Set(swapGroups.flatMap(g => g.sell))].sort();
+    if (!sells.length) { msg.textContent = 'No CoW swap permission found for this client in the strategy cache.'; sel.innerHTML = buy.innerHTML = ''; return; }
+    sel.innerHTML = sells.map(s => `<option>${esc(s)}</option>`).join('');
+    const fillBuy = () => { const s = sel.value; const buys = [...new Set(swapGroups.filter(g => g.sell.includes(s)).flatMap(g => g.buy))].filter(b => b !== s).sort(); buy.innerHTML = buys.map(b => `<option>${esc(b)}</option>`).join(''); fillMax(); };
+    const fillMax = () => { const s = sel.value; const held = snap.book.filter(b => b.kind === 'idle' && (b.symbol || '').toUpperCase() === s.toUpperCase()).reduce((a, b) => a + (b.balance || 0), 0); $('#swapMax').textContent = held ? `in Safe: ${held.toLocaleString('en-US', { maximumFractionDigits: 6 })} ${s}` : 'in Safe: none idle (withdraw first or the order will not fill)'; $('#swapAmount').dataset.max = held; };
+    sel.onchange = fillBuy; fillBuy();
+    $('#swapMax').onclick = () => { if ($('#swapAmount').dataset.max > 0) { $('#swapAmount').value = $('#swapAmount').dataset.max; } };
+    $('#swapQuote').onclick = getSwapQuote;
+    $('#swapExec').onclick = () => { if (lastQuote) openSwapExec(lastQuote); };
+    msg.textContent = `${sells.length} sellable tokens from the permissions cache.`;
+  }
+  async function getSwapQuote() {
+    const sell = $('#swapSell').value, buy = $('#swapBuy').value, amount = Number($('#swapAmount').value);
+    const out = $('#swapOut'), msg = $('#swapMsg');
+    if (!sell || !buy || !(amount > 0)) { msg.textContent = 'Pick a pair and an amount.'; return; }
+    msg.textContent = 'Quoting on CoW through the bot…'; out.innerHTML = ''; $('#swapExec').disabled = true;
+    try {
+      let r = await fetch(EXECUTOR + '/quote', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ client: snap.client, sell, buy, amount }) });
+      if (r.status === 401 && askToken('Executor token needed to quote')) r = await fetch(EXECUTOR + '/quote', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ client: snap.client, sell, buy, amount }) });
+      const j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || r.statusText);
+      lastQuote = j;
+      const f = (v, d = 6) => Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: d });
+      out.innerHTML = [['You sell', `${f(j.sell_amount)} ${esc(j.sell)}`], ['You receive (quote)', `${f(j.buy_amount)} ${esc(j.buy)}`], ['Price', `${f(j.price, 6)} ${esc(j.buy)}/${esc(j.sell)}`],
+        ['Network fee', `${f(j.fee)} ${esc(j.sell)}`], ['Slippage (dynamic)', `${j.slippage_bps} bps${j.slippage_source ? ' · ' + esc(String(j.slippage_source)) : ''}`], ['Min. receive', `${f(j.min_receive)} ${esc(j.buy)}`]]
+        .map(([t, v]) => `<div class="o"><div class="t">${t}</div><div class="v num" style="font-size:15px">${v}</div></div>`).join('');
+      msg.textContent = `Quote valid to ${j.valid_to ? new Date(j.valid_to * 1000).toISOString().slice(11, 16) + ' UTC' : 'n/a'} · command: ${j.command}`;
+      $('#swapExec').disabled = !executorOn;
+    } catch (e) { msg.textContent = 'Quote failed: ' + e.message; }
+  }
+  function openSwapExec(q) {
+    cur = { move: null, plan: null, stage2: { commands: [q.command], label: q.command, wait_for: '' }, claimOnly: true };
+    $('#mTitle').textContent = `Execute · ${snap.display_name} · swap`;
+    $('#mParams').innerHTML = [['Client / chain', `${snap.client} · ${snap.chain_id}`], ['Avatar Safe', (snap.safes && snap.safes.avatar) || snap.avatar_safe], ['Action', 'CoW SWAP (pre-signed order)'],
+      ['Sell', `${q.sell_amount} ${q.sell}`], ['Buy (quote)', `${q.buy_amount} ${q.buy}`], ['Slippage', `${q.slippage_bps} bps (dynamic, CoW)`], ['Min. receive', `${q.min_receive} ${q.buy}`], ['Command', q.command]]
+      .map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(String(v))}</dd></div>`).join('');
+    $('#mPlan').hidden = true; $('#mSim').hidden = true; $('#mMsg').className = 'modal-msg';
+    $('#mMsg').textContent = 'Build & simulate re-quotes through the bot and builds the approval + setPreSignature steps. Propose submits the order to CoW and the Safe transaction to the signers.';
     $('#mBuild').disabled = !executorOn; $('#mPropose').disabled = true; steps({}); $('#modal').hidden = false;
   }
 

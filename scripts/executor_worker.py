@@ -111,7 +111,9 @@ def do_plan(client_dir: Path, payload: dict):
         if intent.get("type") != "execute":
             fail(f"`{cmd}` is not an executable command ({intent.get('type')})", command=cmd)
         try:
-            pp._resolve_all_amount(intent)
+            resolve = getattr(pp, "_resolve_all_amount", None)   # some client planners resolve inside build_steps
+            if resolve:
+                resolve(intent)
             steps, extra = pp.build_steps(intent)
         except Exception as e:
             fail(f"build failed for `{cmd}`: {e}", command=cmd, trace=traceback.format_exc(limit=3))
@@ -218,6 +220,35 @@ def do_plan(client_dir: Path, payload: dict):
     ))
 
 
+def do_quote(client_dir: Path, payload: dict):
+    """CoW quote + dynamic slippage for the swap panel, through the bot's cow_api (same as the planner)."""
+    load_runtime(client_dir)
+    import time as _t
+    import config
+    from token_registry import get_address, get_decimals, normalize
+    from cow_api import get_quote, get_slippage_tolerance_info
+    sell, buy, amount = payload["sell"].upper(), payload["buy"].upper(), str(payload["amount"])
+    raw = normalize(amount, sell)
+    sell_addr, buy_addr = get_address(sell), get_address(buy)
+    try:
+        q = get_quote(sell_addr, buy_addr, raw, config.SAFE_ADDRESS, int(_t.time()) + 30 * 60)
+    except Exception as e:
+        fail(f"CoW quote failed for {amount} {sell} -> {buy}: {e}")
+    quote = q.get("quote") or {}
+    try:
+        sl = get_slippage_tolerance_info(sell_addr, buy_addr, config.CHAIN_ID, sell_amount=raw)
+    except Exception as e:
+        sl = {"error": str(e)[:120]}
+    bps = sl.get("slippage_bps") if isinstance(sl.get("slippage_bps"), int) else 50
+    sd, bd = get_decimals(sell), get_decimals(buy)
+    buy_amt = int(quote.get("buyAmount") or 0)
+    out(dict(sell=sell, buy=buy, sell_amount=raw / 10 ** sd, sell_amount_after_fee=int(quote.get("sellAmount") or raw) / 10 ** sd,
+             fee=int(quote.get("feeAmount") or 0) / 10 ** sd, buy_amount=buy_amt / 10 ** bd,
+             price=(buy_amt / 10 ** bd) / (raw / 10 ** sd) if raw else None, slippage_bps=bps, slippage_source=sl.get("source") or sl.get("mode"),
+             slippage_info={k: v for k, v in sl.items() if k != "raw"}, min_receive=(buy_amt * (10_000 - bps) // 10_000) / 10 ** bd,
+             valid_to=quote.get("validTo"), expiration=q.get("expiration"), command=f"cowswap swap {amount} {sell} {buy}"))
+
+
 def do_propose(client_dir: Path, payload: dict):
     load_runtime(client_dir)
     from propose_tx import propose_manager_tx
@@ -264,11 +295,11 @@ def do_propose(client_dir: Path, payload: dict):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--client-dir", required=True)
-    ap.add_argument("op", choices=["plan", "propose"])
+    ap.add_argument("op", choices=["plan", "propose", "quote"])
     a = ap.parse_args()
     payload = json.loads(sys.stdin.read() or "{}")
     try:
-        (do_plan if a.op == "plan" else do_propose)(Path(a.client_dir).resolve(), payload)
+        {"plan": do_plan, "propose": do_propose, "quote": do_quote}[a.op](Path(a.client_dir).resolve(), payload)
     except SystemExit:
         raise
     except Exception as e:
