@@ -36,6 +36,17 @@ PLANS = ROOT / "runs" / "plans"
 # rebalancer client slug -> SafeAgent client folder
 CLIENT_DIRS = {"ens": "ens", "nexus": "nexus", "cow": "cow dao", "balancer": "balancer"}
 KNOWN_TOKENS: dict[str, list] = {}   # slug -> symbols in the bot's token registry (per process cache)
+KNOWN_ADDR: dict[str, dict] = {}     # slug -> {symbol: address} from the same registry
+NATIVE = "0x0000000000000000000000000000000000000000"
+
+
+def known_tokens(slug: str) -> tuple[list, dict]:
+    if slug not in KNOWN_TOKENS:
+        res = run_worker(slug, "tokens", {})
+        if res.get("tokens"):
+            KNOWN_TOKENS[slug] = res["tokens"]
+            KNOWN_ADDR[slug] = res.get("addresses") or {}
+    return KNOWN_TOKENS.get(slug, []), KNOWN_ADDR.get(slug, {})
 
 # Strategy API protocol key -> bot protocol word
 PROTO = {"morphoVaults": "morpho", "aave_v3": "aave", "compound_v3": "compound", "fluid": "fluid", "sky": "sky",
@@ -428,8 +439,21 @@ class H(BaseHTTPRequestHandler):
                 chain_id = int(snap.get("chain_id") or 1)
                 avatar = (snap.get("safes") or {}).get("avatar") or snap.get("avatar_safe")
                 rows = fetch_safe_balances(registry(), chain_id, avatar)
+                # the tx-service list carries spam tokens (fake "ETH"/"ERC20" with absurd balances): keep only tokens
+                # the bot's registry knows, matched by ADDRESS, and report them under the registry symbol
+                _, addr = known_tokens(slug)
+                by_addr = {a.lower(): sym for sym, a in addr.items()}
+                native_sym = next((s for s, a in addr.items() if a.lower() in (NATIVE, "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")), "ETH")
+                out = []
+                for r in rows:
+                    if r["balance"] <= 0:
+                        continue
+                    if r["token"] == NATIVE:
+                        out.append(dict(symbol=native_sym, token=NATIVE, balance=r["balance"], decimals=18, safe_symbol=r["symbol"]))
+                    elif r["token"] in by_addr:
+                        out.append(dict(symbol=by_addr[r["token"]], token=r["token"], balance=r["balance"], decimals=r["decimals"], safe_symbol=r["symbol"]))
                 return self._json(200, dict(client=slug, chain_id=chain_id, safe=avatar, fetched_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                                            balances=[dict(symbol=r["symbol"], token=r["token"], balance=r["balance"], decimals=r["decimals"]) for r in rows if r["balance"] > 0]))
+                                            balances=out, filtered_out=len([r for r in rows if r["balance"] > 0]) - len(out)))
             except Exception as e:
                 return self._json(502, dict(error=f"safe balances: {str(e)[:160]}"))
         if self.path.startswith("/swap-pairs/"):
@@ -439,12 +463,7 @@ class H(BaseHTTPRequestHandler):
                 return self._json(404, dict(error="no strategy cache for this client"))
             raw = json.loads(f.read_text(encoding="utf-8")).get("raw_permissions") or {}
             groups = cow_groups(slug)
-            known = KNOWN_TOKENS.get(slug)
-            if known is None:
-                res = run_worker(slug, "tokens", {})
-                known = res.get("tokens") or []
-                if known:
-                    KNOWN_TOKENS[slug] = known
+            known, _ = known_tokens(slug)
             return self._json(200, dict(client=slug, groups=groups, known_tokens=known,
                                         cached_at=json.loads(f.read_text(encoding="utf-8")).get("vault_data_fetched_at")))
         if self.path.startswith("/cow/"):

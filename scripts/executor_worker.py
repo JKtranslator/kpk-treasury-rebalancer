@@ -258,7 +258,8 @@ def do_tokens(client_dir: Path, payload: dict):
     """Symbols the client's bot token registry knows: the swap panel greys out everything else."""
     load_runtime(client_dir)
     from token_registry import TOKENS
-    out(dict(tokens=sorted(TOKENS.keys())))
+    out(dict(tokens=sorted(TOKENS.keys()), addresses={k: v["address"].lower() for k, v in TOKENS.items()},
+             decimals={k: v.get("decimals", 18) for k, v in TOKENS.items()}))
 
 
 def do_propose(client_dir: Path, payload: dict):
