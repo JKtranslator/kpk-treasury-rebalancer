@@ -3,21 +3,21 @@
   "display_name": "Balancer DAO Treasury",
   "chain_id": 1,
   "avatar_safe": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
-  "as_of": "2026-09-15T14:39:19+00:00",
+  "as_of": "2026-09-15T14:52:00+00:00",
   "period": "7day",
   "vault_data_fetched_at": "2026-09-15T01:53:22.611Z",
   "run_folder": "2026-09-15",
-  "nav_usd": 7156456,
+  "nav_usd": 7153349,
   "eth_price_usd": 2520.7772,
   "reconciliation": {
-    "syncrone_nav_usd": 7153210,
-    "bridge_usd": 7153198,
+    "syncrone_nav_usd": 7150102,
+    "bridge_usd": 7150090,
     "diff": null,
     "in_flight_usd": 0,
-    "idle_usd": 773528,
+    "idle_usd": 770420,
     "untracked_usd": 6379670,
     "strategy_api_usd": 0,
-    "tokens_checked": 16,
+    "tokens_checked": 15,
     "tokens_disagree": 0,
     "other_wallets": {
       "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 42161": 2234,
@@ -26,7 +26,8 @@
   },
   "flags": [
     "NOTE: Strategy API unreachable (failed after 3 attempts: http://ops-tools-backend.kpk/api/clients/current-strate); positions from Syncrone, APYs from the last snapshot's permitted venues (stale) and fallback sources",
-    "NOTE: positions the Strategy API / vaults.fyi does not price (kept in the book with APY unknown): aave_v3/OTHER $2,510,301, morphoVaults/USD $2,054,439, ether_fi/ETH $973,281, compound_v3/USD/ciUSDCv3 $500,160, rocket_pool/ETH $184,773, stakewise_v3/ETH $135,635, balancer_v2/ETH $15,932, aave_v3/USD $5,061, compound_v3/OTHER $89."
+    "NOTE: positions the Strategy API / vaults.fyi does not price (kept in the book with APY unknown): aave_v3/OTHER $2,510,301, morphoVaults/USD $2,054,439, ether_fi/ETH $973,281, compound_v3/USD/ciUSDCv3 $500,160, rocket_pool/ETH $184,773, stakewise_v3/ETH $135,635, balancer_v2/ETH $15,932, aave_v3/USD $5,061, compound_v3/OTHER $89.",
+    "NOTE: idle balances taken from the live Safe (Syncrone had not booked recent moves): USDC 147,240.34, WETH 0.00"
   ],
   "policy": null,
   "policy_checks": [],
@@ -73,12 +74,12 @@
       "venue": "claimable AAVE (stkAAVE rewards)",
       "symbol": "AAVE",
       "asset_group": "REWARDS",
-      "usd": 3179.99,
+      "usd": 3181.31,
       "apy": null,
       "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
-      "balance": 24.79524991876629,
+      "balance": 24.805564938971678,
       "claimable": true,
       "claim_cmd": "aave claim"
     },
@@ -103,12 +104,12 @@
       "venue": "idle in Safe [USDC]",
       "symbol": "USDC",
       "asset_group": "USD",
-      "usd": 82384.93,
+      "usd": 147225.62,
       "apy": 0.0,
       "apy_source": null,
       "venue_tvl_usd": null,
       "untracked": false,
-      "balance": 82385.016635,
+      "balance": 147240.342337,
       "claimable": false,
       "claim_cmd": null
     },
@@ -124,21 +125,6 @@
       "venue_tvl_usd": null,
       "untracked": false,
       "balance": 3327556.6717589125,
-      "claimable": false,
-      "claim_cmd": null
-    },
-    {
-      "kind": "idle",
-      "protocol": "(wallet)",
-      "venue": "idle in Safe [WETH]",
-      "symbol": "WETH",
-      "asset_group": "ETH",
-      "usd": 67948.53,
-      "apy": 0.0,
-      "apy_source": null,
-      "venue_tvl_usd": null,
-      "untracked": false,
-      "balance": 26.955387389731737,
       "claimable": false,
       "claim_cmd": null
     },
@@ -1046,7 +1032,7 @@
     }
   },
   "rewards_sweep": {
-    "total_usd": 3273,
+    "total_usd": 3275,
     "min_usd": 100,
     "items": [
       {
@@ -1067,8 +1053,8 @@
       },
       {
         "symbol": "AAVE",
-        "amount": 24.79524991876629,
-        "usd": 3180,
+        "amount": 24.805564938971678,
+        "usd": 3181,
         "source": "aave_safety_module",
         "claimable": true,
         "claim_cmd": "aave claim"
