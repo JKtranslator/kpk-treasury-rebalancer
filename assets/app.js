@@ -14,7 +14,7 @@
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const GROUP_COLORS = { USD: '#2D8561', ETH: '#1D1D1D', EURO: '#8E6710', OTHER: '#706E66' };
   const srcTag = b => b.in_roles === false || b.apy_source === 'NOT IN ROLES' ? `<span class="src bad" title="listed by the Strategy API but not a target in the on-chain Roles (pending PUR); never proposed">not in Roles</span>`
-    : b.apy == null ? '' : b.apy_source && b.apy_source !== 'vaults.fyi' ? `<span class="src" title="${esc(b.apy_source)}">${b.apy_source.startsWith('defillama') ? 'llama' : b.apy_source.includes('stale') ? 'stale' : b.apy_source.startsWith('vaults.fyi') ? '' : 'realised'}</span>` : '';
+    : b.apy == null ? '' : b.apy_source && b.apy_source !== 'vaults.fyi' ? `<span class="src" title="${esc(b.apy_source)}">${b.apy_source.startsWith('defillama') ? 'llama' : b.apy_source.includes('stale') ? 'stale' : b.apy_source === 'vaults.fyi live' ? 'live' : b.apy_source.startsWith('vaults.fyi') ? '' : 'realised'}</span>` : '';
 
   let index = null, snap = null, live = null, moves = [], executorOn = false;
   let sim = { pickupBps: 50, moveUsd: 250000, tvlCapPct: 10, basis: 'apy', exclude: new Set() };
@@ -89,7 +89,11 @@
     const r = snap.reconciliation;
     $('#stamp').innerHTML = `<b>${esc(snap.display_name)}</b> · chain ${snap.chain_id} · run ${esc(snap.run_folder)}`;
     if (snap.stale_note) { $('#stamp2').title = snap.stale_note; }
-    $('#stamp2').textContent = (snap.stale_note ? '⚠ off-network: office permissions, live DeFiLlama APYs · ' : '') + `data as of ${new Date(snap.as_of).toISOString().slice(0, 16).replace('T', ' ')} UTC · APY period ${snap.period} · vaults.fyi ${snap.vault_data_fetched_at ? new Date(snap.vault_data_fetched_at).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : 'n/a'}`;
+    const src = snap.apy_sources || {}; const gate = snap.roles_gate || {};
+    const srcLine = [src['vaults.fyi live'] ? `${src['vaults.fyi live']} venues priced live by vaults.fyi` : null,
+      Object.keys(src).filter(k => k.startsWith('defillama')).reduce((a, k) => a + src[k], 0) ? `${Object.keys(src).filter(k => k.startsWith('defillama')).reduce((a, k) => a + src[k], 0)} via DeFiLlama` : null,
+      gate.checked ? `${gate.n_targets} Roles targets checked${gate.excluded && gate.excluded.length ? `, <b class="bad">${gate.excluded.length} permitted venue${gate.excluded.length > 1 ? 's' : ''} not in Roles</b>` : ''}` : '<b class="bad">venues NOT checked against on-chain Roles</b>'].filter(Boolean).join(' · ');
+    $('#stamp2').innerHTML = (snap.stale_note ? '⚠ off-network: office permissions cache · ' : '') + `data as of ${new Date(snap.as_of).toISOString().slice(0, 16).replace('T', ' ')} UTC · APY period ${snap.period}` + (srcLine ? ' · ' + srcLine : '');
 
     const groups = {}; snap.book.forEach(b => groups[b.asset_group] = (groups[b.asset_group] || 0) + b.usd);
     const nav = snap.nav_usd; const stables = (groups.USD || 0) + (groups.EURO || 0);
@@ -108,7 +112,9 @@
     ].join('');
     const others = Object.entries(r.other_wallets || {});
     $('#reconBox').innerHTML = `<b>Bridge.</b> Syncrone NAV ${usd(r.syncrone_nav_usd)} against Strategy API positions ${usd(r.strategy_api_usd)} + untracked ${usd(r.untracked_usd)} + in-flight ${usd(r.in_flight_usd)} + idle ${usd(r.idle_usd)} = ${usd(r.bridge_usd)}. Tolerance 1%.` +
-      (others.length ? `<div class="fine" style="margin-top:6px">Other wallets/chains in the same Syncrone org, not in this view: ${others.map(([k, v]) => `${esc(k)} ${compact(v)}`).join(', ')}.</div>` : '');
+      (others.length ? `<div class="fine" style="margin-top:6px">Other wallets/chains in the same Syncrone org, not in this view: ${others.map(([k, v]) => `${esc(k)} ${compact(v)}`).join(', ')}.</div>` : '') +
+      (snap.debank ? `<div style="margin-top:8px"><b>Independent read (DeBank, live prices).</b> ${usd(snap.debank.nav_usd)} across ${Object.keys(snap.debank.protocols || {}).length} protocols${snap.debank.diff_vs_syncrone != null ? `, ${(snap.debank.diff_vs_syncrone * 100).toFixed(2)}% from Syncrone's mark (price timing, not a position gap)` : ''}. ` +
+        (snap.debank.notes && snap.debank.notes.length ? `<span class="bad">${snap.debank.notes.map(esc).join(' · ')}</span>` : '<span class="pill p-good">every protocol Syncrone books, DeBank sees, within 8%</span>') + `</div>` : '');
 
     // composition cards: per group, protocol shares
     $('#composition').innerHTML = `<div class="comp">` + Object.keys(groups).sort().map(g => {
@@ -235,6 +241,10 @@
     const gross = moves.reduce((s, m) => s + m.amt * m.pick, 0);
     const pickup = gross - dilutionCost; const after = before + pickup; den += idleDeployed;
     const headlineGross = moves.reduce((s, m) => s + m.amt * (m.toApy - m.from.apy), 0);
+    const gx = (snap.roles_gate && snap.roles_gate.excluded) || [];
+    let gateNote = $('#gateNote'); if (!gateNote) { gateNote = document.createElement('div'); gateNote.id = 'gateNote'; gateNote.className = 'sw-note'; $('#simOut').parentNode.insertBefore(gateNote, $('#simOut')); }
+    gateNote.hidden = !gx.length;
+    gateNote.innerHTML = gx.length ? `<div><b>Excluded, not in on-chain Roles:</b> ${gx.map(e => { const p = snap.permitted.find(q => q.vault === e.vault); return `${esc(e.protocol)} ${esc(e.asset)}${p && p.apy_total != null ? ` (${pct(p.apy_total)})` : ''}`; }).join(', ')}. The Strategy API lists them as permitted, but the Safe cannot call them until the PUR lands, so they never appear as candidates here.</div>` : '';
     $('#simOut').innerHTML = [
       ['Candidate moves', moves.length], ['Capital moved', compact(moves.reduce((s, m) => s + m.amt, 0))],
       ['Blended APY before', den ? pct(before / (den - idleDeployed)) : 'n/a'], ['Blended APY after', den ? pct(after / den) : 'n/a'],

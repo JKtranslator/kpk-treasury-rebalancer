@@ -68,7 +68,16 @@ def snapshot(slug: str, run: Path) -> dict:
         book=book, permitted=permitted, ops_tools=ops, fallback_apy=y.get("fallback_apy") or {},
         rewards_sweep=a.get("rewards_sweep"),
         safes=c["safes"].get(str(h["chain_id"]), {}), stale_note=y.get("stale_note"),
-        ops_tools_caveat=y.get("ops_tools_caveat"))
+        ops_tools_caveat=y.get("ops_tools_caveat"),
+        # source provenance for the page: which venues the on-chain Roles gate excluded, how many APYs are live
+        roles_gate=y.get("roles_gate"),
+        apy_sources={k: sum(1 for p in permitted if (p.get("apy_source") or "none") == k)
+                     for k in sorted({(p.get("apy_source") or "none") for p in permitted})},
+        vault_apys_live=len(y.get("vault_apys") or {}),
+        debank=(lambda d: dict(nav_usd=d["nav_usd"], protocol_nav_usd=d["protocol_nav_usd"], wallet_usd=d["wallet_usd"],
+                               protocols={v["ours"]: round(v["usd"]) for v in d["protocols"].values() if v["usd"] > 1000},
+                               diff_vs_syncrone=n.get("syncrone_vs_debank_diff"),
+                               notes=[f for f in h["flags"] if f.startswith("NOTE (DeBank")]))(h["debank"]) if h.get("debank") else None)
 
 
 def strategy_cache(slug: str, run: Path) -> dict | None:

@@ -129,3 +129,5 @@ tr.inflight td{color:var(--muted);font-style:italic;}
 th.ck,td.ck{width:28px;padding-right:0!important;} td.ck input,th.ck input{cursor:pointer;width:15px;height:15px;accent-color:var(--ink);}
 
 .src.bad{color:var(--bad);border-color:var(--bad);}
+
+#gateNote{margin-bottom:12px;} .bad{color:var(--bad);}
