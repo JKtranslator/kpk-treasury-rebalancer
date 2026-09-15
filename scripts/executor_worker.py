@@ -120,7 +120,7 @@ def do_plan(client_dir: Path, payload: dict):
         if extra.get("_cow_submit"):
             x = dict(extra["_cow_submit"])
             x.setdefault("sell_symbol", (intent.get("token") or "").upper()); x.setdefault("buy_symbol", (intent.get("buy_token") or "").upper())
-            x.setdefault("sell_human", intent.get("amount")); x.setdefault("command", cmd)
+            parts = cmd.split(); x.setdefault("sell_human", parts[2] if len(parts) > 2 else None); x.setdefault("command", cmd)
             extra["_cow_submit"] = x
             cow_submits.append(x)   # each submitted to the CoW API at propose time, like execute_plan
             cow_submit = cow_submits[0]
