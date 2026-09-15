@@ -3,11 +3,11 @@
   "display_name": "ENS DAO Endowment",
   "chain_id": 1,
   "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
-  "as_of": "2026-09-15T14:32:59+00:00",
+  "as_of": "2026-09-15T15:18:55+00:00",
   "period": "7day",
   "vault_data_fetched_at": "2026-09-15T01:53:22.611Z",
   "run_folder": "2026-09-15",
-  "nav_usd": 94381599,
+  "nav_usd": 94381597,
   "eth_price_usd": 2520.7772,
   "reconciliation": {
     "syncrone_nav_usd": 94379911,
@@ -77,7 +77,7 @@
     {
       "check": "Single-protocol cap 30% of NAV: ether_fi",
       "status": "in-bounds",
-      "value": "21.9% ($20,665,966); headroom $7,648,514"
+      "value": "21.9% ($20,665,966); headroom $7,648,513"
     },
     {
       "check": "Single-protocol cap 30% of NAV: fluid",
@@ -87,7 +87,7 @@
     {
       "check": "Single-protocol cap 30% of NAV: stakewise_v3",
       "status": "in-bounds",
-      "value": "19.0% ($17,927,279); headroom $10,387,201"
+      "value": "19.0% ($17,927,279); headroom $10,387,200"
     },
     {
       "check": "Single-protocol cap 30% of NAV: stader",
@@ -97,7 +97,7 @@
     {
       "check": "Single-protocol cap 30% of NAV: morphoVaults",
       "status": "in-bounds",
-      "value": "8.4% ($7,926,207); headroom $20,388,273"
+      "value": "8.4% ($7,926,207); headroom $20,388,272"
     },
     {
       "check": "Single-protocol cap 30% of NAV: aave_v3",
@@ -107,22 +107,22 @@
     {
       "check": "Single-protocol cap 30% of NAV: sky",
       "status": "in-bounds",
-      "value": "3.5% ($3,261,347); headroom $25,053,133"
+      "value": "3.5% ($3,261,347); headroom $25,053,132"
     },
     {
       "check": "Single-protocol cap 30% of NAV: lido",
       "status": "in-bounds",
-      "value": "2.7% ($2,579,116); headroom $25,735,364"
+      "value": "2.7% ($2,579,116); headroom $25,735,363"
     },
     {
       "check": "Single-protocol cap 30% of NAV: compound_v3",
       "status": "in-bounds",
-      "value": "1.6% ($1,507,272); headroom $26,807,208"
+      "value": "1.6% ($1,507,272); headroom $26,807,207"
     },
     {
       "check": "Single-protocol cap 30% of NAV: merkl",
       "status": "in-bounds",
-      "value": "0.0% ($1,501); headroom $28,312,979"
+      "value": "0.0% ($1,501); headroom $28,312,978"
     },
     {
       "check": "Network whitelist",
@@ -148,7 +148,7 @@
       "venue": "claimable GHO (merkl)",
       "symbol": "GHO",
       "asset_group": "REWARDS",
-      "usd": 1574.92,
+      "usd": 1574.84,
       "apy": null,
       "apy_source": null,
       "venue_tvl_usd": null,
@@ -163,7 +163,7 @@
       "venue": "claimable COMP (merkl)",
       "symbol": "COMP",
       "asset_group": "REWARDS",
-      "usd": 161.59,
+      "usd": 159.65,
       "apy": null,
       "apy_source": null,
       "venue_tvl_usd": null,
@@ -1232,7 +1232,7 @@
     }
   },
   "rewards_sweep": {
-    "total_usd": 1737,
+    "total_usd": 1734,
     "min_usd": 100,
     "items": [
       {
@@ -1246,7 +1246,7 @@
       {
         "symbol": "COMP",
         "amount": 8.382076,
-        "usd": 162,
+        "usd": 160,
         "source": "merkl",
         "claimable": true,
         "claim_cmd": "merkl claim"
