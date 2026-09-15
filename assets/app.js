@@ -253,7 +253,7 @@
   const sw = { groups: [], known: null, sell: null, buy: null, quote: null, timer: null, tick: null, inverted: false, picking: null, seq: 0 };
   const fmtTok = (v, d) => { v = Number(v || 0); if (d == null) d = v >= 1000 ? 2 : v >= 1 ? 4 : 6; return v.toLocaleString('en-US', { maximumFractionDigits: d }); };
   const upper = s => String(s || '').toUpperCase();
-  function priceOf(sym) { let p = 0; for (const b of (snap.book || [])) if (upper(b.symbol) === upper(sym) && b.price > p) p = b.price; if (!p && live) for (const r of (live.rows || live.book || [])) if (upper(r.symbol) === upper(sym) && r.price > p) p = r.price; return p || null; }
+  function priceOf(sym) { let p = 0; for (const b of (snap.book || [])) if (upper(b.symbol) === upper(sym)) { const bp = b.price || (b.balance > 0 && b.usd > 0 ? b.usd / b.balance : 0); if (bp > p) p = bp; } if (!p && live) for (const r of (live.rows || live.book || [])) if (upper(r.symbol) === upper(sym) && r.price > p) p = r.price; return p || null; }
   function idleOf(sym) { return (snap.book || []).filter(b => b.kind === 'idle' && upper(b.symbol) === upper(sym)).reduce((a, b) => a + (b.balance || 0), 0); }
   const sellable = () => [...new Set(sw.groups.flatMap(g => g.sell))].sort();
   const buyableFor = s => [...new Set(sw.groups.filter(g => g.sell.includes(s)).flatMap(g => g.buy))].filter(b => b !== s).sort();
