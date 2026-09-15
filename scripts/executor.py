@@ -195,6 +195,24 @@ def two_stage_commands(move: dict, snap: dict) -> tuple[list[str], dict, list[st
     return cmds, stage2, notes
 
 
+def cow_groups(slug: str) -> list[dict]:
+    """CoW swap groups (sell set, buy set) from the client's cached Roles permissions; TWAP groups excluded."""
+    f = ROOT / "data" / f"{slug}.strategy.json"
+    if not f.exists():
+        return []
+    raw = json.loads(f.read_text(encoding="utf-8")).get("raw_permissions") or {}
+    out = []
+    for e in (raw.get("allPermissions") or {}).get("cowswap") or (raw.get("permissions") or {}).get("cowswap") or []:
+        if e.get("action") == "swap" and not e.get("isTWAP"):
+            out.append(dict(sell=sorted(set(e.get("sellAssets") or [])), buy=sorted(set(e.get("buyAssets") or []))))
+    return out
+
+
+def cow_pair_ok(groups: list[dict], sell: str, buy: str) -> bool:
+    s, b = sell.upper(), buy.upper()
+    return any(s in {x.upper() for x in g["sell"]} and b in {x.upper() for x in g["buy"]} for g in groups)
+
+
 def sweep_commands(body: dict, snap: dict) -> tuple[list[str], dict, list[str]]:
     """Rewards sweep: claim everything claimable, place one CoW order per reward token into USDC (stage 1),
     then deposit all USDC into the chosen venue (stage 2). Tokens below min_sweep_usd are skipped."""
@@ -212,10 +230,18 @@ def sweep_commands(body: dict, snap: dict) -> tuple[list[str], dict, list[str]]:
     by_tok: dict[str, float] = {}
     for i in items:
         by_tok[i["symbol"].upper()] = by_tok.get(i["symbol"].upper(), 0.0) + fnum(i.get("amount"))
+    groups = cow_groups(body["client"])
+    held_back = []
     for sym, amt in by_tok.items():
         if sym in ("USDC",):
             continue
+        if groups and not cow_pair_ok(groups, sym, "USDC"):
+            allowed = sorted({b for g in groups if sym in {x.upper() for x in g["sell"]} for b in g["buy"]})
+            held_back.append(f"{sym} (permitted buys: {', '.join(allowed) or 'none'})")
+            continue
         cmds.append(f"cowswap swap {amt:.6f} {sym} USDC")
+    if held_back:
+        notes.append("no CoW route to USDC under this client's Roles permissions, claimed and held in the Safe: " + "; ".join(held_back))
     to = body.get("to") or sw.get("best_usd_venue")
     if not to:
         raise ValueError("no permitted USDC venue to deposit into")
@@ -397,10 +423,7 @@ class H(BaseHTTPRequestHandler):
             if slug not in CLIENT_DIRS or not f.exists():
                 return self._json(404, dict(error="no strategy cache for this client"))
             raw = json.loads(f.read_text(encoding="utf-8")).get("raw_permissions") or {}
-            groups = []
-            for e in (raw.get("allPermissions") or {}).get("cowswap") or (raw.get("permissions") or {}).get("cowswap") or []:
-                if e.get("action") == "swap" and not e.get("isTWAP"):
-                    groups.append(dict(sell=sorted(set(e.get("sellAssets") or [])), buy=sorted(set(e.get("buyAssets") or []))))
+            groups = cow_groups(slug)
             known = KNOWN_TOKENS.get(slug)
             if known is None:
                 res = run_worker(slug, "tokens", {})

@@ -205,6 +205,8 @@
 
   /* ------------------------------------------------------------------ rewards sweep */
   const rewardSel = {};   // client -> { rowKey: checked }
+  const sw_groups = () => (typeof sw !== 'undefined' && sw.groups) || [];
+  const pairOk_ = (s, b) => sw_groups().some(g => g.sell.some(x => x.toUpperCase() === String(s).toUpperCase()) && g.buy.some(x => x.toUpperCase() === String(b).toUpperCase()));
   function renderRewards() {
     const box = $('#rewardsBox');
     const sw = snap.rewards_sweep; const co = (sw && sw.claim_only) || [];
@@ -215,7 +217,7 @@
     const n4 = v => Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: 4 });
     // one row per claim / held token, Uniswap fee positions included (claim-only, never swapped)
     const rows = (sw.items || []).map((i, n) => ({ key: 'i' + n + i.symbol, kind: 'sweep', item: i, source: i.source, token: i.symbol, amount: n4(i.amount), usd: i.usd,
-      claimable: i.claimable, claim_cmd: i.claim_cmd, state: (i.claimable ? 'claimable' : 'held in Safe') + (i.usd < sw.min_usd ? ' · below sweep floor' : ''), def: i.usd >= sw.min_usd }));
+      claimable: i.claimable, claim_cmd: i.claim_cmd, state: (i.claimable ? 'claimable' : 'held in Safe') + (i.usd < sw.min_usd ? ' · below sweep floor' : '') + (doSwap && i.symbol.toUpperCase() !== 'USDC' && sw_groups().length && !pairOk_(i.symbol, 'USDC') ? ' · no CoW route to USDC' : ''), def: i.usd >= sw.min_usd }));
     const byPos = {}; co.forEach(c => { (byPos[c.token_id] = byPos[c.token_id] || []).push(c); });
     Object.entries(byPos).forEach(([tid, cs]) => rows.push({ key: 'u' + tid, kind: 'uni', source: 'uniswap v3 fees · #' + tid, token: cs.map(c => c.symbol).join(' + '), amount: cs.map(c => n4(c.amount)).join(' + '),
       usd: cs.reduce((s, c) => s + c.usd, 0), claimable: true, claim_cmd: cs[0].claim_cmd, state: 'claim only · fees stay as pool tokens', def: true }));
@@ -224,7 +226,9 @@
     const chosen = rows.filter(r => sel[r.key]);
     const claimCmds = [...new Set(chosen.filter(r => r.claimable && r.claim_cmd).map(r => r.claim_cmd))];
     const sweepItems = chosen.filter(r => r.kind === 'sweep').map(r => r.item);
-    const swapTokens = [...new Set(sweepItems.map(i => i.symbol).filter(t => t.toUpperCase() !== 'USDC'))];
+    const routable = t => !sw_groups().length || pairOk_(t, 'USDC');
+    const swapTokens = [...new Set(sweepItems.map(i => i.symbol).filter(t => t.toUpperCase() !== 'USDC' && routable(t)))];
+    const heldBack = [...new Set(sweepItems.map(i => i.symbol).filter(t => t.toUpperCase() !== 'USDC' && !routable(t)))];
     const extra = [...new Set(chosen.filter(r => r.kind === 'uni').map(r => r.claim_cmd))];
     const total = chosen.reduce((s, r) => s + r.usd, 0);
     const swapMode = doSwap && sweepItems.length > 0;
@@ -233,7 +237,7 @@
     if (!chosen.length) { title = 'Nothing selected'; summary = 'Tick the rewards to bundle into one transaction.'; }
     else if (swapMode) {
       title = 'Claim, swap and deposit';
-      summary = `${claimCmds.length ? 'claim (' + esc(claimCmds.join(', ')) + ') → ' : ''}CoW swap <b>${esc(swapTokens.join(', ') || 'nothing')}</b> to USDC → deposit into <b>${best ? esc(best.protocol + ' ' + best.asset) : 'no permitted USDC venue'}</b>${best ? ` <small>(${pct(best.apy)})</small>` : ''}<br><small>one Safe transaction bundles the claims and one pre-signed CoW order per token; the USDC deposit follows once the orders fill</small>`;
+      summary = `${claimCmds.length ? 'claim (' + esc(claimCmds.join(', ')) + ') → ' : ''}CoW swap <b>${esc(swapTokens.join(', ') || 'nothing')}</b> to USDC${heldBack.length ? ` <small>(${esc(heldBack.join(', '))}: no permitted route to USDC, claimed and held)</small>` : ''} → deposit into <b>${best ? esc(best.protocol + ' ' + best.asset) : 'no permitted USDC venue'}</b>${best ? ` <small>(${pct(best.apy)})</small>` : ''}<br><small>one Safe transaction bundles the claims and one pre-signed CoW order per token; the USDC deposit follows once the orders fill</small>`;
     } else {
       title = 'Claim only';
       summary = `${esc(claimCmds.join(', ')) || 'nothing to claim (only held tokens selected)'}<br><small>one transaction; tokens stay in the Safe</small>`;
@@ -292,6 +296,7 @@
     clearInterval(sw.timer); clearInterval(sw.tick); sw.quote = null; sw.sell = sw.buy = null;
     try { const r = await loadJSON(EXECUTOR + '/swap-pairs/' + snap.client); sw.groups = r.groups || []; sw.known = r.known_tokens && r.known_tokens.length ? r.known_tokens : null; }
     catch (e) { sw.known = null; try { sw.groups = (await loadJSON('data/' + snap.client + '.strategy.json')).raw_permissions.allPermissions.cowswap.filter(g => g.action === 'swap' && !g.isTWAP).map(g => ({ sell: g.sellAssets, buy: g.buyAssets })); } catch (e2) { sw.groups = []; } }
+    renderRewards();
     const sells = sellable();
     if (!sells.length) { $('#swapMsg').textContent = 'No CoW swap permission found for this client in the strategy cache.'; swapPaint(); return; }
     // sensible default: the largest idle settlement asset, into USDC (or the first permitted buy)
