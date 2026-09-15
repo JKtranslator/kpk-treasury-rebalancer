@@ -4,20 +4,20 @@
   "chain_id": 1,
   "avatar_safe": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
   "ok": true,
-  "as_of": "2026-09-15T14:53:08+00:00",
+  "as_of": "2026-09-15T15:00:37+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 7150102,
+  "nav_usd": 7153165,
   "positions_usd": 6379682,
-  "idle_usd": 770420,
+  "idle_usd": 773483,
   "in_flight_usd": 0,
   "onchain_idle_eth": 0.0,
   "eth_price_usd": 2520.7772,
   "groups": {
     "OTHER": 3133579,
-    "USD": 2706885,
+    "USD": 2709948,
     "ETH": 1309611
   },
   "sleeves": [
@@ -113,8 +113,8 @@
     },
     {
       "symbol": "USDC",
-      "balance": 147240.342337,
-      "usd": 147226,
+      "balance": 150303.826003,
+      "usd": 150289,
       "asset_group": "USD"
     },
     {
@@ -138,7 +138,7 @@
   ],
   "in_flight_items": [],
   "token_check": {
-    "checked": 15,
+    "checked": 16,
     "disagree": 0,
     "etherscan_source": "etherscan"
   },
@@ -165,8 +165,8 @@
     {
       "source": "aave_safety_module",
       "symbol": "AAVE",
-      "amount": 24.806547321848377,
-      "usd": 3181,
+      "amount": 0.004584453424608302,
+      "usd": 1,
       "claimable": true
     },
     {
@@ -205,8 +205,8 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 3276,
+  "rewards_usd": 95,
   "flags": [
-    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 82,385.0166 -> 147,240.3423; WETH 26.9554 -> 0.0000"
+    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 82,385.0166 -> 150,303.8260; WETH 26.9554 -> 0.0000"
   ]
 }
