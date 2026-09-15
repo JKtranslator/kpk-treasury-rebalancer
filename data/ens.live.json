@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
   "ok": true,
-  "as_of": "2026-09-15T05:46:57+00:00",
+  "as_of": "2026-09-15T06:50:19+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -139,7 +139,7 @@
   "unbooked": [
     {
       "symbol": "cUSDCv3",
-      "balance": 1507142.455638,
+      "balance": 1507149.237943,
       "position": "Compound v3 USDC (cUSDCv3) (not yet booked by Syncrone)"
     },
     {
@@ -149,6 +149,6 @@
     }
   ],
   "flags": [
-    "NOTE: Safe holds vault shares Syncrone has not booked yet: 1,507,142.46 cUSDCv3, 2,937,699.09 sUSDS"
+    "NOTE: Safe holds vault shares Syncrone has not booked yet: 1,507,149.24 cUSDCv3, 2,937,699.09 sUSDS"
   ]
 }
