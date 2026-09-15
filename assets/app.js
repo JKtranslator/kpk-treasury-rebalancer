@@ -179,6 +179,11 @@
     const byProto = {}; snap.book.forEach(b => { if (b.kind !== 'idle') byProto[b.protocol] = (byProto[b.protocol] || 0) + b.usd; });
     const minPick = sim.pickupBps / 1e4; moves = []; let before = 0, den = 0, idleDeployed = 0;
     const heldMap = new Map(), dep = new Map();   // venue -> what we already hold / what this plan adds
+    // one protocol-cap budget shared by every venue of that protocol, spent as moves are allocated
+    const protoRoom = new Map();
+    Object.keys(byProto).concat(snap.permitted.map(p => p.protocol)).forEach(p => {
+      if (!protoRoom.has(p)) protoRoom.set(p, cap ? Math.max(0, cap / 100 * nav - (byProto[p] || 0)) : Infinity);
+    });
     const apyOf = p => (sim.basis === 'apy_30d' && p.apy_30d != null) ? p.apy_30d : (sim.basis === 'apy_1d' && p.apy_1d != null) ? p.apy_1d : p.apy;
     const STABLE_SYMS = ['USDC', 'USDT', 'USDS', 'DAI', 'GHO', 'EURC', 'PYUSD', 'RLUSD'];
     const isStable = s => STABLE_SYMS.some(t => (s || '').toUpperCase().includes(t));
@@ -193,7 +198,7 @@
       const best = apyOf(venues[0]);
       venues.forEach(v => { if (!heldMap.has(v)) heldMap.set(v, heldIn(v)); });
       // the threshold governs the resulting position, so subtract what we already own in the venue
-      const headroom = new Map(venues.map(v => [v, Math.max(0, Math.min(cap ? cap / 100 * nav - (byProto[v.protocol] || 0) : Infinity, v.tvl_usd ? sim.tvlCapPct / 100 * v.tvl_usd - heldMap.get(v) : Infinity))]));
+      const headroom = new Map(venues.map(v => [v, v.tvl_usd ? Math.max(0, sim.tvlCapPct / 100 * v.tvl_usd - heldMap.get(v)) : Infinity]));
       const sources = [...idle.map(b => ({ ...b, apy: 0 })), ...pos.filter(b => sim.exclude.has(b.protocol) || (best - b.apy >= minPick && b.usd >= sim.moveUsd)).sort((a, b) => a.apy - b.apy)];
       for (const src of sources) {
         let rem = src.usd;
@@ -203,14 +208,16 @@
           const st = (src.symbol || '').toUpperCase(), vt = (v.asset || '').toUpperCase();
           const compatible = st === vt || (isStable(st) && isStable(vt)) || g === 'ETH';
           if (!compatible) continue;
-          const amt = Math.min(rem, headroom.get(v));
+          const amt = Math.min(rem, headroom.get(v), protoRoom.get(v.protocol) ?? Infinity);
           // the pickup is judged on the rate we would actually receive once this money lands
           const pick = diluted(apyOf(v), v.tvl_usd, (dep.get(v) || 0) + Math.max(amt, 0)) - src.apy;
           if (pick < minPick && src.kind === 'position' && !sim.exclude.has(src.protocol)) break;
           if (amt < Math.min(sim.moveUsd, rem) || amt <= 0) continue;
           moves.push({ id: moves.length, g, from: src, to: v, amt, pick, toApy: apyOf(v), forced: sim.exclude.has(src.protocol) });
           dep.set(v, (dep.get(v) || 0) + amt);
-          headroom.set(v, headroom.get(v) - amt); rem -= amt; if (src.kind === 'idle') idleDeployed += amt;
+          headroom.set(v, headroom.get(v) - amt);
+          protoRoom.set(v.protocol, (protoRoom.get(v.protocol) ?? Infinity) - amt);
+          rem -= amt; if (src.kind === 'idle') idleDeployed += amt;
           if (rem <= 0) break;
         }
       }

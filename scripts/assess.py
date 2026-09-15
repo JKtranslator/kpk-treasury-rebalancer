@@ -190,12 +190,15 @@ def performance(book, permitted, nav, pol, args, reg):
                 laggards.append(dict(**b, reason=f"{gap*100:.2f} pts below best permitted venue {best['protocol']}/{best['asset']}", gap_to_best=gap))
         # size candidate moves: fill best venues subject to venue TVL cap and protocol cap headroom
         headroom, held_in = {}, {}
+        # one protocol-cap budget shared by every venue of that protocol, spent as moves are allocated:
+        # sizing each venue against the full headroom independently would let three Fluid pools each
+        # take the whole 30% allowance and breach it in aggregate
+        proto_room = {v["protocol"]: (cap_pct / 100 * nav - by_proto.get(v["protocol"], 0.0)) if (cap_pct and nav) else float("inf")
+                      for v in venues}
         for v in venues:
-            p = v["protocol"]
-            proto_room = (cap_pct / 100 * nav - by_proto.get(p, 0.0)) if (cap_pct and nav) else float("inf")
             held_in[id(v)] = venue_held_usd(book, v)
-            tvl_room = (args.venue_tvl_cap_pct / 100 * fnum(v["tvl_usd"]) - held_in[id(v)]) if v["tvl_usd"] else float("inf")
-            headroom[id(v)] = max(0.0, min(proto_room, tvl_room))
+            headroom[id(v)] = max(0.0, (args.venue_tvl_cap_pct / 100 * fnum(v["tvl_usd"]) - held_in[id(v)])
+                                  if v["tvl_usd"] else float("inf"))
         sources = [dict(b) for b in idle] + [dict(l) for l in laggards]
         for src in sources:
             remaining = src["usd"]
@@ -213,7 +216,7 @@ def performance(book, permitted, nav, pol, args, reg):
                 pick = fnum(v["apy_total"]) - fnum(src["apy"])
                 if pick < min_pick and src["kind"] == "position":
                     break  # venues are sorted; nothing better left
-                amt = min(remaining, headroom[id(v)])
+                amt = min(remaining, headroom[id(v)], proto_room.get(v["protocol"], float("inf")))
                 if amt < min(args.min_move_usd, remaining):
                     continue
                 moves.append(dict(from_kind=src["kind"], from_protocol=src["protocol"], from_venue=src["venue"],
@@ -223,6 +226,7 @@ def performance(book, permitted, nav, pol, args, reg):
                                   to_venue_held_usd=round(held_in[id(v)]), to_venue_room_usd=round(headroom[id(v)]),
                                   pickup_pts=round(pick * 100, 2), pickup_usd_per_year=round(amt * pick)))
                 headroom[id(v)] -= amt
+                proto_room[v["protocol"]] = proto_room.get(v["protocol"], float("inf")) - amt
                 remaining -= amt
                 if remaining <= 0:
                     break
@@ -236,7 +240,7 @@ def performance(book, permitted, nav, pol, args, reg):
                            best_permitted=best, permitted_venues=venues[:10],
                            venue_capacity=[dict(protocol=v["protocol"], asset=v.get("asset"), apy=fnum(v["apy_total"]),
                                                 tvl_usd=fnum(v["tvl_usd"]), held_usd=round(held_in[id(v)]),
-                                                room_usd=round(headroom[id(v)])) for v in venues],
+                                                room_usd=round(min(headroom[id(v)], proto_room.get(v["protocol"], float("inf"))))) for v in venues],
                            unpriced_permitted=sorted({f"{p['protocol']}/{p['asset']}" for p in permitted
                                                       if p["asset_group"] == grp and not p["priced"] and p["action"] != "swap"}),
                            laggards=laggards, candidate_moves=moves,
