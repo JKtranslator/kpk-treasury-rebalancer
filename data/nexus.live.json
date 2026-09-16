@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
   "ok": true,
-  "as_of": "2026-09-16T20:15:19+00:00",
+  "as_of": "2026-09-16T21:19:21+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -162,7 +162,7 @@
       "claimable": false
     }
   ],
-  "rewards_usd": 145,
+  "rewards_usd": 146,
   "flags": [
     "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 632.4756 -> 0.0000; cbBTC 0.0079 -> 0.0000; ETH 3.1408 -> 0.0000"
   ]
