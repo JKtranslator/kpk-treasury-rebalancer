@@ -4,22 +4,22 @@
   "chain_id": 1,
   "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
   "ok": true,
-  "as_of": "2026-09-16T03:26:15+00:00",
+  "as_of": "2026-09-16T04:29:42+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 7292504,
+  "nav_usd": 7286452,
   "positions_usd": 7146041,
-  "idle_usd": 146463,
+  "idle_usd": 140411,
   "in_flight_usd": 0,
   "onchain_idle_eth": 3.140807908958729,
-  "eth_price_usd": 2516.08,
+  "eth_price_usd": 2398.26,
   "groups": {
     "USD": 1633189,
-    "REWARDS": 123,
-    "OTHER": 5002769,
-    "ETH": 656391
+    "REWARDS": 117,
+    "OTHER": 4997093,
+    "ETH": 656021
   },
   "sleeves": [
     {
@@ -114,31 +114,31 @@
     {
       "symbol": "MORPHO",
       "balance": 28.376777604667712,
-      "usd": 62,
+      "usd": 59,
       "asset_group": "REWARDS"
     },
     {
       "symbol": "cbBTC",
       "balance": 0.00788571,
-      "usd": 615,
+      "usd": 597,
       "asset_group": "OTHER"
     },
     {
       "symbol": "ETH",
       "balance": 3.140807908958729,
-      "usd": 7903,
+      "usd": 7532,
       "asset_group": "ETH"
     },
     {
       "symbol": "GEAR",
       "balance": 173863.4238356013,
-      "usd": 61,
+      "usd": 58,
       "asset_group": "REWARDS"
     },
     {
       "symbol": "NXM",
       "balance": 2136.208426773011,
-      "usd": 137174,
+      "usd": 131515,
       "asset_group": "OTHER"
     }
   ],
@@ -176,12 +176,12 @@
       "source": "wallet",
       "symbol": "MORPHO",
       "amount": 28.376777604667712,
-      "usd": 62,
+      "usd": 59,
       "claimable": false
     }
   ],
-  "rewards_usd": 148,
+  "rewards_usd": 145,
   "flags": [
-    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 0.0000 -> 648.8748"
+    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 632.4756 -> 648.8748"
   ]
 }

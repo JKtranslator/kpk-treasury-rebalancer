@@ -4,20 +4,20 @@
   "chain_id": 1,
   "avatar_safe": "0x616dE58c011F8736fa20c7Ae5352F7f6FB9F0669",
   "ok": true,
-  "as_of": "2026-09-16T03:27:10+00:00",
+  "as_of": "2026-09-16T04:30:38+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 18351819,
-  "positions_usd": 17950687,
-  "idle_usd": 401132,
+  "nav_usd": 18339670,
+  "positions_usd": 17951251,
+  "idle_usd": 388419,
   "in_flight_usd": 0,
   "onchain_idle_eth": 0.0,
   "eth_price_usd": 2456.4499,
   "groups": {
-    "OTHER": 592353,
-    "USD": 12150207,
+    "OTHER": 579640,
+    "USD": 12150772,
     "ETH": 3051588,
     "EURO": 2558000
   },
@@ -61,7 +61,7 @@
     {
       "protocol": "compound_v3",
       "asset_group": "USD",
-      "usd": 1000326,
+      "usd": 1000890,
       "in_flight_usd": 0,
       "positions": [
         "Compound v3 Institutional USDC (ciUSDCv3)"
@@ -108,13 +108,13 @@
     {
       "symbol": "BAL",
       "balance": 199999.99999999997,
-      "usd": 22761,
+      "usd": 21830,
       "asset_group": "OTHER"
     },
     {
       "symbol": "DAI",
       "balance": 2625.742220095646,
-      "usd": 2626,
+      "usd": 2625,
       "asset_group": "USD"
     },
     {
@@ -131,8 +131,8 @@
     },
     {
       "symbol": "COW",
-      "balance": 2677405.034091315,
-      "usd": 361450,
+      "balance": 2677405.0340913157,
+      "usd": 349669,
       "asset_group": "OTHER"
     }
   ],
@@ -143,11 +143,11 @@
     "etherscan_source": "etherscan"
   },
   "other_wallets": {
-    "0x616de58c011f8736fa20c7ae5352f7f6fb9f0669 chain 100": 2229107,
+    "0x616de58c011f8736fa20c7ae5352f7f6fb9f0669 chain 100": 2228867,
     "0x616de58c011f8736fa20c7ae5352f7f6fb9f0669 chain 42161": 76266,
     "0x616de58c011f8736fa20c7ae5352f7f6fb9f0669 chain 8453": 78638,
     "0x9009b4411d0e1171cc042b77d7701f46b737fdb9 chain 100": 1416229,
-    "0x523732d31b4432bcdd4baad108f7ebe54ad478b0 chain 1": 4502773,
+    "0x523732d31b4432bcdd4baad108f7ebe54ad478b0 chain 1": 4356350,
     "0x7f8987d6a8bee31bd7be80e877732579e2582a28 chain 100": 5326457
   },
   "unbooked": [],
@@ -176,7 +176,7 @@
     {
       "source": "uniswap",
       "symbol": "WETH",
-      "amount": 0.004440005031085421,
+      "amount": 0.004586764395406524,
       "usd": 11,
       "claimable": true
     },
@@ -184,12 +184,10 @@
       "source": "uniswap",
       "symbol": "COW",
       "amount": 115.32774117482529,
-      "usd": 16,
+      "usd": 15,
       "claimable": true
     }
   ],
   "rewards_usd": 44,
-  "flags": [
-    "NOTE: idle re-based on the live Safe (Syncrone lagging): COW 2,638,451.2416 -> 2,677,405.0341"
-  ]
+  "flags": []
 }

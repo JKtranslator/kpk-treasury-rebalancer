@@ -4,20 +4,20 @@
   "chain_id": 1,
   "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
   "ok": true,
-  "as_of": "2026-09-16T03:25:36+00:00",
+  "as_of": "2026-09-16T04:29:03+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 91702315,
-  "positions_usd": 90318789,
-  "idle_usd": 1383525,
+  "nav_usd": 91638178,
+  "positions_usd": 90318903,
+  "idle_usd": 1319275,
   "in_flight_usd": 0,
   "onchain_idle_eth": 548.8487272534044,
-  "eth_price_usd": 2520.7772,
+  "eth_price_usd": 2403.7141,
   "groups": {
-    "ETH": 56415073,
-    "USD": 35287034,
+    "ETH": 56350823,
+    "USD": 35287147,
     "OTHER": 157
   },
   "sleeves": [
@@ -105,7 +105,7 @@
     {
       "protocol": "merkl",
       "asset_group": "USD",
-      "usd": 1501,
+      "usd": 1614,
       "in_flight_usd": 0,
       "positions": [
         "Merkl Merkl Reward on Ethereum"
@@ -125,7 +125,7 @@
     {
       "symbol": "ETH",
       "balance": 548.8487272534044,
-      "usd": 1383525,
+      "usd": 1319275,
       "asset_group": "ETH"
     }
   ],
