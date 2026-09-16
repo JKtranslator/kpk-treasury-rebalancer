@@ -460,6 +460,8 @@ class H(BaseHTTPRequestHandler):
                 return self._json(404, dict(error="not found"))
             return self._json(200, json.loads(f.read_text(encoding="utf-8")))
         if self.path.startswith("/live/"):
+            if not self._authorized():      # spends DeBank + vaults.fyi quota: bearer token required, like /refresh
+                return self._json(401, dict(error="unauthorized: set the executor token on the page"))
             slug = self.path.split("/live/", 1)[1].split("?")[0]
             if slug not in CLIENT_DIRS:
                 return self._json(404, dict(error="unknown client"))
