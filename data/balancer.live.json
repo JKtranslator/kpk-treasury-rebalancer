@@ -1,6 +1,6 @@
 {
   "client": "balancer",
   "ok": false,
-  "as_of": "2026-09-16T00:16:06+00:00",
-  "error": "RuntimeError: failed after 3 attempts: https://api-v2.syncrone.fi/api/kpk/org_34W0MirWNy9YCenIu0aVHDpWn4l/performance?from=2026-09-01&to=2026-10-01: HTTP Error 504: Gateway Timeout"
+  "as_of": "2026-09-16T00:24:56+00:00",
+  "error": "ERROR: SYNCRONE_API_KEY is not set. Export it or add it to /home/runner/.kpk/env (names only in .env.example; never commit .env.local)."
 }
