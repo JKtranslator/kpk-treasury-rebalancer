@@ -374,7 +374,8 @@
     $('#swapSellBtn').onclick = () => openPicker('sell'); $('#swapBuyBtn').onclick = () => openPicker('buy');
     $('#swapFlip').onclick = swapFlip; $('#swapRate').onclick = () => { sw.inverted = !sw.inverted; swapPaint(); };
     $('#swapAmount').oninput = () => { sw.quote = null; swapPaint(); swapSchedule(); };
-    $('#swapSellBal').onclick = e => { if (e.target.classList.contains('sw-max')) { $('#swapAmount').value = idleOf(sw.sell) || ''; sw.quote = null; swapPaint(); swapQuote(); } };
+    // floor, never round: a figure a few wei above the Safe balance defeats the bot's wrap detection
+    $('#swapSellBal').onclick = e => { if (e.target.classList.contains('sw-max')) { $('#swapAmount').value = idleOf(sw.sell) ? (Math.floor(idleOf(sw.sell) * 1e6) / 1e6).toString() : ''; sw.quote = null; swapPaint(); swapQuote(); } };
     $('#swapCta').onclick = swapCtaClick;
     $('#swapPickerX').onclick = closePicker; $('#swapPicker').onclick = e => { if (e.target.id === 'swapPicker') closePicker(); };
     $('#swapPickerQ').oninput = paintPicker;
@@ -424,10 +425,10 @@
         ['Slippage tolerance', `${(q.slippage_bps / 100).toFixed(2)}% <span class="dim">CoW dynamic${q.slippage_source ? ' · ' + esc(String(q.slippage_source)) : ''}</span>`],
         ['Network fee', `${fmtTok(q.fee)} ${esc(q.sell)}${ps ? ` <span class="dim">(${usd(q.fee * ps, 2)})</span>` : ''} <span class="dim">paid in the sell token, no gas for the Safe</span>`],
         ['Price impact vs spot', impact == null ? '<span class="dim">no spot price for both tokens</span>' : `<span class="${impactCls}">${(impact * 100).toFixed(2)}%</span> <span class="dim">quote vs Syncrone marks</span>`],
-        ['Order type', 'Market sell, fill-or-kill, pre-signed by the Safe'],
+        ['Order type', q.is_wrap ? `${q.sell === 'ETH' || q.sell === 'XDAI' ? 'Wrap' : 'Unwrap'}: direct ${q.sell === 'ETH' || q.buy === 'ETH' ? 'WETH' : 'WXDAI'} contract call under Roles, 1:1` : 'Market sell, fill-or-kill, pre-signed by the Safe'],
         ['Valid for', '30 min from the moment the proposal is built'],
         ['Receiver', `<span class="num">${esc((snap.safes && snap.safes.avatar) || snap.avatar_safe || '')}</span>`],
-        ['Route', 'CoW Protocol batch auction (solvers)'],
+        ['Route', q.is_wrap ? 'no CoW order: the wrapped-native contract, inside the Roles bundle' : 'CoW Protocol batch auction (solvers)'],
         ['Bot command', `<span class="num">${esc(q.command)}</span>`],
       ].map(([k, v]) => `<div class="r"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('');
     } else det.hidden = true;
@@ -488,8 +489,8 @@
   function openSwapExec(q) {
     clearInterval(sw.timer); clearInterval(sw.tick);
     cur = { move: null, plan: null, stage2: { commands: [q.command], label: q.command, wait_for: '' }, claimOnly: true };
-    $('#mTitle').textContent = `Execute · ${snap.display_name} · swap`;
-    $('#mParams').innerHTML = [['Client / chain', `${snap.client} · ${snap.chain_id}`], ['Avatar Safe', (snap.safes && snap.safes.avatar) || snap.avatar_safe], ['Action', 'CoW SWAP (market sell, pre-signed order)'],
+    $('#mTitle').textContent = `Execute · ${snap.display_name} · ${q.is_wrap ? (q.sell === 'ETH' || q.sell === 'XDAI' ? 'wrap' : 'unwrap') : 'swap'}`;
+    $('#mParams').innerHTML = [['Client / chain', `${snap.client} · ${snap.chain_id}`], ['Avatar Safe', (snap.safes && snap.safes.avatar) || snap.avatar_safe], ['Action', q.is_wrap ? `${q.sell === 'ETH' || q.sell === 'XDAI' ? 'WRAP' : 'UNWRAP'} (direct ${q.sell === 'ETH' || q.buy === 'ETH' ? 'WETH' : 'WXDAI'} call under Roles, no CoW order)` : 'CoW SWAP (market sell, pre-signed order)'],
       ['Sell', `${fmtTok(q.sell_amount)} ${q.sell}`], ['Buy (quote)', `${fmtTok(q.buy_amount)} ${q.buy}`], ['Slippage', `${(q.slippage_bps / 100).toFixed(2)}% (dynamic, CoW)`], ['Min. receive', `${fmtTok(q.min_receive)} ${q.buy}`], ['Fee', `${fmtTok(q.fee)} ${q.sell}`], ['Command', q.command]]
       .map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(String(v))}</dd></div>`).join('');
     $('#mPlan').hidden = true; $('#mSim').hidden = true; $('#mMsg').className = 'modal-msg';

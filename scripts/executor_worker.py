@@ -110,6 +110,21 @@ def do_plan(client_dir: Path, payload: dict):
             fail(f"parser rejected `{cmd}`: {intent['error']}", command=cmd)
         if intent.get("type") != "execute":
             fail(f"`{cmd}` is not an executable command ({intent.get('type')})", command=cmd)
+        # A sell of native ETH sized a few wei above the Safe's balance (float rounding of a "max" figure) makes
+        # the bot's balance check report plain insufficiency instead of needs_wrap, so the auto-wrap never fires.
+        if intent.get("protocol") == "cowswap" and intent.get("action") in ("swap", "limit", "twap") \
+                and str(intent.get("token", "")).upper() == "ETH" and intent.get("amount") and not intent.get("amount_all"):
+            try:
+                from planner_utils import get_w3
+                bal = get_w3().eth.get_balance(config.SAFE_ADDRESS)
+                if int(intent["amount"]) > bal:
+                    fail(f"`{cmd}` sells {int(intent['amount'])/1e18:.18f} ETH but the Safe holds {bal/1e18:.18f} ETH "
+                         f"({int(intent['amount'])-bal} wei short). Use a rounded-down amount; the page's Max button now floors to 6 decimals.",
+                         command=cmd)
+            except SystemExit:
+                raise
+            except Exception:
+                pass
         try:
             resolve = getattr(pp, "_resolve_all_amount", None)   # some client planners resolve inside build_steps
             if resolve:
@@ -159,11 +174,20 @@ def do_plan(client_dir: Path, payload: dict):
     # build_steps prepend the WETH wrap for the shortfall, then rebuild and re-simulate.
     nw = sim.get("needs_wrap") if not sim.get("success") else None
     if nw and isinstance(nw, dict):
-        for it in intents:
-            if str(it.get("token", "")).upper() == "WETH":
-                it["wrap_eth"] = True
-                if nw.get("shortfall_raw"):
-                    it["wrap_shortfall_raw"] = int(nw["shortfall_raw"])
+        # Same as ens/bot_service._execute on needs_wrap: mark the intent so build_steps prepends WETH.deposit()
+        # for the shortfall, then rebuild. The consumer of the wrapped native is a cowswap sell of ETH or WETH
+        # (the builder normalises ETH -> WETH) or a WETH deposit; attach the wrap to the first such intent so the
+        # deposit() lands before the step that needs it. Fall back to the first intent.
+        wtok = str(nw.get("token") or "WETH").upper()
+        native = "XDAI" if wtok == "WXDAI" else "ETH"
+        cands = [it for it in intents if str(it.get("token", "")).upper() in (wtok, native)] or intents[:1]
+        it = cands[0]
+        it["wrap_eth"] = True
+        it["wrap_token"] = wtok
+        if nw.get("shortfall_raw"):
+            it["wrap_shortfall_raw"] = int(nw["shortfall_raw"])
+        if nw.get("shortfall"):
+            it["wrap_shortfall_human"] = nw["shortfall"]
         all_steps, labels = [], []
         for it in intents:
             try:
@@ -233,6 +257,16 @@ def do_quote(client_dir: Path, payload: dict):
     from token_registry import get_address, get_decimals, normalize
     from cow_api import get_quote, get_slippage_tolerance_info
     sell, buy, amount = payload["sell"].upper(), payload["buy"].upper(), str(payload["amount"])
+    wrapped = "WXDAI" if config.CHAIN_ID == 100 else "WETH"; native = "XDAI" if config.CHAIN_ID == 100 else "ETH"
+    if {sell, buy} == {native, wrapped}:
+        # not a swap at all: WETH.deposit() / WETH.withdraw() under Roles, 1:1, no CoW order, no slippage, no fee
+        act = "wrap" if sell == native else "unwrap"
+        amt = float(amount)
+        out(dict(sell=sell, buy=buy, sell_amount=amt, sell_amount_after_fee=amt, fee=0.0, buy_amount=amt, price=1.0,
+                 slippage_bps=0, slippage_source="n/a (wrap)", slippage_info={}, min_receive=amt, valid_to=None, expiration=None,
+                 command=f"cowswap {act} {amount} {sell}", is_wrap=True,
+                 note=f"{'Wrapping' if act == 'wrap' else 'Unwrapping'} is a direct {wrapped} contract call inside the Roles bundle, not a CoW order"))
+        return
     # CoW cannot sell native ETH: the bot wraps first and the order sells WETH (same rule as cowswap_builder)
     quote_sell, note = (("WETH", "ETH is wrapped to WETH inside the bundle; the CoW order sells WETH") if sell == "ETH" else (sell, None))
     raw = normalize(amount, quote_sell)
