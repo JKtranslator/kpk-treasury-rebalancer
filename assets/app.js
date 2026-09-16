@@ -156,8 +156,8 @@
       const rows = snap.book.filter(b => b.asset_group === g).sort((a, b) => b.usd - a.usd);
       const tot = groups[g]; const ap = weightedApy(rows.filter(b => b.kind === 'position' && b.apy != null));
       return `<div class="grp"><div class="grp-h"><h3>${g}</h3><div class="tot"><b>${compact(tot)}</b> · ${(100 * tot / nav).toFixed(1)}% of NAV${ap != null ? ` · blended <b>${pct(ap)}</b>` : ''}</div></div>
-        <div class="scroll"><table><thead><tr><th>Protocol</th><th>Venue</th><th class="n">Value</th><th class="n">Share</th><th class="n">APY</th><th class="n">30d</th></tr></thead><tbody>
-        ${rows.map(b => `<tr class="${b.kind === 'idle' ? 'idle' : b.kind === 'in_flight' ? 'inflight' : ''}"><td class="k">${esc(b.protocol)}</td><td>${esc(b.venue)}${b.untracked && b.apy == null ? ' <span class="pill p-warn">untracked</span>' : ''}</td><td class="n num">${usd(b.usd)}</td><td class="n num">${(100 * b.usd / nav).toFixed(1)}%</td><td class="n num">${b.apy == null ? '<span class="dim">n/a</span>' : pct(b.apy) + srcTag(b)}</td><td class="n num dim">${apy30(b)}</td></tr>`).join('')}
+        <div class="scroll"><table><thead><tr><th>Protocol</th><th>Venue</th><th class="n">Value</th><th class="n">% NAV</th><th class="n" title="Our position as a share of the venue's own TVL — the concentration the venue ceiling governs">Of pool</th><th class="n">APY</th><th class="n">30d</th></tr></thead><tbody>
+        ${rows.map(b => `<tr class="${b.kind === 'idle' ? 'idle' : b.kind === 'in_flight' ? 'inflight' : ''}"><td class="k">${esc(b.protocol)}</td><td>${esc(b.venue)}${b.untracked && b.apy == null ? ' <span class="pill p-warn">untracked</span>' : ''}</td><td class="n num">${usd(b.usd)}</td><td class="n num">${(100 * b.usd / nav).toFixed(1)}%</td><td class="n num">${(() => { const s = poolShare(b); if (s == null) return '<span class="dim">–</span>'; const over = s >= sim.tvlCapPct / 100; return `<span class="${over ? 'bad' : ''}" title="${usd(b.usd)} of a ${compact(poolTvl(b))} pool${over ? ` — above the ${sim.tvlCapPct}% venue ceiling` : ''}">${(100 * s).toFixed(1)}%</span>`; })()}</td><td class="n num">${b.apy == null ? '<span class="dim">n/a</span>' : pct(b.apy) + srcTag(b)}</td><td class="n num dim">${apy30(b)}</td></tr>`).join('')}
         </tbody></table></div></div>`;
     }).join('');
 
@@ -200,6 +200,14 @@
      the pool rate falls to r x TVL / (TVL + what we add). Our existing stake in that venue dilutes too. */
     // receipt or vault names to the asset that goes in: cUSDCv3, aEthUSDC, fUSDC, sUSDS, kpk USDC Prime v2 -> USDC / USDS
   const UNDER = s => { s = (s || '').trim(); let m; if ((m = /^c(USDC|USDT|USDS)v3$/i.exec(s))) return m[1].toUpperCase(); if ((m = /^kpk[\s_]+([A-Za-z]+)[\s_]/i.exec(s))) return m[1].toUpperCase(); if ((m = /^aEth([A-Za-z]+)$/.exec(s))) return m[1].toUpperCase(); if ((m = /^s(USDS|DAI)$/i.exec(s))) return m[1].toUpperCase(); if ((m = /^f(USDC|USDT|GHO)$/.exec(s))) return m[1]; return s.toUpperCase(); };
+  // the pool a position sits in, and how much of it is ours: the concentration that the venue ceiling governs
+  function poolTvl(b) {
+    if (b.venue_tvl_usd > 0) return b.venue_tvl_usd;
+    const v = (b.vault || '').toLowerCase();
+    const p = v && (snap.permitted || []).find(q => (q.vault || '').toLowerCase() === v && q.tvl_usd > 0);
+    return p ? p.tvl_usd : null;
+  }
+  function poolShare(b) { const t = poolTvl(b); return (b.kind === 'position' && t) ? b.usd / t : null; }
   const diluted = (r, tvl, added) => (tvl && added > 0) ? r * tvl / (tvl + added) : r;
 
   /* Same method as scripts/assess.py: per asset group, fill the best permitted venues from idle
