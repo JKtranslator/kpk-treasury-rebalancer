@@ -135,6 +135,10 @@ def live_snapshot(slug: str, base: dict | None = None) -> dict:
             b["live"] = "stale (not indexed by DeBank)"; book.append(b)
     # positions DeBank sees that the stored book did not have (new deposits): add as untracked, priced if a permitted vault matches
     permitted = [dict(p) for p in base.get("permitted", [])]
+    gated = {(e.get("vault") or "").lower() for e in (base.get("roles_gate") or {}).get("excluded", []) if e.get("vault")}
+    for p in permitted:
+        if (p.get("vault") or "").lower() in gated or p.get("apy_source") == "NOT IN ROLES":
+            p.update(in_roles=False, priced=False, apy_source="NOT IN ROLES")
     for i, it in enumerate(items):
         if i in used or it["usd"] < 1000 or it["protocol"] in ("merkl", "(wallet)"):
             continue
