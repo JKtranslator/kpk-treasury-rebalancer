@@ -36,7 +36,7 @@ def snapshot(slug: str, run: Path) -> dict:
     h = json.loads((run / "holdings.json").read_text(encoding="utf-8"))
     y = json.loads((run / "yields.json").read_text(encoding="utf-8"))
     from receipts import resolve_receipts
-    prices = resolve_receipts(a["book"], h, reg)     # receipt token + unit mark per position; the run's price map
+    prices = resolve_receipts(a["book"], h, reg, y.get("permitted"))     # receipt token + unit mark per position; the run's price map
     book = [dict(kind=b["kind"], protocol=b["protocol"], venue=b["venue"], symbol=b.get("symbol"),
                  asset_group=b["asset_group"], usd=round(fnum(b["usd"]), 2),
                  apy=b.get("apy"), apy_source=b.get("apy_source"), venue_tvl_usd=b.get("venue_tvl_usd"),
