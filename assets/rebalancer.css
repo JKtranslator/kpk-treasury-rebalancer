@@ -1,7 +1,9 @@
 /* additions on top of the shared KPK styles.css */
-.mast-grid{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:start;flex-wrap:nowrap;}
-.mast-r{display:flex;flex-direction:column;align-items:flex-end;gap:6px;text-align:right;min-width:260px;}
-.mast-r .stamp{text-align:right;}
+.mast-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:22px;align-items:start;}
+.mast-grid .mast-l{min-width:0;}
+.mast-grid h1{text-wrap:balance;}
+.mast-r{display:flex;flex-direction:column;align-items:flex-end;gap:6px;text-align:right;min-width:0;max-width:440px;}
+.mast-r .stamp{text-align:right;line-height:1.5;overflow-wrap:anywhere;}
 .exec-state{margin-left:10px;font-size:11px;padding:2px 8px;border-radius:20px;background:var(--card);color:var(--muted);}
 .exec-state.on{background:var(--good-bg);color:var(--good);}
 .exec-state.off{background:var(--card);color:var(--muted);}
@@ -70,7 +72,8 @@ tr.inflight td{color:var(--muted);font-style:italic;}
 .txlist .tx{padding:6px 0;border-bottom:1px solid var(--hair);}
 .txlist .tx:last-child{border-bottom:none;}
 .txlist b{color:var(--ink);font-weight:600;font-family:inherit;}
-@media (max-width:720px){.mast-grid{grid-template-columns:1fr;} .mast-r{align-items:flex-start;text-align:left;} .mv{grid-template-columns:1fr;} .mv .amt{text-align:left;}}
+@media (max-width:900px){.mast-grid{grid-template-columns:minmax(0,1fr) minmax(0,320px);}}
+@media (max-width:720px){.mast-grid{grid-template-columns:1fr;} .mast-r{max-width:none;} .mast-r{align-items:flex-start;text-align:left;} .mv{grid-template-columns:1fr;} .mv .amt{text-align:left;}}
 
 /* ---- swap panel (DEX-style) ---- */
 .sw-wrap{display:grid;grid-template-columns:minmax(300px,440px) 1fr;gap:22px;align-items:start;}

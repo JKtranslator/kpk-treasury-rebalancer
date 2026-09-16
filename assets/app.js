@@ -90,10 +90,19 @@
     $('#stamp').innerHTML = `<b>${esc(snap.display_name)}</b> · chain ${snap.chain_id} · run ${esc(snap.run_folder)}`;
     if (snap.stale_note) { $('#stamp2').title = snap.stale_note; }
     const src = snap.apy_sources || {}; const gate = snap.roles_gate || {};
-    const srcLine = [src['vaults.fyi live'] ? `${src['vaults.fyi live']} venues priced live by vaults.fyi` : null,
-      Object.keys(src).filter(k => k.startsWith('defillama')).reduce((a, k) => a + src[k], 0) ? `${Object.keys(src).filter(k => k.startsWith('defillama')).reduce((a, k) => a + src[k], 0)} via DeFiLlama` : null,
-      gate.checked ? `${gate.n_targets} Roles targets checked${gate.excluded && gate.excluded.length ? `, <b class="bad">${gate.excluded.length} permitted venue${gate.excluded.length > 1 ? 's' : ''} not in Roles</b>` : ''}` : '<b class="bad">venues NOT checked against on-chain Roles</b>'].filter(Boolean).join(' · ');
-    $('#stamp2').innerHTML = (snap.stale_note ? '⚠ off-network: office permissions cache · ' : '') + `data as of ${new Date(snap.as_of).toISOString().slice(0, 16).replace('T', ' ')} UTC · APY period ${snap.period}` + (srcLine ? ' · ' + srcLine : '');
+    const nLlama = Object.keys(src).filter(k => k.startsWith('defillama')).reduce((a, k) => a + src[k], 0);
+    const nGated = (gate.excluded || []).length;
+    const when = new Date(snap.as_of).toISOString().slice(0, 16).replace('T', ' ');
+    // keep the masthead line short; the provenance detail lives in the tooltip
+    $('#stamp2').innerHTML = `${when} UTC · ${snap.period} · ${src['vaults.fyi live'] || 0} live APYs`
+      + (nGated ? ` · <b class="bad">${nGated} venue${nGated > 1 ? 's' : ''} not in Roles</b>` : '')
+      + (snap.stale_note ? ' · <span class="bad">off-network</span>' : '');
+    $('#stamp2').title = [`Data as of ${when} UTC · APY period ${snap.period}`,
+      `${src['vaults.fyi live'] || 0} venues priced live by vaults.fyi${nLlama ? `, ${nLlama} via DeFiLlama` : ''}`,
+      gate.checked ? `${gate.n_targets} on-chain Roles targets checked${nGated ? `; excluded: ${(gate.excluded || []).map(e => e.protocol + '/' + e.asset).join(', ')}` : '; all venues verified'}`
+                   : 'Venues NOT verified against the on-chain Roles file',
+      snap.stale_note || ''].filter(Boolean).join('
+');
 
     const groups = {}; snap.book.forEach(b => groups[b.asset_group] = (groups[b.asset_group] || 0) + b.usd);
     const nav = snap.nav_usd; const stables = (groups.USD || 0) + (groups.EURO || 0);
