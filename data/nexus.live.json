@@ -4,22 +4,22 @@
   "chain_id": 1,
   "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
   "ok": true,
-  "as_of": "2026-09-16T14:32:02+00:00",
+  "as_of": "2026-09-16T15:46:39+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 7286453,
+  "nav_usd": 7286413,
   "positions_usd": 7146041,
-  "idle_usd": 140412,
+  "idle_usd": 140372,
   "in_flight_usd": 0,
-  "onchain_idle_eth": 3.140807908958729,
+  "onchain_idle_eth": 9.08958728578e-07,
   "eth_price_usd": 2398.26,
   "groups": {
-    "USD": 1633787,
+    "USD": 1641279,
     "REWARDS": 117,
-    "ETH": 656021,
-    "OTHER": 4996496
+    "OTHER": 4996496,
+    "ETH": 648489
   },
   "sleeves": [
     {
@@ -107,8 +107,8 @@
   "idle": [
     {
       "symbol": "USDC",
-      "balance": 1247.030208,
-      "usd": 1247,
+      "balance": 8740.024457,
+      "usd": 8739,
       "asset_group": "USD"
     },
     {
@@ -116,12 +116,6 @@
       "balance": 28.376777604667712,
       "usd": 59,
       "asset_group": "REWARDS"
-    },
-    {
-      "symbol": "ETH",
-      "balance": 3.140807908958729,
-      "usd": 7532,
-      "asset_group": "ETH"
     },
     {
       "symbol": "GEAR",
@@ -176,6 +170,6 @@
   ],
   "rewards_usd": 145,
   "flags": [
-    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 632.4756 -> 1,247.0302; cbBTC 0.0079 -> 0.0000"
+    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 632.4756 -> 8,740.0245; cbBTC 0.0079 -> 0.0000; ETH 3.1408 -> 0.0000"
   ]
 }
