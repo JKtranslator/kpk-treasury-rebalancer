@@ -100,8 +100,7 @@
       `${src['vaults.fyi live'] || 0} venues priced live by vaults.fyi${nLlama ? `, ${nLlama} via DeFiLlama` : ''}`,
       gate.checked ? `${gate.n_targets} on-chain Roles targets checked${nGated ? `; excluded: ${(gate.excluded || []).map(e => e.protocol + '/' + e.asset).join(', ')}` : '; all venues verified'}`
                    : 'Venues NOT verified against the on-chain Roles file',
-      snap.stale_note || ''].filter(Boolean).join('
-');
+      snap.stale_note || ''].filter(Boolean).join('\n');
 
     const groups = {}; snap.book.forEach(b => groups[b.asset_group] = (groups[b.asset_group] || 0) + b.usd);
     const nav = snap.nav_usd; const stables = (groups.USD || 0) + (groups.EURO || 0);
