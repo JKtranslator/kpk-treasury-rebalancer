@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
   "ok": true,
-  "as_of": "2026-09-16T13:01:41+00:00",
+  "as_of": "2026-09-16T14:05:31+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -154,14 +154,14 @@
       "source": "merkl",
       "symbol": "COMP",
       "amount": 4.437549981061129,
-      "usd": 85,
+      "usd": 84,
       "claimable": true
     },
     {
       "source": "aave_safety_module",
       "symbol": "AAVE",
-      "amount": 1.0860516137726046,
-      "usd": 133,
+      "amount": 1.1382956492766507,
+      "usd": 139,
       "claimable": true
     },
     {
@@ -200,6 +200,6 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 226,
+  "rewards_usd": 232,
   "flags": []
 }
