@@ -6,8 +6,8 @@
 <title>Treasury Rebalancer | KPK</title>
 <meta name="description" content="Holdings, policy checks and permitted yield moves for the treasuries KPK manages. Snapshot-driven; simulate thresholds in the browser.">
 <link rel="icon" href="assets/kpk.png">
-<link rel="stylesheet" href="assets/styles.css?v=968b4aa69f">
-<link rel="stylesheet" href="assets/rebalancer.css?v=968b4aa69f">
+<link rel="stylesheet" href="assets/styles.css?v=fb482b0a98">
+<link rel="stylesheet" href="assets/rebalancer.css?v=fb482b0a98">
 </head>
 <body>
 <div class="wrap">
@@ -104,7 +104,7 @@
           <div class="sub-h"><h3>Within a category</h3><span>Same asset, better venue: idle balances and laggards move to the best permitted venue of their own category.</span></div>
           <div class="out" id="simOut"></div>
           <div id="simMoves"></div>
-          <div class="sub-h"><h3>Between categories</h3><span>Mandate moves: take from the worst performers of one category, swap, and deposit into the best venues of another. Sized against the same caps and dilution ledger as the moves above.</span></div>
+          <div class="sub-h"><h3>Between categories</h3><span>Mandate moves: what the policy asks for this tranche, taken from excluded venues, idle balances and the worst performers of one category, swapped, and deposited into the best venues of another. Same thresholds, caps and dilution ledger as the moves above; edit the amount to size it differently.</span></div>
           <div class="sim-grid cross">
             <div class="field"><label>From</label><select id="xFrom"></select></div>
             <div class="field"><label>To</label><select id="xTo"></select></div>
@@ -211,6 +211,6 @@
     </div>
   </div>
 </div>
-<script src="assets/app.js?v=968b4aa69f"></script>
+<script src="assets/app.js?v=fb482b0a98"></script>
 </body>
 </html>
