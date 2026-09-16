@@ -37,6 +37,12 @@ def snapshot(slug: str, run: Path) -> dict:
     y = json.loads((run / "yields.json").read_text(encoding="utf-8"))
     from receipts import resolve_receipts
     prices = resolve_receipts(a["book"], h, reg, y.get("permitted"))     # receipt token + unit mark per position; the run's price map
+    # a Morpho/ERC-4626 vault share IS the vault address: adopt it so the venue-share cap sees what we already hold
+    # there (Syncrone books these under the underlying, leaving the row without a vault and the cap blind)
+    perm_vaults = {(q.get("vault") or "").lower() for q in y.get("permitted", []) if q.get("vault")}
+    for b in a["book"]:
+        if not b.get("vault") and (b.get("receipt") or "").lower() in perm_vaults:
+            b["vault"] = b["receipt"].lower()
     book = [dict(kind=b["kind"], protocol=b["protocol"], venue=b["venue"], symbol=b.get("symbol"),
                  asset_group=b["asset_group"], usd=round(fnum(b["usd"]), 2),
                  apy=b.get("apy"), apy_source=b.get("apy_source"), venue_tvl_usd=b.get("venue_tvl_usd"),
