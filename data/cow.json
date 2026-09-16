@@ -383,7 +383,7 @@
       "balance": null,
       "claimable": false,
       "claim_cmd": null,
-      "vault": null,
+      "vault": "0x4ef53d2caa51c447fdfeeedee8f07fd1962c9ee6",
       "receipt": "0x4ef53d2caa51c447fdfeeedee8f07fd1962c9ee6",
       "receipt_method": "erc20",
       "unit_usd": 1.033476966514513,
