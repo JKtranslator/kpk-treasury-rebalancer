@@ -6,8 +6,8 @@
 <title>Treasury Rebalancer | KPK</title>
 <meta name="description" content="Holdings, policy checks and permitted yield moves for the treasuries KPK manages. Snapshot-driven; simulate thresholds in the browser.">
 <link rel="icon" href="assets/kpk.png">
-<link rel="stylesheet" href="assets/styles.css?v=fb482b0a98">
-<link rel="stylesheet" href="assets/rebalancer.css?v=fb482b0a98">
+<link rel="stylesheet" href="assets/styles.css?v=9f3cb7150e">
+<link rel="stylesheet" href="assets/rebalancer.css?v=9f3cb7150e">
 </head>
 <body>
 <div class="wrap">
@@ -108,7 +108,7 @@
           <div class="sim-grid cross">
             <div class="field"><label>From</label><select id="xFrom"></select></div>
             <div class="field"><label>To</label><select id="xTo"></select></div>
-            <div class="field" style="grid-column:span 2"><label>Amount (USD) <span class="val" id="xHint"></span></label><input type="number" id="xAmt" min="0" step="100000" placeholder="0"></div>
+            <div class="field xamt"><label>Amount (USD)</label><input type="number" id="xAmt" min="0" step="100000" placeholder="0"><span class="hint" id="xHint"></span></div>
           </div>
           <div class="out" id="xOut"></div>
           <div id="xMoves"></div>
@@ -211,6 +211,6 @@
     </div>
   </div>
 </div>
-<script src="assets/app.js?v=fb482b0a98"></script>
+<script src="assets/app.js?v=9f3cb7150e"></script>
 </body>
 </html>

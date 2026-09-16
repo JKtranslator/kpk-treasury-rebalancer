@@ -166,8 +166,9 @@
     $('#exclude').onclick = e => { const b = e.target.closest('button'); if (!b) return; sim.exclude.has(b.dataset.p) ? sim.exclude.delete(b.dataset.p) : sim.exclude.add(b.dataset.p); b.setAttribute('aria-pressed', sim.exclude.has(b.dataset.p)); simulate(); };
     $('#basis').onclick = e => { const b = e.target.closest('button'); if (!b) return; [...$('#basis').children].forEach(x => x.setAttribute('aria-pressed', x === b)); sim.basis = b.dataset.b; simulate(); };
     bindRange('#pickup', 'pickupBps', v => v + ' bps'); bindRange('#move', 'moveUsd', v => compact(v)); bindRange('#tvl', 'tvlCapPct', v => v + '% of venue TVL (incl. holdings)');
-    $('#xFrom').onchange = e => { sim.xFrom = e.target.value; simulate(); };
-    $('#xTo').onchange = e => { sim.xTo = e.target.value; simulate(); };
+    // a new pair is a new question: drop the typed amount and the per-leg choices, and re-size from the policy
+    const xPair = which => e => { sim[which] = e.target.value; sim.xUser = false; sim.override = {}; sim.route = {}; simulate(); };
+    $('#xFrom').onchange = xPair('xFrom'); $('#xTo').onchange = xPair('xTo');
     let xDeb = null; $('#xAmt').oninput = e => { sim.xAmt = Number(e.target.value || 0); sim.xUser = true; clearTimeout(xDeb); xDeb = setTimeout(simulate, 400); };
     simulate();
 
@@ -197,6 +198,8 @@
   /* Supplying into a lending market spreads the same borrower interest over a bigger base, so the rate
      we actually receive is below the headline. Assuming borrow demand is unchanged in the short run,
      the pool rate falls to r x TVL / (TVL + what we add). Our existing stake in that venue dilutes too. */
+    // receipt or vault names to the asset that goes in: cUSDCv3, aEthUSDC, fUSDC, sUSDS, kpk USDC Prime v2 -> USDC / USDS
+  const UNDER = s => { s = (s || '').trim(); let m; if ((m = /^c(USDC|USDT|USDS)v3$/i.exec(s))) return m[1].toUpperCase(); if ((m = /^kpk[\s_]+([A-Za-z]+)[\s_]/i.exec(s))) return m[1].toUpperCase(); if ((m = /^aEth([A-Za-z]+)$/.exec(s))) return m[1].toUpperCase(); if ((m = /^s(USDS|DAI)$/i.exec(s))) return m[1].toUpperCase(); if ((m = /^f(USDC|USDT|GHO)$/.exec(s))) return m[1]; return s.toUpperCase(); };
   const diluted = (r, tvl, added) => (tvl && added > 0) ? r * tvl / (tvl + added) : r;
 
   /* Same method as scripts/assess.py: per asset group, fill the best permitted venues from idle
@@ -220,6 +223,14 @@
     if (from && !cats.includes(from)) from = null;
     return { amt: from ? Math.round(amt / 1000) * 1000 : 0, why, from, to: from ? to : null, need, tranche };
   }
+  /* The figure for the pair on screen: the policy's own need when it points this way, otherwise the regular
+     tranche as a neutral size to look at. Either way the box is never left empty for the user to guess. */
+  function sizeFor(prop, from, to) {
+    if (prop.from === from && prop.to === to) return { amt: prop.amt, why: prop.why.slice(), policy: true };
+    const t = prop.tranche ? Math.round(prop.tranche / 1000) * 1000 : 0;
+    const why = prop.from ? [`the policy asks for ${prop.from} → ${prop.to}, not this pair`] : ['policy in bounds'];
+    return { amt: t, policy: false, why: why.concat(t ? [`sized at the regular tranche ${compact(t)}`] : ['size it below']) };
+  }
   function syncCross(cats) {
     const k = snap.client + '|' + cats.join(',');
     const prop = proposedRotation(cats);
@@ -227,12 +238,17 @@
       $('#xFrom').dataset.k = k; sim.override = {}; sim.route = {}; sim.xUser = false;
       sim.xFrom = prop.from || (cats.includes('ETH') ? 'ETH' : cats[0] || null); sim.xTo = prop.to || cats.find(c => c !== sim.xFrom) || null;
       const opt = c => `<option value="${esc(c)}">${esc(c)}</option>`;
-      $('#xFrom').innerHTML = cats.map(opt).join(''); $('#xTo').innerHTML = cats.map(opt).join('');
+      $('#xFrom').innerHTML = cats.map(opt).join('');
     }
-    // the policy's number stands until the user types one; a live refresh re-sizes it as balances move
-    if (!sim.xUser) { sim.xAmt = (sim.xFrom === prop.from && sim.xTo === prop.to) ? prop.amt : 0; $('#xAmt').value = sim.xAmt || ''; }
+    const opt = c => `<option value="${esc(c)}">${esc(c)}</option>`;
+    const tos = cats.filter(c => c !== sim.xFrom);                      // a rotation into the category we are selling makes no sense
+    if ($('#xTo').dataset.for !== sim.xFrom) { $('#xTo').dataset.for = sim.xFrom; $('#xTo').innerHTML = tos.map(opt).join(''); }
+    if (!tos.includes(sim.xTo)) sim.xTo = tos[0] || null;
+    const size = sizeFor(prop, sim.xFrom, sim.xTo);
+    // the proposed number stands until the user types one; a live refresh re-sizes it as balances move
+    if (!sim.xUser) { sim.xAmt = size.amt; $('#xAmt').value = sim.xAmt || ''; }
     $('#xFrom').value = sim.xFrom || ''; $('#xTo').value = sim.xTo || '';
-    return prop;
+    return Object.assign({}, prop, { size });
   }
 
   /* Same method as scripts/assess.py: per asset group, fill the best permitted venues from idle
@@ -261,8 +277,6 @@
     // the threshold governs the resulting position, so subtract what we already own in the venue
     const roomFor = v => { if (!heldMap.has(v)) heldMap.set(v, heldIn(v)); if (!headroom.has(v)) headroom.set(v, v.tvl_usd ? Math.max(0, sim.tvlCapPct / 100 * v.tvl_usd - heldMap.get(v)) : Infinity); return headroom.get(v); };
     const compatible = (src, v, g) => { const st = (src.symbol || '').toUpperCase(), vt = (v.asset || '').toUpperCase(); return st === vt || (isStable(st) && isStable(vt)) || g === 'ETH'; };
-    // receipt or vault names to the asset that goes in: cUSDCv3, aEthUSDC, fUSDC, sUSDS, kpk USDC Prime v2 -> USDC / USDS
-    const UNDER = s => { s = (s || '').trim(); let m; if ((m = /^c(USDC|USDT|USDS)v3$/i.exec(s))) return m[1].toUpperCase(); if ((m = /^kpk[\s_]+([A-Za-z]+)[\s_]/i.exec(s))) return m[1].toUpperCase(); if ((m = /^aEth([A-Za-z]+)$/.exec(s))) return m[1].toUpperCase(); if ((m = /^s(USDS|DAI)$/i.exec(s))) return m[1].toUpperCase(); if ((m = /^f(USDC|USDT|GHO)$/.exec(s))) return m[1]; return s.toUpperCase(); };
     const sameAsset = (src, v) => UNDER(src.symbol) === UNDER(v.asset);
     const needsSwap = (src, v) => isStable(src.symbol) && isStable(v.asset) && !sameAsset(src, v);
     const vkey = v => `${v.protocol}|${v.asset}|${v.vault || ''}`, skey = s => `${s.protocol}|${s.venue}|${s.symbol}`;
@@ -339,10 +353,7 @@
     const gross = W.reduce((s, m) => s + m.amt * m.pick, 0);
     const pickup = gross - dilW; const after = before + pickup; den += idleDeployed;
     const headlineGross = W.reduce((s, m) => s + m.amt * (m.toApy - m.from.apy), 0);
-    const gx = (snap.roles_gate && snap.roles_gate.excluded) || [];
-    let gateNote = $('#gateNote'); if (!gateNote) { gateNote = document.createElement('div'); gateNote.id = 'gateNote'; gateNote.className = 'sw-note'; $('#simOut').parentNode.insertBefore(gateNote, $('#simOut')); }
-    gateNote.hidden = !gx.length;
-    gateNote.innerHTML = gx.length ? `<div><b>Excluded, not in on-chain Roles:</b> ${gx.map(e => { const p = snap.permitted.find(q => q.vault === e.vault); return `${esc(e.protocol)} ${esc(e.asset)}${p && p.apy_total != null ? ` (${pct(p.apy_total)})` : ''}`; }).join(', ')}. The Strategy API lists them as permitted, but the Safe cannot call them until the PUR lands, so they never appear as candidates here.</div>` : '';
+    // venues outside the on-chain Roles are simply not candidates; the provenance stamp carries the count
     const tiles = rows => rows.map(([t, v]) => `<div class="o"><div class="t">${t}</div><div class="v num">${v}</div></div>`).join('');
     $('#simOut').innerHTML = tiles([
       ['Candidate moves', W.length], ['Capital moved', compact(W.reduce((s, m) => s + m.amt, 0))],
@@ -371,13 +382,13 @@
     const hint = [];
     if (floor) hint.push(usdNow < floor ? `stables ${compact(floor - usdNow)} short of the floor` : `floor met by ${compact(usdNow - floor)}`);
     if (snap.policy?.rebalance_tranche_eth && priceOf('ETH')) hint.push(`tranche ${snap.policy.rebalance_tranche_eth.toLocaleString()} ETH ≈ ${compact(snap.policy.rebalance_tranche_eth * priceOf('ETH'))}`);
-    $('#xHint').textContent = sim.xUser ? 'your figure · ' + hint.join(' · ') : (prop.why.length ? 'policy: ' + prop.why.join(' · ') : hint.join(' · ') || 'no policy need');
+    $('#xHint').textContent = sim.xUser ? 'your figure · ' + hint.join(' · ') : (prop.size.policy ? 'policy: ' : '') + prop.size.why.join(' · ');
     let xHead = $('#xHead'); if (!xHead) { xHead = document.createElement('div'); xHead.id = 'xHead'; xHead.className = 'grp-h'; $('#xOut').parentNode.insertBefore(xHead, $('#xOut')); }
-    xHead.innerHTML = `<h3>${esc(sim.xFrom || '?')} → ${esc(sim.xTo || '?')}</h3><div class="tot">${prop.from ? `${prop.why.join(' · ')} · <b>${compact(prop.amt)}</b> proposed${sim.xUser && sim.xAmt !== prop.amt ? ` · sizing <b>${compact(sim.xAmt)}</b>` : ''}` : 'policy in bounds: nothing proposed, size one below if wanted'}${X.length ? ` · net <b>${(xGain - xGiven >= 0 ? '+' : '-') + compact(Math.abs(xGain - xGiven))}/yr</b> after dilution` : ''}</div>`;
+    xHead.innerHTML = `<h3>${esc(sim.xFrom || '?')} → ${esc(sim.xTo || '?')}</h3><div class="tot">${esc(prop.size.why.join(' · '))}${prop.size.amt ? ` · <b>${compact(prop.size.amt)}</b> proposed` : ''}${sim.xUser && sim.xAmt !== prop.size.amt ? ` · sizing <b>${compact(sim.xAmt)}</b>` : ''}${X.length ? ` · net <b>${(xGain - xGiven >= 0 ? '+' : '-') + compact(Math.abs(xGain - xGiven))}/yr</b> after dilution` : ''}</div>`;
     $('#xOut').innerHTML = X.length ? tiles([
-      ['Capital rotated', compact(xOut)], ['Yield given up', '-' + compact(xGiven) + '/yr'], ['Yield gained, after dilution', '+' + compact(xGain) + '/yr'],
+      ['Capital rotated', compact(xOut)], ['Yield given up', '-' + compact(xGiven) + '/yr'], ['Yield gained, diluted', '+' + compact(xGain) + '/yr'],
       ['Net', (xGain - xGiven >= 0 ? '+' : '-') + compact(Math.abs(xGain - xGiven)) + '/yr'],
-      ['Stables after', `${compact(usdAfter)} · ${(100 * usdAfter / nav).toFixed(1)}% of NAV`],
+      ['Stables after', `${compact(usdAfter)} · ${(100 * usdAfter / nav).toFixed(1)}%`],
       floor ? ['Floor gap after', usdAfter >= floor ? 'met' : compact(floor - usdAfter) + ' short'] : ['Destination venues', new Set(X.map(m => m.to)).size],
     ]) : '';
     // how the capital leaves the source: a CoW sale when the pair is in Roles, or the protocol's own exit
@@ -389,7 +400,7 @@
     const xRow = m => { const rs = routesFor(m), r = routeOf(m);
       const sel = rs.length > 1 ? `<div class="mv-opts"><label>Route</label><select class="mv-route" data-src="${esc(skey(m.from))}">${rs.map(x => `<option value="${x.id}" ${r && x.id === r.id ? 'selected' : ''}>${x.label}</option>`).join('')}</select></div>` : '';
       return `<div class="mv cross ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path">${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> <span class="leg">${r ? r.label : 'no permitted exit route'}</span> <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → <b>${pct(m.toApyDiluted)}</b>${m.toApyDiluted < m.toApy - 1e-6 ? ` after dilution (${pct(m.toApy)} headline)` : ''}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.shareAfter != null ? ` · our share after ${(m.shareAfter * 100).toFixed(1)}%` : ''} · before swap fee and slippage</small>${sel}${optsRow(m)}</div><div class="amt num">${usd(m.amt)}<small>${m.pick >= 0 ? '+' : '-'}${usd(Math.abs(m.amt * m.pick))}/yr</small></div>${r && r.swap ? `<button class="btn ${executorOn ? '' : 'ghost'}" data-xswap="${m.id}" type="button" title="Prefill the Swap panel with this leg and quote it on CoW; once the order fills the deposit shows up above as an idle move">Swap</button>` : '<span class="dim" style="font-size:11.5px">exit first</span>'}</div>`; };
-    $('#xMoves').innerHTML = !sim.xAmt ? `<p class="empty">${prop.from ? 'Pick the policy pair above to see the proposed legs, or enter an amount.' : 'The policy is within bounds, so no rotation is proposed. Enter an amount to size one anyway.'}</p>` : X.length ? X.map(xRow).join('') + (xShort > 1 ? `<p class="empty">${compact(xShort)} could not be placed: the ${esc(sim.xTo)} venues in Roles are full under the share and protocol caps.</p>` : '') : `<p class="empty">No ${esc(sim.xTo)} venue in Roles has room under the caps, or nothing in ${esc(sim.xFrom)} can be moved.</p>`;
+    $('#xMoves').innerHTML = !sim.xAmt ? '<p class="empty">Enter an amount to size a rotation for this pair.</p>' : X.length ? X.map(xRow).join('') + (xShort > 1 ? `<p class="empty">${compact(xShort)} could not be placed: the ${esc(sim.xTo)} venues in Roles are full under the share and protocol caps.</p>` : '') : `<p class="empty">No ${esc(sim.xTo)} venue in Roles has room under the caps, or nothing in ${esc(sim.xFrom)} can be moved.</p>`;
     const onMv = e => { const b = e.target.closest('button[data-exec],button[data-xswap]'); if (!b) return; if (b.dataset.exec != null) openModal(moves[Number(b.dataset.exec)]); else prefillSwap(moves[Number(b.dataset.xswap)]); };
     $('#simMoves').onclick = onMv; $('#xMoves').onclick = onMv;
     const onAlt = e => { const s = e.target.closest('select.mv-alt, select.mv-route'); if (!s) return;
@@ -504,7 +515,7 @@
     if (keep.length) pendTimer = setTimeout(pollPending, 30000);
   }
   function renderPending() {
-    let box = $('#pendingBox'); if (!box) { box = document.createElement('div'); box.id = 'pendingBox'; const sim = $('#simOut'); sim.parentNode.insertBefore(box, $('#gateNote') || sim); }
+    let box = $('#pendingBox'); if (!box) { box = document.createElement('div'); box.id = 'pendingBox'; const sim = $('#simOut'); sim.parentNode.insertBefore(box, sim); }
     const l = pendingList();
     box.hidden = !l.length;
     box.innerHTML = l.map(p => { const s = p.status || {}; const st = s.is_executed ? 'executed' : s.confirmations != null ? `${s.confirmations}/${s.required} signatures` : 'awaiting signers';
@@ -519,7 +530,9 @@
   const sw = { groups: [], known: null, sell: null, buy: null, quote: null, timer: null, tick: null, inverted: false, picking: null, seq: 0, live: null, liveAt: null, liveBusy: false };
   const fmtTok = (v, d) => { v = Number(v || 0); if (d == null) d = v >= 1000 ? 2 : v >= 1 ? 4 : 6; return v.toLocaleString('en-US', { maximumFractionDigits: d }); };
   const upper = s => String(s || '').toUpperCase();
-  function priceOf(sym) { if (['ETH', 'WETH'].includes(upper(sym)) && snap && snap.eth_price_usd) return snap.eth_price_usd; let p = 0; for (const b of (snap.book || [])) if (upper(b.symbol) === upper(sym)) { const bp = b.price || (b.balance > 0 && b.usd > 0 ? b.usd / b.balance : 0); if (bp > p) p = bp; } if (!p && live) for (const r of (live.rows || live.book || [])) if (upper(r.symbol) === upper(sym) && r.price > p) p = r.price; return p || null; }
+  function priceOf(sym) { if (['ETH', 'WETH'].includes(upper(sym)) && snap && snap.eth_price_usd) return snap.eth_price_usd;
+    for (const b of (snap.book || [])) if (upper(b.symbol) === upper(sym) && b.unit_usd > 0) return b.unit_usd;   // the run's mark per unit
+    let p = 0; for (const b of (snap.book || [])) if (upper(b.symbol) === upper(sym)) { const bp = b.price || (b.balance > 0 && b.usd > 0 ? b.usd / b.balance : 0); if (bp > p) p = bp; } if (!p && live) for (const r of (live.rows || live.book || [])) if (upper(r.symbol) === upper(sym) && r.price > p) p = r.price; return p || null; }
   function idleOf(sym) {
     if (sw.live) return sw.live[upper(sym)] || 0;   // live Safe balance when fetched
     return (snap.book || []).filter(b => b.kind === 'idle' && upper(b.symbol) === upper(sym)).reduce((a, b) => a + (b.balance || 0), 0);
