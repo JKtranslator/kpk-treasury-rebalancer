@@ -1,19 +1,22 @@
-"""Fast lane: a snapshot-shaped view of one client rebuilt from live sources in a few seconds.
+"""Fast lane: a snapshot-shaped view of one client rebuilt from free live sources in a few seconds.
 
 The full pipeline (run.py -> refresh_holdings -> publish -> git push) is the authoritative record and takes
 1-3 minutes: Syncrone's month-to-date performance call, the whole DeFiLlama pool dump, sequential vaults.fyi
 reads, rate-limited Etherscan reads and a git push. None of that is needed to answer "what does the Safe hold
 right now and which moves still stand". This module answers that from:
 
-  * Safe Transaction Service     token units held by the avatar Safe (1 call)
-  * DeBank Pro                   every DeFi position with live USD and prices (2 calls)
-  * vaults.fyi                   live APY/TVL per vault address, fetched in parallel (~30 calls, ~2 s)
-  * on-chain reward reads        Merkl, Compound, Aave, Safety Module, Uniswap fees (collect_rewards)
+  * last published snapshot     Syncrone is the base: per position the receipt token the Safe holds and the
+                                USD mark of one unit at the run (scripts/receipts.py), plus the run's prices
+  * Safe Transaction Service    token units held by the avatar Safe now (1 call, free)
+  * public JSON-RPC             Chainlink ETH/USD for the ETH sleeve; getShares() for share-only vaults (free)
+  * vaults.fyi                  live APY/TVL per vault address, fetched in parallel (~30 calls, 3 CU each)
+  * on-chain reward reads       Merkl, Compound, Aave, Safety Module, Uniswap fees (collect_rewards)
 
-Permissions, the Roles gate, the policy block and the ops-tools reference are taken from the last published
-snapshot (data/<client>.json); they only change when a PUR lands or the office re-runs. The result is passed
-through the same policy / performance / rewards-sweep functions the pipeline uses, so the page can swap it in
-for the stored snapshot without knowing the difference. Executed moves disappear because the balances moved.
+A position is `Safe units now x unit mark at run`, re-priced for ETH from Chainlink; a receipt balance that
+went to zero is an exited position and drops out; a new receipt token in the Safe is flagged for a full
+refresh. Permissions, the Roles gate, the policy block and the ops-tools reference are taken from the last
+published snapshot (data/<client>.json). The result passes through the same policy / performance /
+rewards-sweep functions the pipeline uses, so the page can swap it in for the stored snapshot.
 """
 from __future__ import annotations
 
@@ -24,17 +27,29 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from types import SimpleNamespace
 
-from common import asset_group_of, client, fnum, http_json, key, load_env, registry
+from common import asset_group_of, client, fnum, key, load_env, registry
+from receipts import CHAINLINK_ETH_USD, SEL_GET_SHARES, SEL_LATEST_ANSWER
 
 ROOT = Path(__file__).resolve().parent.parent
+STABLE_SYMS = {"USDC", "USDT", "USDS", "DAI", "GHO", "EURC", "PYUSD", "RLUSD"}
 
 
-def _fetch_positions(reg, c, chain_id, safe):
-    from fetch_holdings import fetch_debank, fetch_safe_balances
-    with ThreadPoolExecutor(max_workers=3) as ex:
-        f_safe = ex.submit(fetch_safe_balances, reg, chain_id, safe)
-        f_deb = ex.submit(fetch_debank, chain_id, safe)
-        return f_safe.result(), f_deb.result()
+def _eth_price(chain_id: int, fallback: float | None) -> tuple[float | None, str]:
+    from fetch_holdings import _rpc_call
+    feed = CHAINLINK_ETH_USD.get(chain_id)
+    if not feed:
+        return fallback, "snapshot"
+    try:
+        px = int(_rpc_call(chain_id, feed, SEL_LATEST_ANSWER), 16) / 1e8
+        return (px, "chainlink") if px > 0 else (fallback, "snapshot")
+    except Exception as e:
+        print("  chainlink:", str(e)[:100])
+        return fallback, "snapshot"
+
+
+def _shares(chain_id: int, vault: str, safe: str) -> float:
+    from fetch_holdings import _rpc_call
+    return int(_rpc_call(chain_id, vault, SEL_GET_SHARES + safe[2:].lower().rjust(64, "0")), 16) / 1e18
 
 
 def _vault_apys(chain_id: int, addrs: list[str], period: str) -> dict:
@@ -46,21 +61,6 @@ def _vault_apys(chain_id: int, addrs: list[str], period: str) -> dict:
             if d:
                 out[a] = d
     return out
-
-
-def _underlying(sym: str) -> str:
-    """aEthUSDC -> USDC, weETH/eETH/wstETH/stETH/ETHx/osETH/rETH -> ETH, fUSDT -> USDT, sUSDS -> USDS, cUSDCv3 -> USDC."""
-    s = (sym or "").upper()
-    if s.startswith("KPK_") or s.startswith("KPK "):          # kpk vault shares: KPK_USDC_Prime -> USDC
-        parts = s.replace(" ", "_").split("_")
-        if len(parts) > 1:
-            return _underlying(parts[1])
-    for pre in ("AETH", "AARB", "WA", "F", "C", "S", "A"):
-        if s.startswith(pre) and len(s) > len(pre) + 2 and s[len(pre):].rstrip("V3") in ("USDC", "USDT", "USDS", "DAI", "GHO", "EURC"):
-            return s[len(pre):].rstrip("V3")
-    if s in ("WEETH", "EETH", "WSTETH", "STETH", "ETHX", "OSETH", "RETH", "WETH", "ETH"):
-        return "ETH"
-    return s.rstrip("V3") if s.endswith("V3") else s
 
 
 def live_snapshot(slug: str, base: dict | None = None) -> dict:
@@ -77,92 +77,83 @@ def live_snapshot(slug: str, base: dict | None = None) -> dict:
     aliases = reg.get("protocol_aliases", {})
     norm_proto = lambda p: aliases.get((p or "").lower(), (p or "").lower())
 
-    safe_rows, debank = _fetch_positions(reg, c, chain_id, safe)
-    if not debank:
-        raise RuntimeError("DeBank unavailable (DEBANK_ACCESS_KEY missing or API down); the fast lane needs it for live position values")
+    from fetch_holdings import fetch_safe_balances
+    with ThreadPoolExecutor(max_workers=2) as ex:
+        f_safe = ex.submit(fetch_safe_balances, reg, chain_id, safe)
+        f_eth = ex.submit(_eth_price, chain_id, fnum(base.get("eth_price_usd")) or None)
+        safe_rows = f_safe.result()
+        eth_live, eth_src = f_eth.result()
+    if not safe_rows:
+        raise RuntimeError("Safe Transaction Service returned no balances; the fast lane needs them")
+    held = {r["token"]: fnum(r["balance"]) for r in safe_rows if fnum(r["balance"]) > 0}
+    eth_base = fnum(base.get("eth_price_usd")) or None
+    eth_factor = (eth_live / eth_base) if (eth_live and eth_base) else 1.0
+    factor = lambda grp: eth_factor if grp == "ETH" else 1.0
+    prices = base.get("prices") or {}
+    notes = []
 
-    # ---- live prices per token / symbol (DeBank wallet list + supply tokens inside positions)
-    price_of, price_sym = {}, {}
-    for w in debank.get("wallet", []):
-        if w.get("price"):
-            price_of[w["token"]] = w["price"]; price_sym[(w.get("symbol") or "").upper()] = w["price"]
-    raw_protos = debank.get("protocols") or {}
-
-    # ---- DeBank positions indexed for matching: by pool id (receipt/vault address) and by (protocol, underlying)
-    items = []
-    for did, p in raw_protos.items():
-        ours = norm_proto(p.get("ours") or did)
-        if ours == "merkl":
-            continue                                  # claimables come from the on-chain rewards collector below
-        for it in p.get("items", []):
-            toks = [t for t in it.get("tokens", []) if t and t[0]]
-            items.append(dict(protocol=ours, name=it.get("name"), usd=fnum(it.get("usd")), tokens=toks,
-                              underlying={_underlying(t[0]) for t in toks}, pool=(it.get("pool") or "").lower()))
-    # fetch_debank does not keep pool ids; recover them cheaply from the raw protocol payload when present
-    # (items carry 'pool' only if fetch_debank was extended; matching still works on protocol+underlying)
-
-    # ---- rebase the stored book on live values
+    # ---- positions: Safe units now x unit mark at run
+    book, known_receipts = [], set()
     base_book = [dict(b) for b in base.get("book", []) if b["kind"] in ("position", "in_flight")]
-    used = set()
-    def take_all(pred):
-        """Every unmatched DeBank item satisfying pred, summed. DeBank lists e.g. a zero-value 'Rewards' item beside the
-        real 'Staked' one for the same protocol; the position is the sum, not the first hit."""
-        hits = [i for i, it in enumerate(items) if i not in used and pred(it)]
-        if not hits:
-            return None
-        used.update(hits)
-        return dict(usd=sum(items[i]["usd"] for i in hits), n=len(hits))
-    book = []
     for b in base_book:
         if norm_proto(b["protocol"]) == "merkl":
+            continue                                                 # claimables come from the on-chain rewards collector below
+        if b["kind"] == "in_flight":
+            b["live"] = "stored (withdrawal queue)"; book.append(b); continue
+        rc, unit = (b.get("receipt") or "").lower(), fnum(b.get("unit_usd"))
+        if not rc or unit <= 0:
+            b["live"] = "stale: no receipt token resolved at the run (full refresh to re-mark)"; book.append(b); continue
+        known_receipts.add(rc)
+        try:
+            units = _shares(chain_id, rc, safe) if b.get("receipt_method") == "shares" else held.get(rc, 0.0)
+        except Exception as e:
+            print("  getShares:", str(e)[:100]); b["live"] = "stale: on-chain share read failed"; book.append(b); continue
+        if units <= 0:
+            continue                                                 # receipt gone: the position was exited
+        b["usd"] = round(units * unit * factor(b.get("asset_group")), 2); b["balance"] = units
+        b["live"] = "safe units x run mark" + (" x chainlink ETH" if b.get("asset_group") == "ETH" and eth_src == "chainlink" else "")
+        book.append(b)
+    # receipt tokens in the Safe the run's book did not have: new deposits, unvalued until a full refresh
+    receipts_reg = reg.get("receipt_tokens", {})
+    vaults_perm = {(p.get("vault") or "").lower(): p for p in base.get("permitted", []) if p.get("vault")}
+    for t, units in held.items():
+        if t in known_receipts or t in prices or units < 0.01:      # dust of a vault token beside the real receipt is not a deposit
             continue
-        proto = norm_proto(b["protocol"]); und = _underlying(b.get("symbol")); vault = (b.get("vault") or "").lower()
-        hit = take_all(lambda it: it["protocol"] == proto and vault and it["pool"] == vault) if vault else None
-        if not hit:
-            hit = take_all(lambda it: it["protocol"] == proto and und in it["underlying"])
-        if not hit and sum(1 for x in base_book if norm_proto(x["protocol"]) == proto) == 1:
-            hit = take_all(lambda it: it["protocol"] == proto)      # one stored position, one protocol: whatever DeBank has is it
-        if hit and hit["usd"] > 0:
-            b["usd"] = round(hit["usd"], 2); b["live"] = "debank"
-            book.append(b)
-        elif hit:
-            continue                                                 # DeBank sees the venue but nothing in it: exited
+        lab = receipts_reg.get(t) or (vaults_perm.get(t) and dict(protocol=vaults_perm[t]["protocol"], symbol=vaults_perm[t]["asset"]))
+        if lab:
+            notes.append(f"NOTE: the Safe holds {units:,.4f} {lab.get('symbol')} ({lab.get('protocol')}) that the last run did not book; "
+                         f"value shown after a full refresh")
+
+    # ---- idle: live Safe units x run prices (ETH sleeve re-priced)
+    for sb in safe_rows:
+        t, bal = sb["token"], fnum(sb["balance"])
+        if bal <= 0 or t in known_receipts or t in receipts_reg:
+            continue
+        sym = sb.get("symbol") or ""
+        pr = prices.get(t)
+        if pr:
+            px = pr["price"] * factor(pr.get("asset_group") or asset_group_of(sym, reg))
+        elif sym.upper() == "ETH" and eth_live:
+            px = eth_live
+        elif sym.upper() in STABLE_SYMS:
+            px = 1.0
         else:
-            # nothing live for this venue: the position was exited (or DeBank does not index it). Drop it when the
-            # protocol is otherwise seen by DeBank, keep it flagged when the protocol is not indexed at all.
-            if any(it["protocol"] == proto for it in items):
-                continue
-            b["live"] = "stale (not indexed by DeBank)"; book.append(b)
-    # positions DeBank sees that the stored book did not have (new deposits): add as untracked, priced if a permitted vault matches
+            continue                                                 # unknown token, unknown price: spam guard
+        usd = bal * px
+        if usd < reg.get("spam_dust_usd", 50):
+            continue
+        grp = asset_group_of(sym, reg)
+        if grp == "OTHER" and sym.upper() not in {s.upper() for s in (reg.get("asset_groups", {}).get("OTHER") or [])}:
+            continue
+        book.append(dict(kind="idle", protocol="(wallet)", venue=f"idle in Safe [{sym}]", symbol=sym, asset_group=grp,
+                         usd=round(usd, 2), apy=0.0, apy_source=None, balance=bal, token=t, live="safe"))
+
+    # ---- permitted venues: never reprice or propose what the on-chain Roles gate excluded
     permitted = [dict(p) for p in base.get("permitted", [])]
     gated = {(e.get("vault") or "").lower() for e in (base.get("roles_gate") or {}).get("excluded", []) if e.get("vault")}
     for p in permitted:
         if (p.get("vault") or "").lower() in gated or p.get("apy_source") == "NOT IN ROLES":
             p.update(in_roles=False, priced=False, apy_source="NOT IN ROLES")
-    for i, it in enumerate(items):
-        if i in used or it["usd"] < 1000 or it["protocol"] in ("merkl", "(wallet)"):
-            continue
-        grp = "ETH" if "ETH" in it["underlying"] else ("USD" if it["underlying"] & {"USDC", "USDT", "USDS", "DAI", "GHO"} else "OTHER")
-        sym = it["tokens"][0][0] if it["tokens"] else "?"
-        book.append(dict(kind="position", protocol=it["protocol"], venue=f"{it['protocol']} {it['name']} [{sym}] (new since last run)",
-                         symbol=sym, asset_group=grp, usd=round(it["usd"], 2), apy=None, apy_source=None, untracked=True, live="debank (new)"))
-    # idle: live Safe units x live prices
-    known = {r["token"] for r in book if r.get("token")}
-    receipt = reg.get("receipt_tokens", {})
-    for sb in safe_rows:
-        if sb["balance"] <= 0 or sb["token"] in receipt:
-            continue
-        px = price_of.get(sb["token"]) or price_sym.get((sb["symbol"] or "").upper())
-        if not px:
-            continue
-        usd = sb["balance"] * px
-        if usd < reg.get("spam_dust_usd", 50):
-            continue
-        grp = asset_group_of(sb["symbol"], reg)
-        if grp == "OTHER" and (sb["symbol"] or "").upper() not in {s.upper() for s in (reg.get("asset_groups", {}).get("OTHER") or [])}:
-            continue   # unknown token: spam guard, the Safe list is full of airdropped junk
-        book.append(dict(kind="idle", protocol="(wallet)", venue=f"idle in Safe [{sb['symbol']}]", symbol=sb["symbol"], asset_group=grp,
-                         usd=round(usd, 2), apy=0.0, apy_source=None, balance=sb["balance"], token=sb["token"], live="safe"))
 
     # ---- APYs: one parallel vaults.fyi pass over every vault we hold or may deposit into
     addrs = [b.get("vault") for b in book if b.get("vault")] + [p.get("vault") for p in permitted if p.get("vault") and p.get("in_roles") is not False]
@@ -179,9 +170,9 @@ def live_snapshot(slug: str, base: dict | None = None) -> dict:
                      priced=True, apy_source="vaults.fyi live")
         p.setdefault("apy_total", p.get("apy"))
 
-    # ---- rewards: same collector as the pipeline, priced from DeBank
+    # ---- rewards: same collector as the pipeline, priced from the run's marks
     from fetch_holdings import collect_rewards
-    price_rows = [dict(token=t, price=px, symbol=next((s for s, v in price_sym.items() if v == px), None), kind="idle") for t, px in price_of.items()]
+    price_rows = [dict(token=t, price=v["price"] * factor(v.get("asset_group")), symbol=v.get("symbol"), kind="idle") for t, v in prices.items()]
     try:
         rewards = collect_rewards(c, reg, chain_id, safe, safe_rows, price_rows)
     except Exception as e:
@@ -202,25 +193,29 @@ def live_snapshot(slug: str, base: dict | None = None) -> dict:
     perf = performance(book, permitted, nav, c.get("policy"), args, reg)
     sweep = rewards_sweep(book, permitted, reg)
 
+    stale = sum(1 for b in book if str(b.get("live", "")).startswith("stale"))
+    eth_line = (f"ETH ${eth_live:,.0f} ({eth_src}) vs ${eth_base:,.0f} at the run" if eth_live and eth_base else "ETH price from the run")
     snap = dict(base)
     snap.update(
         live=True, live_as_of=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), live_seconds=round(time.time() - t0, 1),
-        live_sources=dict(positions="DeBank", units="Safe Transaction Service", apys=f"vaults.fyi ({len(va)} vaults)", rewards="on-chain"),
+        live_sources=dict(positions="Safe units x run marks", units="Safe Transaction Service", eth_price=eth_src,
+                          apys=f"vaults.fyi ({len(va)} vaults)", rewards="on-chain"),
         base_as_of=base.get("as_of"), base_run=base.get("run_folder"),
-        nav_usd=round(nav), eth_price_usd=price_sym.get("ETH") or base.get("eth_price_usd"),
+        nav_usd=round(nav), eth_price_usd=eth_live or eth_base,
         book=[dict(kind=b["kind"], protocol=b["protocol"], venue=b["venue"], symbol=b.get("symbol"), asset_group=b["asset_group"],
                    usd=round(fnum(b["usd"]), 2), apy=b.get("apy"), apy_source=b.get("apy_source"), venue_tvl_usd=b.get("venue_tvl_usd"),
                    untracked=b.get("untracked", False), balance=b.get("balance"), claimable=b.get("claimable", False),
-                   claim_cmd=b.get("claim_cmd"), vault=b.get("vault"), live=b.get("live")) for b in book if fnum(b["usd"]) >= 1],
+                   claim_cmd=b.get("claim_cmd"), vault=b.get("vault"), receipt=b.get("receipt"), unit_usd=b.get("unit_usd"),
+                   live=b.get("live")) for b in book if fnum(b["usd"]) >= 1],
         permitted=permitted, policy_checks=checks, rewards_sweep=sweep,
         apy_sources={k: sum(1 for p in permitted if (p.get("apy_source") or "none") == k) for k in sorted({(p.get("apy_source") or "none") for p in permitted})},
-        vault_apys_live=len(va),
-        debank=dict(nav_usd=debank["nav_usd"], protocol_nav_usd=debank["protocol_nav_usd"], wallet_usd=debank["wallet_usd"],
-                    protocols={v["ours"]: round(v["usd"]) for v in raw_protos.values() if v["usd"] > 1000}, diff_vs_syncrone=None, notes=[]),
-        reconciliation=dict(base.get("reconciliation") or {}, live_note=f"live view: DeBank NAV ${debank['nav_usd']:,.0f} vs stored snapshot ${base.get('nav_usd', 0):,.0f}"),
-        flags=[f"LIVE VIEW ({dt.datetime.now(dt.timezone.utc).strftime('%H:%M:%S')} UTC): positions from DeBank, units from the Safe, APYs from vaults.fyi. "
-               f"Permissions and policy from the stored snapshot of {base.get('as_of')}. Run a full refresh for the audited reconciliation."]
-              + [f for f in (base.get("flags") or []) if f.startswith("NOTE")][:3],
+        vault_apys_live=len(va), debank=None,
+        reconciliation=dict(base.get("reconciliation") or {},
+                            live_note=f"live view: Safe units x run marks NAV ${nav:,.0f} vs stored snapshot ${base.get('nav_usd', 0):,.0f}; {eth_line}"
+                                      + (f"; {stale} position(s) kept at the stored value" if stale else "")),
+        flags=[f"LIVE VIEW ({dt.datetime.now(dt.timezone.utc).strftime('%H:%M:%S')} UTC): units from the Safe, marks from the run of {base.get('as_of')}, "
+               f"{eth_line}, APYs from vaults.fyi. Permissions and policy from the stored snapshot. Run a full refresh for the audited reconciliation."]
+              + notes + [f for f in (base.get("flags") or []) if f.startswith("NOTE")][:3],
         performance_summary={g: dict(pickup_usd_per_year=v.get("pickup_usd_per_year"), moves=len(v.get("candidate_moves") or [])) for g, v in perf.items()},
     )
     return snap

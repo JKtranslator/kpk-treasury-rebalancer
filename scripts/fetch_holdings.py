@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -776,7 +777,8 @@ def main():
         if r["kind"] == "idle" and r["token"] in held_tokens:
             r["asset_group"] = "REWARDS"
     recon, nav, flags = reconcile(sync_rows, strat_rows, safe_rows, eth_rows, reg, c)
-    debank = fetch_debank(chain_id, safe) if safe else None
+    # DeBank costs ~36 units a call and adds nothing the Safe + Etherscan reads do not already reconcile; opt-in only
+    debank = fetch_debank(chain_id, safe) if safe and os.environ.get("DEBANK_CROSSCHECK") == "1" else None
     if debank:
         nav["debank_nav_usd"] = debank["nav_usd"]
         nav["syncrone_vs_debank_diff"] = pct_diff(nav["syncrone_nav_usd"], debank["nav_usd"])
@@ -786,7 +788,7 @@ def main():
         for n_ in xc:
             flags.append("NOTE (DeBank cross-check): " + n_)
     else:
-        print("  debank: skipped (no DEBANK_ACCESS_KEY or chain unsupported)")
+        print("  debank: off (set DEBANK_CROSSCHECK=1 for the metered independent read)")
     ub = [r for r in sync_rows if r.get("unbooked")]
     if ub:
         flags.append("NOTE: the Safe holds vault shares Syncrone has not booked yet (value shown as 0 until it does): "
