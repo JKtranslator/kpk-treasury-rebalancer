@@ -502,10 +502,10 @@
       "claimable": false,
       "claim_cmd": null,
       "vault": null,
-      "receipt": null,
-      "receipt_method": null,
-      "unit_usd": null,
-      "units_at_run": null
+      "receipt": "0xd5cce260e7a755ddf0fb9cdf06443d593aaeaa13",
+      "receipt_method": "erc20",
+      "unit_usd": 1.0481199517816302,
+      "units_at_run": 1017718.4749577584
     },
     {
       "kind": "position",

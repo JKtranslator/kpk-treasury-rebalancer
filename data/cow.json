@@ -9,6 +9,113 @@
   "run_folder": "2026-09-15",
   "nav_usd": 18513293,
   "eth_price_usd": 2456.4499,
+  "prices": {
+    "0xba100000625a3754423978a60c9317c58a424e3d": {
+      "symbol": "BAL",
+      "price": 0.1138,
+      "asset_group": "OTHER"
+    },
+    "0x6b175474e89094c44da98b954eedeac495271d0f": {
+      "symbol": "DAI",
+      "price": 1.0,
+      "asset_group": "USD"
+    },
+    "0x207158a267cbd2598bb3d611d8cbdee2709f2f8c": {
+      "symbol": "ciUSDCv3",
+      "price": 1.0001,
+      "asset_group": "USD"
+    },
+    "0xdac17f958d2ee523a2206206994597c13d831ec7": {
+      "symbol": "USDT",
+      "price": 0.9992,
+      "asset_group": "USD"
+    },
+    "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48": {
+      "symbol": "USDC",
+      "price": 0.9999,
+      "asset_group": "USD"
+    },
+    "0xdef1ca1fb7fbcdc777520aa7f396b4e015f497ab": {
+      "symbol": "COW",
+      "price": 0.135,
+      "asset_group": "OTHER"
+    },
+    "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2": {
+      "symbol": "WETH",
+      "price": 2520.7772,
+      "asset_group": "ETH"
+    },
+    "0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee": {
+      "symbol": "weETH",
+      "price": 2774.2777,
+      "asset_group": "ETH"
+    },
+    "0xf1c9acdc66974dfb6decb12aa385b9cd01190e38": {
+      "symbol": "osETH",
+      "price": 2714.746,
+      "asset_group": "ETH"
+    },
+    "0x0000000000000000000000000000000000000000": {
+      "symbol": "ETH",
+      "price": 2516.08,
+      "asset_group": "ETH"
+    },
+    "0x4ef53d2caa51c447fdfeeedee8f07fd1962c9ee6": {
+      "symbol": "KPK_USDC_Prime",
+      "price": 1.0333,
+      "asset_group": "USD"
+    },
+    "0x58d97b57bb95320f9a05dc918aef65434969c2b2": {
+      "symbol": "MORPHO",
+      "price": 2.1775,
+      "asset_group": "OTHER"
+    },
+    "0xa877d5bb0274dccba8556154a30e1ca4021a275f": {
+      "symbol": "KPK_EURC_Yield",
+      "price": 1.1818,
+      "asset_group": "EURO"
+    },
+    "0xbb50a5341368751024ddf33385ba8cf61fe65ff9": {
+      "symbol": "KPK_ETH_Prime",
+      "price": 2573.3295,
+      "asset_group": "ETH"
+    },
+    "0x40d16fc0246ad3160ccc09b8d0d3a2cd28ae6c2f": {
+      "symbol": "GHO",
+      "price": 0.9983,
+      "asset_group": "USD"
+    },
+    "0x4d5f47fa6a74757f35c14fd3a6ef8e3c9bc514e8": {
+      "symbol": "aEthWETH",
+      "price": 2520.7772,
+      "asset_group": "ETH"
+    },
+    "0xaa6e91c82942aeae040303bf96c15a6dbcb82ca0": {
+      "symbol": "aEthEURC",
+      "price": 1.155,
+      "asset_group": "EURO"
+    },
+    "0xae7ab96520de3a18e5e111b5eaab095312d7fe84": {
+      "symbol": "stETH",
+      "price": 2510.6979,
+      "asset_group": "ETH"
+    },
+    "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0": {
+      "symbol": "wstETH",
+      "price": 3128.078,
+      "asset_group": "ETH"
+    },
+    "0xc00e94cb662c3520282e6f5717214004a7f26888": {
+      "symbol": "COMP",
+      "price": 19.4742,
+      "asset_group": "OTHER"
+    },
+    "0x259338656198ec7a76c729514d3cb45dfbf768a1": {
+      "symbol": "RESOLV",
+      "price": 0.0168,
+      "asset_group": "OTHER"
+    }
+  },
   "reconciliation": {
     "syncrone_nav_usd": 18501363,
     "bridge_usd": 18501344,
@@ -54,7 +161,12 @@
       "untracked": false,
       "balance": 8.302223982435503,
       "claimable": true,
-      "claim_cmd": "merkl claim"
+      "claim_cmd": "merkl claim",
+      "vault": null,
+      "receipt": null,
+      "receipt_method": null,
+      "unit_usd": null,
+      "units_at_run": null
     },
     {
       "kind": "reward",
@@ -69,7 +181,12 @@
       "untracked": false,
       "balance": 2.4938946167127534,
       "claimable": true,
-      "claim_cmd": "uniswap claim 1342394"
+      "claim_cmd": "uniswap claim 1342394",
+      "vault": null,
+      "receipt": null,
+      "receipt_method": null,
+      "unit_usd": null,
+      "units_at_run": null
     },
     {
       "kind": "reward",
@@ -84,7 +201,12 @@
       "untracked": false,
       "balance": 38953.78854909609,
       "claimable": true,
-      "claim_cmd": "uniswap claim 1342394"
+      "claim_cmd": "uniswap claim 1342394",
+      "vault": null,
+      "receipt": null,
+      "receipt_method": null,
+      "unit_usd": null,
+      "units_at_run": null
     },
     {
       "kind": "idle",
@@ -99,7 +221,12 @@
       "untracked": false,
       "balance": 199999.99999999997,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": null,
+      "receipt": null,
+      "receipt_method": null,
+      "unit_usd": null,
+      "units_at_run": null
     },
     {
       "kind": "idle",
@@ -114,7 +241,12 @@
       "untracked": false,
       "balance": 2625.742220095646,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": null,
+      "receipt": null,
+      "receipt_method": null,
+      "unit_usd": null,
+      "units_at_run": null
     },
     {
       "kind": "position",
@@ -129,7 +261,12 @@
       "untracked": true,
       "balance": null,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": null,
+      "receipt": "0x207158a267cbd2598bb3d611d8cbdee2709f2f8c",
+      "receipt_method": "erc20",
+      "unit_usd": 1.0000640890603942,
+      "units_at_run": 1000261.66097
     },
     {
       "kind": "idle",
@@ -144,7 +281,12 @@
       "untracked": false,
       "balance": 152.306225,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": null,
+      "receipt": null,
+      "receipt_method": null,
+      "unit_usd": null,
+      "units_at_run": null
     },
     {
       "kind": "idle",
@@ -159,7 +301,12 @@
       "untracked": false,
       "balance": 14142.962281,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": null,
+      "receipt": null,
+      "receipt_method": null,
+      "unit_usd": null,
+      "units_at_run": null
     },
     {
       "kind": "idle",
@@ -174,7 +321,12 @@
       "untracked": false,
       "balance": 2638451.2416446875,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": null,
+      "receipt": null,
+      "receipt_method": null,
+      "unit_usd": null,
+      "units_at_run": null
     },
     {
       "kind": "position",
@@ -189,7 +341,12 @@
       "untracked": true,
       "balance": null,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": null,
+      "receipt": null,
+      "receipt_method": null,
+      "unit_usd": null,
+      "units_at_run": null
     },
     {
       "kind": "position",
@@ -204,7 +361,12 @@
       "untracked": true,
       "balance": null,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": null,
+      "receipt": null,
+      "receipt_method": null,
+      "unit_usd": null,
+      "units_at_run": null
     },
     {
       "kind": "position",
@@ -219,7 +381,12 @@
       "untracked": true,
       "balance": null,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": null,
+      "receipt": null,
+      "receipt_method": null,
+      "unit_usd": null,
+      "units_at_run": null
     },
     {
       "kind": "position",
@@ -234,7 +401,12 @@
       "untracked": true,
       "balance": null,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": null,
+      "receipt": null,
+      "receipt_method": null,
+      "unit_usd": null,
+      "units_at_run": null
     },
     {
       "kind": "position",
@@ -249,7 +421,12 @@
       "untracked": false,
       "balance": null,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": "0x35fa164735182de50811e8e2e824cfb9b6118ac2",
+      "receipt": "0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee",
+      "receipt_method": "erc20",
+      "unit_usd": 2774.2777416894414,
+      "units_at_run": 694.0872306560699
     },
     {
       "kind": "position",
@@ -264,7 +441,12 @@
       "untracked": false,
       "balance": null,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": "0xac0f906e433d58fa868f936e8a43230473652885",
+      "receipt": null,
+      "receipt_method": null,
+      "unit_usd": null,
+      "units_at_run": null
     },
     {
       "kind": "position",
@@ -279,7 +461,12 @@
       "untracked": false,
       "balance": null,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": "0x4ef53d2caa51c447fdfeeedee8f07fd1962c9ee6",
+      "receipt": "0x4ef53d2caa51c447fdfeeedee8f07fd1962c9ee6",
+      "receipt_method": "erc20",
+      "unit_usd": 1.0333479666490164,
+      "units_at_run": 7231461.803551527
     },
     {
       "kind": "position",
@@ -294,7 +481,12 @@
       "untracked": true,
       "balance": null,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": null,
+      "receipt": null,
+      "receipt_method": null,
+      "unit_usd": null,
+      "units_at_run": null
     },
     {
       "kind": "position",
@@ -309,7 +501,12 @@
       "untracked": false,
       "balance": null,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": "0xaa6e91c82942aeae040303bf96c15a6dbcb82ca0",
+      "receipt": "0xaa6e91c82942aeae040303bf96c15a6dbcb82ca0",
+      "receipt_method": "erc20",
+      "unit_usd": 1.1548834374421637,
+      "units_at_run": 2216653.409776
     },
     {
       "kind": "position",
@@ -324,7 +521,12 @@
       "untracked": false,
       "balance": null,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84",
+      "receipt": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84",
+      "receipt_method": "erc20",
+      "unit_usd": 2510.5399831139835,
+      "units_at_run": 47.97759418696792
     },
     {
       "kind": "position",
@@ -339,7 +541,12 @@
       "untracked": false,
       "balance": null,
       "claimable": false,
-      "claim_cmd": null
+      "claim_cmd": null,
+      "vault": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84",
+      "receipt": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84",
+      "receipt_method": "erc20",
+      "unit_usd": 4716.667559822497,
+      "units_at_run": 47.97759418696792
     }
   ],
   "permitted": [
@@ -354,7 +561,9 @@
       "tvl_usd": 17486214.0,
       "priced": true,
       "vault": "0x018008bfb33d285247a21d44e50697654f754e63",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "aave_v3",
@@ -367,7 +576,9 @@
       "tvl_usd": 16481669.0,
       "priced": true,
       "vault": "0xaa6e91c82942aeae040303bf96c15a6dbcb82ca0",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "aave_v3",
@@ -380,7 +591,9 @@
       "tvl_usd": 21468387.0,
       "priced": true,
       "vault": "0x1a88df1cfe15af22b3c4c783d4e6f7f9e0c1885d",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "aave_v3",
@@ -393,7 +606,9 @@
       "tvl_usd": 320947880.0,
       "priced": true,
       "vault": "0x927709711794f3de5ddbf1d176bee2d55ba13c21",
-      "apy_source": "vaults.fyi (stale)"
+      "apy_source": "vaults.fyi (stale)",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "aave_v3",
@@ -406,7 +621,9 @@
       "tvl_usd": 202618168.0,
       "priced": true,
       "vault": null,
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "aave_v3",
@@ -419,7 +636,9 @@
       "tvl_usd": 190068628.0,
       "priced": true,
       "vault": "0x98c23e9d8f34fefb1b7bd6a91b7ff122f4e16f5c",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "aave_v3",
@@ -432,7 +651,9 @@
       "tvl_usd": 562148014.0,
       "priced": true,
       "vault": "0x4f5923fc5fd4a93352581b38b7cd26943012decf",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "aave_v3",
@@ -445,7 +666,9 @@
       "tvl_usd": 8761536.0,
       "priced": true,
       "vault": "0x32a6268f9ba3642dda7892add74f1d34469a4259",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "aave_v3",
@@ -458,7 +681,9 @@
       "tvl_usd": 396356882.0,
       "priced": true,
       "vault": "0x23878914efe38d27c4d67ab83ed1b93a74d4086a",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "aave_v3",
@@ -471,7 +696,9 @@
       "tvl_usd": 2543786521.0,
       "priced": true,
       "vault": "0x5ee5bf7ae06d1be5997a1a72006fe6c607ec6de8",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "aave_v3",
@@ -484,7 +711,9 @@
       "tvl_usd": 706145751.0,
       "priced": true,
       "vault": "0x4d5f47fa6a74757f35c14fd3a6ef8e3c9bc514e8",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "compound_v3",
@@ -497,7 +726,9 @@
       "tvl_usd": 37310030.0,
       "priced": true,
       "vault": "0xc3d688b66703497daa19211eedff47f25384cdc3",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "compound_v3",
@@ -510,7 +741,9 @@
       "tvl_usd": 1783768.0,
       "priced": true,
       "vault": "0x5d409e56d886231adaf00c8775665ad0f9897b56",
-      "apy_source": "vaults.fyi (stale)"
+      "apy_source": "vaults.fyi (stale)",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "compound_v3",
@@ -523,7 +756,9 @@
       "tvl_usd": 26313891.0,
       "priced": true,
       "vault": "0x3afdc9bca9213a35503b077a6072f3d0d5ab0840",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "compound_v3",
@@ -536,7 +771,9 @@
       "tvl_usd": null,
       "priced": false,
       "vault": null,
-      "apy_source": null
+      "apy_source": null,
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "compound_v3",
@@ -549,7 +786,9 @@
       "tvl_usd": 128348301.0,
       "priced": true,
       "vault": "0xa17581a9e3356d9a858b789d68b4d866e593ae94",
-      "apy_source": "vaults.fyi (stale)"
+      "apy_source": "vaults.fyi (stale)",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "compound_v3",
@@ -562,7 +801,9 @@
       "tvl_usd": null,
       "priced": false,
       "vault": null,
-      "apy_source": null
+      "apy_source": null,
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "spark",
@@ -575,7 +816,9 @@
       "tvl_usd": 4629136144.0,
       "priced": true,
       "vault": null,
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "spark",
@@ -588,7 +831,9 @@
       "tvl_usd": 99967823.0,
       "priced": true,
       "vault": null,
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "spark",
@@ -601,7 +846,9 @@
       "tvl_usd": 4629136144.0,
       "priced": true,
       "vault": null,
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "spark",
@@ -614,7 +861,9 @@
       "tvl_usd": 2085175.0,
       "priced": true,
       "vault": "0xbc65ad17c5c0a2a4d159fa5a503f4992c7b545fe",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "spark",
@@ -627,7 +876,9 @@
       "tvl_usd": 4629136144.0,
       "priced": true,
       "vault": null,
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "spark",
@@ -640,7 +891,9 @@
       "tvl_usd": 15593384.0,
       "priced": true,
       "vault": "0xe7df13b8e3d6740fe17cbe928c7334243d86c92f",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "spark",
@@ -653,7 +906,9 @@
       "tvl_usd": 145556959.0,
       "priced": true,
       "vault": null,
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "spark",
@@ -666,7 +921,9 @@
       "tvl_usd": 291097878.0,
       "priced": true,
       "vault": "0x59cd1c87501baa753d0b5b5ab5d8416a45cd71db",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "spark",
@@ -679,7 +936,9 @@
       "tvl_usd": null,
       "priced": false,
       "vault": null,
-      "apy_source": null
+      "apy_source": null,
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "spark",
@@ -692,7 +951,9 @@
       "tvl_usd": null,
       "priced": false,
       "vault": null,
-      "apy_source": null
+      "apy_source": null,
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "ether_fi",
@@ -705,7 +966,9 @@
       "tvl_usd": 5327521152.0,
       "priced": true,
       "vault": "0x35fa164735182de50811e8e2e824cfb9b6118ac2",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "stakewise_v3",
@@ -718,7 +981,9 @@
       "tvl_usd": 388619302.0,
       "priced": true,
       "vault": "0xac0f906e433d58fa868f936e8a43230473652885",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "stakewise_v3",
@@ -731,7 +996,9 @@
       "tvl_usd": null,
       "priced": false,
       "vault": null,
-      "apy_source": null
+      "apy_source": null,
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "gearbox",
@@ -744,7 +1011,9 @@
       "tvl_usd": 519039.0,
       "priced": true,
       "vault": "0x9396dcbf78fc526bb003665337c5e73b699571ef",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "gearbox",
@@ -757,7 +1026,9 @@
       "tvl_usd": 2560251.0,
       "priced": true,
       "vault": "0xa9d17f6d3285208280a1fd9b94479c62e0aaba64",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "lido",
@@ -770,7 +1041,9 @@
       "tvl_usd": 23779242554.0,
       "priced": true,
       "vault": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "morphoVaults",
@@ -783,7 +1056,9 @@
       "tvl_usd": null,
       "priced": false,
       "vault": null,
-      "apy_source": "superseded by v2"
+      "apy_source": "superseded by v2",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "morphoVaults",
@@ -796,7 +1071,9 @@
       "tvl_usd": 2611052.0,
       "priced": true,
       "vault": "0xbb50a5341368751024ddf33385ba8cf61fe65ff9",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "morphoVaults",
@@ -809,7 +1086,9 @@
       "tvl_usd": null,
       "priced": false,
       "vault": null,
-      "apy_source": "superseded by v2"
+      "apy_source": "superseded by v2",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "morphoVaults",
@@ -822,7 +1101,9 @@
       "tvl_usd": 197162.0,
       "priced": true,
       "vault": "0xa877d5bb0274dccba8556154a30e1ca4021a275f",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "morphoVaults",
@@ -835,7 +1116,9 @@
       "tvl_usd": null,
       "priced": false,
       "vault": null,
-      "apy_source": "superseded by v2"
+      "apy_source": "superseded by v2",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "morphoVaults",
@@ -848,7 +1131,9 @@
       "tvl_usd": 20860303.0,
       "priced": true,
       "vault": "0x4ef53d2caa51c447fdfeeedee8f07fd1962c9ee6",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "morphoVaults",
@@ -861,7 +1146,9 @@
       "tvl_usd": null,
       "priced": false,
       "vault": null,
-      "apy_source": null
+      "apy_source": null,
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "morphoVaults",
@@ -874,7 +1161,9 @@
       "tvl_usd": 1127739.0,
       "priced": true,
       "vault": "0x870f0bf29a25a40e7cc087cd5c53e70c11f2c8a8",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "rocket_pool",
@@ -887,7 +1176,9 @@
       "tvl_usd": 1278126591.0,
       "priced": true,
       "vault": "0xae78736cd615f374d3085123a210448e74fc6393",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     },
     {
       "protocol": "sky",
@@ -900,7 +1191,9 @@
       "tvl_usd": 4629136144.0,
       "priced": true,
       "vault": "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd",
-      "apy_source": "defillama live"
+      "apy_source": "defillama live",
+      "in_roles": null,
+      "roles_note": null
     }
   ],
   "ops_tools": [
@@ -1205,5 +1498,14 @@
     "roles_modifier": "0xaF65eec285e2999e8f7bFEc57E83e88A9525F1E6"
   },
   "stale_note": "Strategy API unreachable: permissions from the office cache of 2026-09-15T01:53:22.611Z; APYs refreshed live from DeFiLlama for 31 venues, 12 kept cached (stale)",
-  "ops_tools_caveat": "Optimizer respects only tvlCapPercent per venue. It ignores policy caps/floors and swap-only venues. Reference only."
+  "ops_tools_caveat": "Optimizer respects only tvlCapPercent per venue. It ignores policy caps/floors and swap-only venues. Reference only.",
+  "roles_gate": null,
+  "apy_sources": {
+    "defillama live": 31,
+    "none": 6,
+    "superseded by v2": 3,
+    "vaults.fyi (stale)": 3
+  },
+  "vault_apys_live": 0,
+  "debank": null
 }
