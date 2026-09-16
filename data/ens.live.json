@@ -4,19 +4,19 @@
   "chain_id": 1,
   "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
   "ok": true,
-  "as_of": "2026-09-16T08:54:14+00:00",
+  "as_of": "2026-09-16T11:05:34+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 91638178,
+  "nav_usd": 90318903,
   "positions_usd": 90318903,
-  "idle_usd": 1319275,
+  "idle_usd": 0,
   "in_flight_usd": 0,
-  "onchain_idle_eth": 548.8487272534044,
+  "onchain_idle_eth": 2.53404322427e-07,
   "eth_price_usd": 2403.7141,
   "groups": {
-    "ETH": 56350823,
+    "ETH": 55031548,
     "USD": 35287147,
     "OTHER": 157
   },
@@ -121,17 +121,10 @@
       ]
     }
   ],
-  "idle": [
-    {
-      "symbol": "ETH",
-      "balance": 548.8487272534044,
-      "usd": 1319275,
-      "asset_group": "ETH"
-    }
-  ],
+  "idle": [],
   "in_flight_items": [],
   "token_check": {
-    "checked": 8,
+    "checked": 9,
     "disagree": 0,
     "etherscan_source": "etherscan"
   },
@@ -141,15 +134,15 @@
     {
       "source": "merkl",
       "symbol": "GHO",
-      "amount": 1650.7083416928347,
-      "usd": 1648,
+      "amount": 1685.3237734517481,
+      "usd": 1683,
       "claimable": true
     },
     {
       "source": "merkl",
       "symbol": "COMP",
       "amount": 8.382076,
-      "usd": 157,
+      "usd": 158,
       "claimable": true
     },
     {
@@ -167,6 +160,8 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 1810,
-  "flags": []
+  "rewards_usd": 1845,
+  "flags": [
+    "NOTE: idle re-based on the live Safe (Syncrone lagging): ETH 548.8487 -> 0.0000"
+  ]
 }

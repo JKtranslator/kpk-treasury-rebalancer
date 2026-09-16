@@ -4,22 +4,22 @@
   "chain_id": 1,
   "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
   "ok": true,
-  "as_of": "2026-09-16T09:50:32+00:00",
+  "as_of": "2026-09-16T11:06:14+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 7286452,
+  "nav_usd": 7286453,
   "positions_usd": 7146041,
-  "idle_usd": 140411,
+  "idle_usd": 140412,
   "in_flight_usd": 0,
   "onchain_idle_eth": 3.140807908958729,
   "eth_price_usd": 2398.26,
   "groups": {
-    "USD": 1633189,
+    "USD": 1633787,
     "REWARDS": 117,
-    "OTHER": 4997093,
-    "ETH": 656021
+    "ETH": 656021,
+    "OTHER": 4996496
   },
   "sleeves": [
     {
@@ -107,8 +107,8 @@
   "idle": [
     {
       "symbol": "USDC",
-      "balance": 648.874808,
-      "usd": 649,
+      "balance": 1247.030208,
+      "usd": 1247,
       "asset_group": "USD"
     },
     {
@@ -116,12 +116,6 @@
       "balance": 28.376777604667712,
       "usd": 59,
       "asset_group": "REWARDS"
-    },
-    {
-      "symbol": "cbBTC",
-      "balance": 0.00788571,
-      "usd": 597,
-      "asset_group": "OTHER"
     },
     {
       "symbol": "ETH",
@@ -144,7 +138,7 @@
   ],
   "in_flight_items": [],
   "token_check": {
-    "checked": 10,
+    "checked": 9,
     "disagree": 0,
     "etherscan_source": "etherscan"
   },
@@ -155,13 +149,13 @@
       "source": "merkl",
       "symbol": "COMP",
       "amount": 0.560618,
-      "usd": 10,
+      "usd": 11,
       "claimable": true
     },
     {
       "source": "merkl",
       "symbol": "GEAR",
-      "amount": 69694.05046704496,
+      "amount": 70107.78730939023,
       "usd": 23,
       "claimable": true
     },
@@ -182,6 +176,6 @@
   ],
   "rewards_usd": 145,
   "flags": [
-    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 632.4756 -> 648.8748"
+    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 632.4756 -> 1,247.0302; cbBTC 0.0079 -> 0.0000"
   ]
 }
