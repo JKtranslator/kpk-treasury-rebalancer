@@ -27,7 +27,7 @@ def resolve_receipts(book: list[dict], h: dict, reg: dict) -> dict:
     """Annotate the assessment book in place (receipt, receipt_method, unit_usd, units_at_run) and return the
     run's price map {token: {symbol, price, asset_group}} for idle tokens and reward pricing."""
     aliases = reg.get("protocol_aliases", {})
-    norm = lambda p: aliases.get((p or "").lower(), (p or "").lower())
+    norm = lambda p: aliases.get((p or "").lower(), (p or "").lower()).lower()   # Syncrone name or Strategy API key, one spelling
     ZERO = "0x0000000000000000000000000000000000000000"
     safe = {r["token"]: r for r in h.get("safe_balances") or [] if fnum(r.get("balance")) > 0 and r["token"] != ZERO}   # native ETH is never a receipt
     strat = {(r.get("vault") or "").lower(): r for r in h["positions"] if r["source"] == "strategy_api" and r.get("vault")}
@@ -54,6 +54,12 @@ def resolve_receipts(book: list[dict], h: dict, reg: dict) -> dict:
                 r = min(cands, key=lambda r: abs(fnum(r["usd"]) - fnum(b["usd"])))
                 if fnum(r["usd"]) > 0 and abs(fnum(r["usd"]) / fnum(b["usd"]) - 1) < 0.10:
                     hit = dict(receipt=r["token"], receipt_method="erc20", units_at_run=fnum(safe[r["token"]]["balance"]))
+        if not hit and not vault:                                          # Syncrone-only row: the protocol's single Strategy API vault
+            cands = [r for r in strat.values() if norm(r["protocol"]) == proto and r.get("asset_group") == b.get("asset_group") and fnum(r.get("usd")) > 0]
+            if len(cands) == 1:
+                vault = cands[0]["vault"]
+                if vault in safe and fnum(b["usd"]) / fnum(safe[vault]["balance"]) < 1e5:
+                    hit = dict(receipt=vault, receipt_method="erc20", units_at_run=fnum(safe[vault]["balance"]))
         if not hit and vault in strat and strat[vault].get("lp_balance_raw"):
             hit = dict(receipt=vault, receipt_method="shares", units_at_run=int(strat[vault]["lp_balance_raw"]) / 1e18)
         if hit and hit["units_at_run"] > 0:
