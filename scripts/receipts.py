@@ -67,6 +67,14 @@ def resolve_receipts(book: list[dict], h: dict, reg: dict, permitted: list[dict]
                     hit = dict(receipt=vault, receipt_method="erc20", units_at_run=fnum(safe[vault]["balance"]))
         if not hit and vault in strat and strat[vault].get("lp_balance_raw"):
             hit = dict(receipt=vault, receipt_method="shares", units_at_run=int(strat[vault]["lp_balance_raw"]) / 1e18)
+        if not hit and vault and vault not in safe and h.get("avatar_safe"):
+            # a vault the Safe holds no token of (StakeWise v3): shares read on-chain at publish time
+            try:
+                sh = _get_shares(int(h["chain_id"]), vault, h["avatar_safe"])
+            except Exception as e:
+                sh = 0.0; print(f"  receipts: getShares {vault[:10]}: {str(e)[:80]}")
+            if sh > 0:
+                hit = dict(receipt=vault, receipt_method="shares", units_at_run=sh)
         if not hit and not vault and permitted and h.get("avatar_safe"):
             # no Strategy API row either (off-network run): the protocol's single permitted vault, shares read on-chain
             cands = {(p.get("vault") or "").lower() for p in permitted if norm(p.get("protocol")) == proto
