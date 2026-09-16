@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-16T14:29:55+00:00",
+  "generated": "2026-09-16T14:32:02+00:00",
   "clients": [
     {
       "client": "ens",
@@ -12,8 +12,8 @@
     {
       "client": "nexus",
       "display_name": "Nexus Mutual DAO Treasury",
-      "as_of": "2026-09-16T09:49:28+00:00",
-      "nav_usd": 7286453,
+      "as_of": "2026-09-16T14:31:02+00:00",
+      "nav_usd": 7286454,
       "run_folder": "2026-09-16",
       "file": "data/nexus.json"
     },
