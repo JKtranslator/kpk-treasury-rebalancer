@@ -405,11 +405,23 @@ class H(BaseHTTPRequestHandler):
     STATIC_TYPES = {".html": "text/html; charset=utf-8", ".js": "application/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
                     ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".ico": "image/x-icon"}
 
+    def _is_local(self) -> bool:
+        """A genuinely local caller: loopback socket AND not relayed by the reverse proxy. Caddy connects from
+        127.0.0.1 on behalf of the public internet but always stamps X-Forwarded-For, so proxied requests are
+        never 'local' whatever their socket address says. Browsers add Origin on cross-site fetches; scripts do not,
+        which is why the old 'loopback without Origin' rule let any curl through the public URL."""
+        if self.client_address[0] not in ("127.0.0.1", "::1"):
+            return False
+        for h in ("X-Forwarded-For", "X-Forwarded-Host", "X-Forwarded-Proto", "X-Real-IP", "Forwarded"):
+            if self.headers.get(h):
+                return False
+        return not self.headers.get("Origin")
+
     def _authorized(self) -> bool:
         tok = os.environ.get("EXECUTOR_TOKEN", "")
         if not tok:
-            return self.client_address[0] in ("127.0.0.1", "::1")   # no token configured: loopback only
-        return self.headers.get("Authorization", "") == f"Bearer {tok}" or self.client_address[0] in ("127.0.0.1", "::1") and not self.headers.get("Origin")
+            return self._is_local()                                   # no token configured: local callers only
+        return self.headers.get("Authorization", "") == f"Bearer {tok}" or self._is_local()
 
     def _static(self, rel: str) -> bool:
         """Serve the page itself from the repo root so a tunnelled http://127.0.0.1:8743/ is same-origin."""
