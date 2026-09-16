@@ -23,6 +23,58 @@ SEL_LATEST_ANSWER = "0x50d25bcd"   # latestAnswer()       (Chainlink aggregator,
 CHAINLINK_ETH_USD = {1: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", 100: "0xa767f745331D267c7751297D982b050c93985627"}
 
 
+# ---------------------------------------------------------------- what one receipt unit is worth
+SEL_DECIMALS = "0x313ce567"        # decimals()
+SEL_ASSET = "0x38d52e0f"           # asset()                       ERC-4626 (Fluid fTokens, Morpho vaults, sUSDS)
+SEL_CONVERT = "0x07a2d13a"         # convertToAssets(uint256)
+SEL_AAVE_UNDERLYING = "0xb16a19de" # UNDERLYING_ASSET_ADDRESS()    Aave aToken, always 1:1
+SEL_COMET_BASE = "0xc55dae63"      # baseToken()                   Compound Comet, always 1:1
+_RATE_CACHE: dict[tuple[int, str], dict] = {}
+
+
+def receipt_rate(chain_id: int, addr: str) -> dict:
+    """The receipt's relationship to its underlying, read on chain.
+
+    Dividing a venue's dollar value by the units in the Safe looks like a mark, but the two numbers come from
+    different clocks: Syncrone books a deposit minutes after the Safe holds the shares, and in that window the
+    implied mark silently absorbs the whole deposit. The chain does not have that problem: an ERC-4626 vault
+    says how many assets a share is worth, and an aToken or a Comet balance is its underlying, one for one.
+    Returns {underlying, rate} (assets per whole share) or {} when the receipt is its own asset (stETH, ETHx...).
+    """
+    from fetch_holdings import _rpc_call
+    k = (chain_id, addr.lower())
+    if k in _RATE_CACHE:
+        return _RATE_CACHE[k]
+    def call(sig_data):
+        try:
+            return int(_rpc_call(chain_id, addr, sig_data), 16)
+        except Exception:
+            return None
+    out = {}
+    und = call(SEL_ASSET)
+    if und:
+        dec = call(SEL_DECIMALS) or 18
+        one = 10 ** int(dec)
+        assets = call(SEL_CONVERT + hex(one)[2:].rjust(64, "0"))
+        if assets:
+            und_addr = "0x" + hex(und)[2:].rjust(40, "0")[-40:]
+            und_dec = None
+            try:
+                und_dec = int(_rpc_call(chain_id, und_addr, SEL_DECIMALS), 16)
+            except Exception:
+                pass
+            if und_dec is not None:
+                out = dict(underlying=und_addr, rate=assets / 10 ** und_dec, kind="erc4626")
+    if not out:
+        for sig, kind in ((SEL_AAVE_UNDERLYING, "aave"), (SEL_COMET_BASE, "comet")):
+            und = call(sig)
+            if und:
+                out = dict(underlying="0x" + hex(und)[2:].rjust(40, "0")[-40:], rate=1.0, kind=kind)
+                break
+    _RATE_CACHE[k] = out
+    return out
+
+
 def _get_shares(chain_id: int, vault: str, safe: str) -> float:
     from fetch_holdings import _rpc_call
     return int(_rpc_call(chain_id, vault, SEL_GET_SHARES + safe[2:].lower().rjust(64, "0")), 16) / 1e18
@@ -89,6 +141,11 @@ def resolve_receipts(book: list[dict], h: dict, reg: dict, permitted: list[dict]
                     hit = dict(receipt=v, receipt_method="shares", units_at_run=sh)
         if hit and hit["units_at_run"] > 0:
             hit["unit_usd"] = fnum(b["usd"]) / hit["units_at_run"]
+            rr = receipt_rate(int(h["chain_id"]), hit["receipt"])
+            if rr and prices.get(rr["underlying"]):
+                # the honest mark: assets per share on chain, priced at the underlying's price
+                hit.update(receipt_underlying=rr["underlying"], receipt_kind=rr["kind"], receipt_rate=rr["rate"])
+                hit["unit_usd"] = rr["rate"] * prices[rr["underlying"]]["price"]
             used.add(hit["receipt"])
             b.update(hit)
     return prices

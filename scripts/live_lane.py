@@ -110,8 +110,20 @@ def live_snapshot(slug: str, base: dict | None = None) -> dict:
             print("  getShares:", str(e)[:100]); b["live"] = "stale: on-chain share read failed"; book.append(b); continue
         if units <= 0:
             continue                                                 # receipt gone: the position was exited
-        b["usd"] = round(units * unit * factor(b.get("asset_group")), 2); b["balance"] = units
-        b["live"] = "safe units x run mark" + (" x chainlink ETH" if b.get("asset_group") == "ETH" and eth_src == "chainlink" else "")
+        und = (b.get("receipt_underlying") or "").lower()
+        if und and prices.get(und):
+            # a vault share is worth what the chain says it converts to, priced at the underlying's price: this is
+            # exact the moment a deposit lands, where a stored dollars-per-unit mark would still be a run behind
+            from receipts import receipt_rate
+            rr = receipt_rate(chain_id, rc)
+            rate = rr.get("rate") if rr else b.get("receipt_rate")
+            px = prices[und]["price"] * factor(prices[und].get("asset_group") or b.get("asset_group"))
+            b["usd"] = round(units * (rate if rate else 1.0) * px, 2)
+            b["live"] = f"safe units x on-chain {'share rate' if (rr or {}).get('kind') == 'erc4626' else '1:1'}"
+        else:
+            b["usd"] = round(units * unit * factor(b.get("asset_group")), 2)
+            b["live"] = "safe units x run mark" + (" x chainlink ETH" if b.get("asset_group") == "ETH" and eth_src == "chainlink" else "")
+        b["balance"] = units
         book.append(b)
     # receipt tokens in the Safe the run's book did not have: new deposits, unvalued until a full refresh
     receipts_reg = reg.get("receipt_tokens", {})
