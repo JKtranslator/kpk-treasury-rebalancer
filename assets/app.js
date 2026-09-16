@@ -88,7 +88,6 @@
     $('#app').hidden = false;
     const r = snap.reconciliation;
     $('#stamp').innerHTML = `<b>${esc(snap.display_name)}</b> · chain ${snap.chain_id} · run ${esc(snap.run_folder)}`;
-    if (snap.stale_note) { $('#stamp2').title = snap.stale_note; }
     const src = snap.apy_sources || {}; const gate = snap.roles_gate || {};
     const nLlama = Object.keys(src).filter(k => k.startsWith('defillama')).reduce((a, k) => a + src[k], 0);
     const nGated = (gate.excluded || []).length;
