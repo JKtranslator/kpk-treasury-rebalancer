@@ -4,27 +4,27 @@
   "chain_id": 1,
   "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
   "ok": true,
-  "as_of": "2026-09-16T02:21:16+00:00",
+  "as_of": "2026-09-16T03:25:36+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 94379911,
-  "positions_usd": 92996385,
+  "nav_usd": 91702315,
+  "positions_usd": 90318789,
   "idle_usd": 1383525,
   "in_flight_usd": 0,
   "onchain_idle_eth": 548.8487272534044,
   "eth_price_usd": 2520.7772,
   "groups": {
-    "ETH": 59100462,
-    "USD": 35279232,
-    "OTHER": 163
+    "ETH": 56415073,
+    "USD": 35287034,
+    "OTHER": 157
   },
   "sleeves": [
     {
       "protocol": "ether_fi",
       "asset_group": "ETH",
-      "usd": 20665966,
+      "usd": 19711107,
       "in_flight_usd": 0,
       "positions": [
         "Etherfi Staked on Ethereum"
@@ -33,7 +33,7 @@
     {
       "protocol": "fluid",
       "asset_group": "USD",
-      "usd": 19214065,
+      "usd": 19220134,
       "in_flight_usd": 0,
       "positions": [
         "Fluid Yield on Ethereum"
@@ -42,7 +42,7 @@
     {
       "protocol": "stakewise_v3",
       "asset_group": "ETH",
-      "usd": 17927279,
+      "usd": 17095843,
       "in_flight_usd": 0,
       "positions": [
         "Stakewise Lending on Ethereum"
@@ -51,7 +51,7 @@
     {
       "protocol": "stader",
       "asset_group": "ETH",
-      "usd": 16544576,
+      "usd": 15764626,
       "in_flight_usd": 0,
       "positions": [
         "Stader Staked on Ethereum"
@@ -60,7 +60,7 @@
     {
       "protocol": "morphoVaults",
       "asset_group": "USD",
-      "usd": 7926207,
+      "usd": 7927196,
       "in_flight_usd": 0,
       "positions": [
         "Morpho v2 Yield on Ethereum"
@@ -69,7 +69,7 @@
     {
       "protocol": "aave_v3",
       "asset_group": "USD",
-      "usd": 3369004,
+      "usd": 3369355,
       "in_flight_usd": 0,
       "positions": [
         "Aave v3 Lending on Ethereum"
@@ -78,7 +78,7 @@
     {
       "protocol": "sky",
       "asset_group": "USD",
-      "usd": 3261347,
+      "usd": 3261568,
       "in_flight_usd": 0,
       "positions": [
         "Sky Yield on Ethereum"
@@ -87,7 +87,7 @@
     {
       "protocol": "lido",
       "asset_group": "ETH",
-      "usd": 2579116,
+      "usd": 2459972,
       "in_flight_usd": 0,
       "positions": [
         "Lido Staked on Ethereum"
@@ -96,7 +96,7 @@
     {
       "protocol": "compound_v3",
       "asset_group": "USD",
-      "usd": 1507108,
+      "usd": 1507280,
       "in_flight_usd": 0,
       "positions": [
         "Compound v3 Lending on Ethereum"
@@ -114,7 +114,7 @@
     {
       "protocol": "compound_v3",
       "asset_group": "OTHER",
-      "usd": 163,
+      "usd": 157,
       "in_flight_usd": 0,
       "positions": [
         "Compound v3 Lending on Ethereum"
@@ -149,7 +149,7 @@
       "source": "merkl",
       "symbol": "COMP",
       "amount": 8.382076,
-      "usd": 156,
+      "usd": 158,
       "claimable": true
     },
     {
@@ -167,6 +167,6 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 1809,
+  "rewards_usd": 1811,
   "flags": []
 }
