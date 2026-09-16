@@ -6,8 +6,8 @@
 <title>Treasury Rebalancer | KPK</title>
 <meta name="description" content="Holdings, policy checks and permitted yield moves for the treasuries KPK manages. Snapshot-driven; simulate thresholds in the browser.">
 <link rel="icon" href="assets/kpk.png">
-<link rel="stylesheet" href="assets/styles.css?v=39fd4ec601">
-<link rel="stylesheet" href="assets/rebalancer.css?v=39fd4ec601">
+<link rel="stylesheet" href="assets/styles.css?v=a2f7683ee2">
+<link rel="stylesheet" href="assets/rebalancer.css?v=a2f7683ee2">
 </head>
 <body>
 <div class="wrap">
@@ -28,7 +28,8 @@
   <div class="navbar">
     <div class="seg clients" id="clientTabs" role="tablist" aria-label="Client"></div>
     <div class="navright">
-      <button class="btn ghost" id="refreshBtn" type="button" title="Re-run live holdings, yields and the assessment for this client, then reload">↻ Refresh client</button>
+      <button class="btn ghost" id="refreshBtn" type="button" title="Live view in a few seconds: positions from DeBank, units from the Safe, APYs from vaults.fyi, moves and rewards recomputed">↻ Refresh client</button>
+      <button class="lnk" id="fullRefreshBtn" type="button" title="Full pipeline on the executor host (Syncrone, Etherscan, reconciliation, git push). 1 to 3 minutes. This is the audited record.">full refresh</button>
       <div class="seg views" id="viewTabs" role="tablist" aria-label="View">
         <button data-v="holdings" aria-pressed="true">Holdings</button>
         <button data-v="strategies" aria-pressed="false">Execution</button>
@@ -201,6 +202,6 @@
     </div>
   </div>
 </div>
-<script src="assets/app.js?v=39fd4ec601"></script>
+<script src="assets/app.js?v=a2f7683ee2"></script>
 </body>
 </html>

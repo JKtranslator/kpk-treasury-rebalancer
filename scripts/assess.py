@@ -248,6 +248,24 @@ def performance(book, permitted, nav, pol, args, reg):
     return groups
 
 
+def rewards_sweep(book: list[dict], permitted: list[dict], reg: dict) -> dict:
+    """Claimable rewards -> CoW swap to USDC -> deposit in the best permitted USDC venue. Reward tokens already in the
+    wallet are holdings (Holdings tab, REWARDS category, sellable from the Swap panel), not claims."""
+    rew_all = [b for b in book if b["asset_group"] == "REWARDS"]
+    rew = [b for b in rew_all if not b.get("claim_only") and b["kind"] == "reward"]
+    claim_only = [dict(symbol=b["symbol"], amount=b.get("balance"), usd=round(b["usd"]), source=b["protocol"], claim_cmd=b.get("claim_cmd"),
+                       token_id=b.get("token_id"), venue=b["venue"]) for b in rew_all if b.get("claim_only")]
+    apy_of = lambda p: fnum(p.get("apy_total") if p.get("apy_total") is not None else p.get("apy"))
+    usd_venues = sorted([p for p in permitted if p["asset_group"] == "USD" and p.get("priced") and p["action"] == "deposit"
+                         and "USDC" in (p.get("asset") or "").upper() and p.get("in_roles") is not False], key=lambda p: -apy_of(p))
+    return dict(total_usd=round(sum(b["usd"] for b in rew)), min_usd=reg.get("rewards", {}).get("min_sweep_usd", 100),
+                items=[dict(symbol=b["symbol"], amount=b.get("balance"), usd=round(b["usd"]), source=b["protocol"], claimable=b["kind"] == "reward",
+                            claim_cmd=b.get("claim_cmd")) for b in rew],
+                claim_only=claim_only,
+                best_usd_venue=(dict(protocol=usd_venues[0]["protocol"], asset=usd_venues[0]["asset"], vault=usd_venues[0].get("vault"),
+                                     apy=apy_of(usd_venues[0])) if usd_venues else None))
+
+
 def render_md(c, h, y, book, nav, checks, perf, args) -> str:
     L = []
     L.append(f"# {c['display_name']} — rebalancing data appendix")
@@ -445,21 +463,7 @@ def main():
     nav = sum(b["usd"] for b in book)
     checks = policy_checks(book, nav, c.get("policy"), reg)
     perf = performance(book, y["permitted"], nav, c.get("policy"), args, reg)
-    # rewards sweep: claim everything claimable + held reward tokens, swap to USDC via CoW, deposit in the best USD venue
-    rew_all = [b for b in book if b["asset_group"] == "REWARDS"]
-    # only claimable rewards belong in the claim section; reward tokens already in the wallet are holdings
-    # (Holdings tab, REWARDS category) and can be sold from the Swap panel
-    rew = [b for b in rew_all if not b.get("claim_only") and b["kind"] == "reward"]
-    claim_only = [dict(symbol=b["symbol"], amount=b.get("balance"), usd=round(b["usd"]), source=b["protocol"], claim_cmd=b.get("claim_cmd"),
-                       token_id=b.get("token_id"), venue=b["venue"]) for b in rew_all if b.get("claim_only")]
-    usd_venues = sorted([p for p in y.get("permitted", []) if p["asset_group"] == "USD" and p["priced"] and p["action"] == "deposit"
-                         and "USDC" in (p.get("asset") or "").upper()], key=lambda p: -fnum(p["apy_total"]))
-    sweep = dict(total_usd=round(sum(b["usd"] for b in rew)), min_usd=reg.get("rewards", {}).get("min_sweep_usd", 100),
-                 items=[dict(symbol=b["symbol"], amount=b.get("balance"), usd=round(b["usd"]), source=b["protocol"], claimable=b["kind"] == "reward",
-                             claim_cmd=b.get("claim_cmd")) for b in rew],
-                 claim_only=claim_only,
-                 best_usd_venue=(dict(protocol=usd_venues[0]["protocol"], asset=usd_venues[0]["asset"], vault=usd_venues[0].get("vault"),
-                                      apy=usd_venues[0]["apy_total"]) if usd_venues else None))
+    sweep = rewards_sweep(book, y.get("permitted", []), reg)
     write_json(out / "assessment.json", dict(client=args.client, nav_usd=round(nav), book=book, policy_checks=checks,
                                               performance=perf, rewards_sweep=sweep, thresholds=vars(args)))
     md = render_md(c, h, y, book, nav, checks, perf, args)

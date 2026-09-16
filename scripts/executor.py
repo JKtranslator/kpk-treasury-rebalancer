@@ -54,7 +54,38 @@ PROTO = {"morphoVaults": "morpho", "aave_v3": "aave", "compound_v3": "compound",
          "rocket_pool": "rocketpool", "gearbox": "gearbox"}
 STABLES = {"USDC", "USDT", "USDS", "DAI", "GHO", "EURC", "PYUSD", "RLUSD"}
 ALLOWED_ORIGINS = ("http://localhost:", "http://127.0.0.1:", "https://jktranslator.github.io", "https://82-70-94-93.sslip.io")
-PROTECTED = ("/plan", "/propose", "/refresh/")   # need Authorization: Bearer <EXECUTOR_TOKEN>
+PROTECTED = ("/plan", "/propose", "/refresh/", "/live/")   # need Authorization: Bearer <EXECUTOR_TOKEN>
+LIVE_CACHE: dict[str, tuple[float, dict]] = {}   # slug -> (built_at, snapshot); the fast lane is cheap but not free
+LIVE_LOCK = threading.Lock()
+LIVE_TTL = 15.0
+
+
+def live_view(slug: str, force: bool = False) -> dict:
+    """Snapshot-shaped live view from DeBank + Safe + vaults.fyi (scripts/live_lane.py), built in-process, cached 15 s."""
+    now = time.time()
+    with LIVE_LOCK:
+        hit = LIVE_CACHE.get(slug)
+        if hit and not force and now - hit[0] < LIVE_TTL:
+            return dict(hit[1], live_cached=True)
+    from live_lane import live_snapshot
+    snap = live_snapshot(slug, load_snapshot(slug))
+    with LIVE_LOCK:
+        LIVE_CACHE[slug] = (time.time(), snap)
+    return snap
+
+
+def safe_tx_status(chain_id: int, safe_tx_hash: str) -> dict:
+    """Has the Safe executed this proposal yet? (Safe Transaction Service, read-only.)"""
+    svc = registry()["safe_tx_service"][str(chain_id)]
+    k = os.environ.get("SAFE_API_KEY", "")
+    url = f"{svc['gateway'] if k else svc['legacy']}/multisig-transactions/{safe_tx_hash}/"
+    import urllib.request
+    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {k}"} if k else {})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        d = json.loads(r.read().decode())
+    return dict(safe_tx_hash=safe_tx_hash, is_executed=bool(d.get("isExecuted")), is_successful=d.get("isSuccessful"),
+                tx_hash=d.get("transactionHash"), execution_date=d.get("executionDate"), nonce=d.get("nonce"),
+                confirmations=len(d.get("confirmations") or []), required=d.get("confirmationsRequired"))
 
 
 def underlying(symbol: str | None, asset_group: str) -> str:
@@ -428,6 +459,27 @@ class H(BaseHTTPRequestHandler):
             if not name or "/" in name or ".." in name or not f.exists():
                 return self._json(404, dict(error="not found"))
             return self._json(200, json.loads(f.read_text(encoding="utf-8")))
+        if self.path.startswith("/live/"):
+            slug = self.path.split("/live/", 1)[1].split("?")[0]
+            if slug not in CLIENT_DIRS:
+                return self._json(404, dict(error="unknown client"))
+            try:
+                return self._json(200, live_view(slug, force="force" in self.path))
+            except Exception as e:
+                return self._json(502, dict(error=f"live view failed: {str(e)[:200]}"))
+        if self.path.startswith("/safe-tx/"):
+            parts = self.path.split("/safe-tx/", 1)[1].split("?")[0].split("/")
+            if len(parts) != 2 or parts[0] not in CLIENT_DIRS:
+                return self._json(400, dict(error="use /safe-tx/<client>/<safeTxHash>"))
+            try:
+                snap = load_snapshot(parts[0])
+                st = safe_tx_status(int(snap.get("chain_id") or 1), parts[1])
+                if st["is_executed"]:
+                    with LIVE_LOCK:
+                        LIVE_CACHE.pop(parts[0], None)     # balances moved: the next live view must rebuild
+                return self._json(200, st)
+            except Exception as e:
+                return self._json(502, dict(error=f"safe tx lookup failed: {str(e)[:160]}"))
         if self.path.startswith("/balances/"):
             # live Safe balances for the swap panel (Safe Transaction Service, key held on the box)
             slug = self.path.split("/balances/", 1)[1].split("?")[0]

@@ -34,10 +34,17 @@
     showView(q.get('view') || 'holdings');
     await pingExecutor();
     bindModal();
-    $('#refreshBtn').onclick = refreshClient;
+    $('#refreshBtn').onclick = () => refreshClient(false);
+    $('#fullRefreshBtn').onclick = () => refreshClient(true);
   }
 
+  let liveTimer = null;
+  function armLive(on) {
+    clearInterval(liveTimer); liveTimer = null;
+    if (on && executorOn) { liveRefresh(true); liveTimer = setInterval(() => { if (!document.hidden && !$('#modal').offsetParent) liveRefresh(true); }, 60000); }
+  }
   function showView(v) {
+    armLive(v === 'strategies');
     document.querySelectorAll('.view').forEach(el => el.hidden = el.dataset.view !== v);
     [...$('#viewTabs').children].forEach(x => x.setAttribute('aria-pressed', x.dataset.v === v));
     const q = new URLSearchParams(location.search); q.set('view', v); history.replaceState(null, '', '?' + q);
@@ -91,11 +98,12 @@
     const src = snap.apy_sources || {}; const gate = snap.roles_gate || {};
     const nLlama = Object.keys(src).filter(k => k.startsWith('defillama')).reduce((a, k) => a + src[k], 0);
     const nGated = (gate.excluded || []).length;
-    const when = new Date(snap.as_of).toISOString().slice(0, 16).replace('T', ' ');
+    const when = snap.live ? `live ${new Date(snap.live_as_of).toISOString().slice(11, 19)}` : new Date(snap.as_of).toISOString().slice(0, 16).replace('T', ' ');
     // keep the masthead line short; the provenance detail lives in the tooltip
     $('#stamp2').innerHTML = `${when} UTC · ${snap.period} · ${src['vaults.fyi live'] || 0} live APYs`
       + (nGated ? ` · <b class="bad">${nGated} venue${nGated > 1 ? 's' : ''} not in Roles</b>` : '')
-      + (snap.stale_note ? ' · <span class="bad">off-network</span>' : '');
+      + (snap.stale_note && !snap.live ? ' · <span class="bad">off-network</span>' : '')
+      + (snap.live ? ` · <span class="dim">stored snapshot ${new Date(snap.base_as_of).toISOString().slice(0, 16).replace('T', ' ')} UTC</span>` : '');
     $('#stamp2').title = [`Data as of ${when} UTC · APY period ${snap.period}`,
       `${src['vaults.fyi live'] || 0} venues priced live by vaults.fyi${nLlama ? `, ${nLlama} via DeFiLlama` : ''}`,
       gate.checked ? `${gate.n_targets} on-chain Roles targets checked${nGated ? `; excluded: ${(gate.excluded || []).map(e => e.protocol + '/' + e.asset).join(', ')}` : '; all venues verified'}`
@@ -261,7 +269,7 @@
     $('#simMoves').innerHTML = moves.length ? moves.map(m => `<div class="mv ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path"><b>${m.g}</b> · ${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → <b>${pct(m.toApyDiluted)}</b>${m.toApyDiluted < m.toApy - 1e-6 ? ` after dilution (${pct(m.toApy)} headline)` : ''}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.shareAfter != null ? ` · our share after ${(m.shareAfter * 100).toFixed(1)}%` : ''}${m.forced ? ' · excluded venue: exit is mandatory' : ''}</small></div><div class="amt num">${usd(m.amt)}<small>+${usd(m.amt * m.pick)}/yr</small></div><button class="btn ${executorOn ? '' : 'ghost'}" data-exec="${m.id}" type="button" title="${executorOn ? 'Build, simulate and propose via the local SafeAgent executor' : 'Start scripts/executor.py to enable'}">Execute</button></div>`).join('')
       : '<p class="empty">No move clears these thresholds. Laggards are noted, not traded.</p>';
     $('#simMoves').onclick = e => { const b = e.target.closest('button[data-exec]'); if (b) openModal(moves[Number(b.dataset.exec)]); };
-    renderRewards(); renderStage2(); renderSwap();
+    renderRewards(); renderStage2(); renderSwap(); renderPending(); pollPending();
   }
 
   /* ------------------------------------------------------------------ rewards sweep */
@@ -334,6 +342,40 @@
     $('#mPlan').hidden = true; $('#mSim').hidden = true; $('#mMsg').className = 'modal-msg';
     $('#mMsg').textContent = 'Stage 1 builds the claim steps and one pre-signed CoW order per reward token; stage 2 (deposit) is offered once the orders fill.';
     $('#mBuild').disabled = !executorOn; $('#mPropose').disabled = true; steps({}); $('#modal').hidden = false;
+  }
+
+  /* ------------------------------------------------------------------ pending proposals (awaiting signers / execution) */
+  const pendKey = () => 'kpk_pending_' + snap.client;
+  const pendingList = () => { try { return JSON.parse(localStorage.getItem(pendKey()) || '[]'); } catch (e) { return []; } };
+  function addPending(hash, plan) {
+    const l = pendingList();
+    l.push({ hash, plan_id: plan.plan_id, labels: (plan.transactions || []).map(t => t.label), commands: plan.commands || [], created: Date.now(), status: null });
+    localStorage.setItem(pendKey(), JSON.stringify(l)); renderPending(); pollPending();
+  }
+  let pendTimer = null;
+  async function pollPending() {
+    clearTimeout(pendTimer);
+    const l = pendingList(); if (!l.length || !executorOn) return;
+    let changed = false, executed = false;
+    for (const p of l) {
+      try {
+        const r = await fetch(EXECUTOR + '/safe-tx/' + snap.client + '/' + p.hash, { cache: 'no-store' }); const s = await r.json();
+        if (!s.error) { p.status = s; changed = true; if (s.is_executed) executed = true; }
+      } catch (e) { }
+    }
+    const keep = l.filter(p => !(p.status && p.status.is_executed) && Date.now() - p.created < 7 * 86400e3);
+    localStorage.setItem(pendKey(), JSON.stringify(keep));
+    if (changed) renderPending();
+    if (executed) await liveRefresh(true);
+    if (keep.length) pendTimer = setTimeout(pollPending, 30000);
+  }
+  function renderPending() {
+    let box = $('#pendingBox'); if (!box) { box = document.createElement('div'); box.id = 'pendingBox'; const sim = $('#simOut'); sim.parentNode.insertBefore(box, $('#gateNote') || sim); }
+    const l = pendingList();
+    box.hidden = !l.length;
+    box.innerHTML = l.map(p => { const s = p.status || {}; const st = s.is_executed ? 'executed' : s.confirmations != null ? `${s.confirmations}/${s.required} signatures` : 'awaiting signers';
+      return `<div class="mv"><div class="path"><span class="pill p-pend">proposed</span> <b>${esc((p.commands || p.labels || []).join(' · '))}</b>${s.nonce != null ? ` · nonce ${s.nonce}` : ''}<br><small>${esc(st)} · proposed ${new Date(p.created).toISOString().slice(0, 16).replace('T', ' ')} UTC · the live view drops this move once the Safe executes it</small></div><div class="amt num">${esc(p.hash.slice(0, 10))}…</div><button class="btn ghost" data-drop="${esc(p.hash)}" type="button" title="Forget this proposal here (does not cancel it in the Safe)">dismiss</button></div>`; }).join('');
+    box.querySelectorAll('button[data-drop]').forEach(b => b.onclick = () => { localStorage.setItem(pendKey(), JSON.stringify(pendingList().filter(p => p.hash !== b.dataset.drop))); renderPending(); });
   }
 
   /* ------------------------------------------------------------------ swap (CoW, within permissions) */
@@ -538,10 +580,27 @@
     if (snap) simulate();
   }
 
-  async function refreshClient() {
+  /* Fast lane: GET /live/<client> rebuilds the snapshot from DeBank + Safe + vaults.fyi in a few seconds and reruns the
+     policy, move and reward engines. Executed moves vanish because the balances moved. The full pipeline stays the
+     audited record (reconciliation, git history) and sits behind the "full refresh" link. */
+  async function liveRefresh(quiet) {
+    if (!snap || !executorOn) return false;
+    const msg = $('#refreshMsg');
+    try {
+      let r = await fetch(EXECUTOR + '/live/' + snap.client, { cache: 'no-store', headers: authHeaders() });
+      if (r.status === 401 && !quiet && askToken('Executor token needed for the live view')) r = await fetch(EXECUTOR + '/live/' + snap.client, { cache: 'no-store', headers: authHeaders() });
+      const j = await r.json();
+      if (!r.ok || j.error) throw new Error(j.error || r.statusText);
+      snap = j; render();
+      if (!quiet) { msg.hidden = false; msg.className = 'refresh-msg ok'; msg.innerHTML = `Live view in ${j.live_seconds}s${j.live_cached ? ' (cached, under 15 s old)' : ''} · NAV ${compact(j.nav_usd)} · positions DeBank, units Safe, APYs vaults.fyi (${j.vault_apys_live} vaults), rewards on-chain · permissions and policy from the stored snapshot of ${new Date(j.base_as_of).toISOString().slice(0, 16).replace('T', ' ')} UTC`; }
+      return true;
+    } catch (e) { if (!quiet) { msg.hidden = false; msg.className = 'refresh-msg err'; msg.textContent = 'Live view failed: ' + e.message; } return false; }
+  }
+  async function refreshClient(full) {
     if (!snap || !executorOn) return;
     const btn = $('#refreshBtn'), msg = $('#refreshMsg');
-    btn.classList.add('busy'); btn.textContent = '↻ Refreshing…'; msg.hidden = false; msg.className = 'refresh-msg';
+    if (!full) { btn.classList.add('busy'); btn.textContent = '↻ Live…'; try { await liveRefresh(false); } finally { btn.classList.remove('busy'); btn.textContent = '↻ Refresh client'; } return; }
+    btn.classList.add('busy'); btn.textContent = '↻ Full refresh…'; msg.hidden = false; msg.className = 'refresh-msg';
     msg.textContent = `Running holdings (Syncrone, Safe, Etherscan), yields and assessment for ${snap.display_name} on the executor host. Usually 1 to 3 minutes.`;
     try {
       let r = await fetch(EXECUTOR + '/refresh/' + snap.client, { cache: 'no-store', headers: authHeaders() });
@@ -638,6 +697,7 @@
       $('#mMsg').innerHTML = `Proposed. Safe tx hash <span class="num">${esc(j.safe_tx_hash || '')}</span>${j.url ? ` · <a href="${esc(j.url)}" target="_blank" rel="noopener">open in Safe ↗</a>` : ''}` +
         (j.cow_orders && j.cow_orders.length ? `<br>CoW order${j.cow_orders.length > 1 ? 's' : ''} placed: ` + j.cow_orders.map(o => `<a href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.uid.slice(0, 14))}… ↗</a>`).join(', ') + ' (fill after the Safe executes)' : '') +
         (j.cow_warning ? `<br><b>${esc(j.cow_warning)}</b>` : '');
+      if (j.safe_tx_hash) addPending(j.safe_tx_hash, cur.plan);
       if (cur.stage2 && !cur.claimOnly) { const pend = JSON.parse(localStorage.getItem('kpk_stage2') || '{}'); delete pend[snap.client]; localStorage.setItem('kpk_stage2', JSON.stringify(pend)); renderStage2(); }
       if (cur.plan && cur.plan.next_stage) {
         const pend = JSON.parse(localStorage.getItem('kpk_stage2') || '{}');

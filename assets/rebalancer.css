@@ -8,6 +8,10 @@
 .exec-state.on{background:var(--good-bg);color:var(--good);}
 .exec-state.off{background:var(--card);color:var(--muted);}
 .navright{display:flex;align-items:center;gap:10px;}
+.lnk{background:none;border:0;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer;padding:0 2px;}
+.lnk:hover{color:var(--ink);}
+.pill.p-pend{background:var(--warn-bg);color:var(--warn);}
+#pendingBox{margin-bottom:12px;}
 .refresh-msg{margin-top:10px;background:var(--card);color:var(--body);border-radius:11px;padding:9px 13px;font-size:12.5px;line-height:1.55;}
 .refresh-msg.ok{background:var(--good-bg);color:var(--good);}
 .refresh-msg.warn{background:var(--warn-bg);color:var(--warn);}

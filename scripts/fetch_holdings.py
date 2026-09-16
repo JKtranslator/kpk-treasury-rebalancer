@@ -492,6 +492,7 @@ def fetch_debank(chain_id: int, safe: str) -> dict | None:
         usd = sum(fnum(i.get("stats", {}).get("net_usd_value")) for i in p.get("portfolio_item_list", []))
         by_proto[p.get("id")] = dict(name=p.get("name"), usd=usd, ours=DEBANK_PROTO.get(p.get("id"), p.get("id")),
                                      items=[dict(name=i.get("name"), usd=fnum(i.get("stats", {}).get("net_usd_value")),
+                                                 pool=((i.get("pool") or {}).get("id") or "").lower(),
                                                  tokens=[(t.get("symbol"), fnum(t.get("amount"))) for t in i.get("asset_token_list", [])[:4]])
                                             for i in p.get("portfolio_item_list", [])])
     wallet = [dict(symbol=t.get("symbol"), token=(t.get("id") or "").lower(), amount=fnum(t.get("amount")), price=fnum(t.get("price")),

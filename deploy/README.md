@@ -43,3 +43,9 @@ After editing anything under `assets/`, run `python scripts/stamp_assets.py` bef
 ## Roles gate
 
 `fetch_yields.py` verifies every vault-type venue in the Strategy API permitted list against the proposer bot's parsed on-chain Roles (`<kpk-proposer>/<client dir>/Data/live_permissions.json`, path from `safeagent_dir` in the registry). Venues not in Roles are marked `NOT IN ROLES`, unpriced, and can never be proposed by either engine. The Strategy API list can run ahead of the Roles (pending PURs); only the Roles file counts.
+
+## Fast lane (`/live/<client>`)
+
+The Refresh button on the page calls `GET /live/<client>` (bearer token). `scripts/live_lane.py` rebuilds a snapshot-shaped view in a few seconds from DeBank (positions, live USD), the Safe Transaction Service (token units) and vaults.fyi (APY per vault, parallel), runs the same policy / performance / rewards-sweep engines as the pipeline, and returns it. Permissions, the Roles gate and the policy block come from the last published `data/<client>.json`. Cached 15 s per client in the executor process. The full pipeline (`/refresh/<client>`, 1-3 minutes, Syncrone + Etherscan + reconciliation + git push) remains the audited record and sits behind the "full refresh" link.
+
+`GET /safe-tx/<client>/<safeTxHash>` reports whether a proposal has been executed (Safe Transaction Service). The page records every proposal it makes, polls this every 30 s, and drops the pending card and re-runs the live view once the Safe executes it.
