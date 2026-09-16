@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
   "ok": true,
-  "as_of": "2026-09-16T07:39:41+00:00",
+  "as_of": "2026-09-16T08:43:10+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -149,7 +149,7 @@
       "source": "merkl",
       "symbol": "COMP",
       "amount": 8.382076,
-      "usd": 158,
+      "usd": 157,
       "claimable": true
     },
     {
@@ -167,6 +167,6 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 1811,
+  "rewards_usd": 1810,
   "flags": []
 }
