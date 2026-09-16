@@ -188,7 +188,7 @@ def live_snapshot(slug: str, base: dict | None = None) -> dict:
     nav = sum(b["usd"] for b in book)
     th = base.get("thresholds") or {}
     args = SimpleNamespace(min_pickup_bps=th.get("min_pickup_bps", 50), min_move_usd=th.get("min_move_usd", 250_000),
-                           venue_tvl_cap_pct=th.get("venue_tvl_cap_pct", 10), exclude=th.get("exclude") or [])
+                           venue_tvl_cap_pct=th.get("venue_tvl_cap_pct", 20), exclude=th.get("exclude") or [])
     checks = policy_checks(book, nav, c.get("policy"), reg)
     perf = performance(book, permitted, nav, c.get("policy"), args, reg)
     sweep = rewards_sweep(book, permitted, reg)

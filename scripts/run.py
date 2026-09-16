@@ -26,7 +26,7 @@ def main():
     ap.add_argument("--exclude", nargs="*", default=[])
     ap.add_argument("--min-pickup-bps", default="50")
     ap.add_argument("--min-move-usd", default="250000")
-    ap.add_argument("--venue-tvl-cap-pct", default="10")
+    ap.add_argument("--venue-tvl-cap-pct", default="20")
     ap.add_argument("--skip-yields", action="store_true", help="client without a Strategy API entry")
     a = ap.parse_args()
     out = Path(a.out) if a.out else HERE.parent / "runs" / a.client / dt.date.today().isoformat()

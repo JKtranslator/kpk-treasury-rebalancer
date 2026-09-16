@@ -38,7 +38,8 @@ Ask only what the registry cannot know:
    (default: first in `clients.json`). Never ask for addresses; they are in `clients.json`.
 2. **Exclusions**: venues to avoid this round (hack, blacklist, pending exit). Pass as `--exclude`.
 3. **Thresholds** if the user wants them different from the defaults (50 bps pickup, $250k
-   minimum move, 10% of venue TVL).
+   minimum move, 20% of venue TVL including what we already hold — KPK's working ceiling for a
+   single venue, tightened per venue when the dilution it causes eats the pickup).
 4. **Output**: default is the forwardable doc in `references/output-format.md`; ask about
    denomination (USD vs native units) only if the client is ETH-heavy.
 

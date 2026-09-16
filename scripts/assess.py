@@ -1,7 +1,7 @@
 """Turn holdings.json + yields.json into a policy check and a yield-opportunity list.
 
     python assess.py --client ens --out <dir> [--min-pickup-bps 50] [--min-move-usd 250000]
-                     [--venue-tvl-cap-pct 10] [--exclude gearbox fluid ...]
+                     [--venue-tvl-cap-pct 20] [--exclude gearbox fluid ...]
 
 Reads <out>/holdings.json and <out>/yields.json (from fetch_holdings.py / fetch_yields.py) and
 writes <out>/assessment.json and <out>/assessment.md. The markdown is the data appendix Claude
@@ -394,7 +394,7 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--min-pickup-bps", type=float, default=50)
     ap.add_argument("--min-move-usd", type=float, default=250_000)
-    ap.add_argument("--venue-tvl-cap-pct", type=float, default=10)
+    ap.add_argument("--venue-tvl-cap-pct", type=float, default=20)
     ap.add_argument("--exclude", nargs="*", default=[], help="protocol keys to treat as excluded venues (hack, blacklist)")
     args = ap.parse_args()
     reg = registry()

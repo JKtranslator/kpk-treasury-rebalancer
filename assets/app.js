@@ -17,7 +17,7 @@
     : b.apy == null ? '' : b.apy_source && b.apy_source !== 'vaults.fyi' ? `<span class="src" title="${esc(b.apy_source)}">${b.apy_source.startsWith('defillama') ? 'llama' : b.apy_source.includes('stale') ? 'stale' : b.apy_source === 'vaults.fyi live' ? 'live' : b.apy_source.startsWith('vaults.fyi') ? '' : 'realised'}</span>` : '';
 
   let index = null, snap = null, live = null, moves = [], executorOn = false;
-  let sim = { pickupBps: 50, moveUsd: 250000, tvlCapPct: 10, basis: 'apy', exclude: new Set(), xFrom: null, xTo: null, xAmt: 0, xUser: false, override: {}, route: {} };
+  let sim = { pickupBps: 50, moveUsd: 250000, tvlCapPct: 20, basis: 'apy', exclude: new Set(), xFrom: null, xTo: null, xAmt: 0, xUser: false, override: {}, route: {} };
 
   async function loadJSON(p) { const r = await fetch(p, { cache: 'no-store' }); if (!r.ok) throw new Error(p + ' ' + r.status); return r.json(); }
 
