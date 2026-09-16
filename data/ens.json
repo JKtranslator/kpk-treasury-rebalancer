@@ -400,10 +400,10 @@
       "claimable": false,
       "claim_cmd": null,
       "vault": "0xac0f906e433d58fa868f936e8a43230473652885",
-      "receipt": null,
-      "receipt_method": null,
-      "unit_usd": null,
-      "units_at_run": null
+      "receipt": "0xac0f906e433d58fa868f936e8a43230473652885",
+      "receipt_method": "shares",
+      "unit_usd": 2609.1533035195403,
+      "units_at_run": 6552.256839197248
     },
     {
       "kind": "position",
