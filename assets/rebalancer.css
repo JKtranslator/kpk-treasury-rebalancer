@@ -138,3 +138,14 @@ th.ck,td.ck{width:28px;padding-right:0!important;} td.ck input,th.ck input{curso
 .src.bad{color:var(--bad);border-color:var(--bad);}
 
 #gateNote{margin-bottom:12px;} .bad{color:var(--bad);}
+
+/* rebalancing: two blocks */
+.sub-h{display:flex;align-items:baseline;gap:12px;margin:18px 0 8px;flex-wrap:wrap;}
+.sub-h h3{margin:0;font-size:14px;color:var(--ink);}
+.sub-h span{font-size:12px;color:var(--muted);}
+.cat{margin-top:12px;}
+.cat .grp-h{margin-bottom:2px;}
+.mv .path .leg{color:var(--muted);}
+.mv.cross .amt small{color:var(--good);}
+.sim-grid.cross{margin-bottom:10px;}
+.sim-grid.cross select,.sim-grid.cross input[type=number]{width:100%;padding:8px 10px;border:1px solid rgba(0,0,0,.14);border-radius:9px;font:inherit;font-size:13px;background:#fff;color:var(--ink);}

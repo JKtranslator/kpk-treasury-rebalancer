@@ -17,7 +17,7 @@
     : b.apy == null ? '' : b.apy_source && b.apy_source !== 'vaults.fyi' ? `<span class="src" title="${esc(b.apy_source)}">${b.apy_source.startsWith('defillama') ? 'llama' : b.apy_source.includes('stale') ? 'stale' : b.apy_source === 'vaults.fyi live' ? 'live' : b.apy_source.startsWith('vaults.fyi') ? '' : 'realised'}</span>` : '';
 
   let index = null, snap = null, live = null, moves = [], executorOn = false;
-  let sim = { pickupBps: 50, moveUsd: 250000, tvlCapPct: 10, basis: 'apy', exclude: new Set() };
+  let sim = { pickupBps: 50, moveUsd: 250000, tvlCapPct: 10, basis: 'apy', exclude: new Set(), xFrom: null, xTo: null, xAmt: 0 };
 
   async function loadJSON(p) { const r = await fetch(p, { cache: 'no-store' }); if (!r.ok) throw new Error(p + ' ' + r.status); return r.json(); }
 
@@ -41,7 +41,9 @@
   let liveTimer = null;
   function armLive(on) {
     clearInterval(liveTimer); liveTimer = null;
-    if (on && executorOn) { liveRefresh(true); liveTimer = setInterval(() => { if (!document.hidden && !$('#modal').offsetParent) liveRefresh(true); }, 60000); }
+    // one view when the Execution view opens; the executor serves it from a 10-minute cache (a DeBank rebuild costs ~36
+    // units), and only the Refresh button or an executed Safe transaction makes it rebuild
+    if (on && executorOn) liveRefresh(true);
   }
   function showView(v) {
     armLive(v === 'strategies');
@@ -164,6 +166,9 @@
     $('#exclude').onclick = e => { const b = e.target.closest('button'); if (!b) return; sim.exclude.has(b.dataset.p) ? sim.exclude.delete(b.dataset.p) : sim.exclude.add(b.dataset.p); b.setAttribute('aria-pressed', sim.exclude.has(b.dataset.p)); simulate(); };
     $('#basis').onclick = e => { const b = e.target.closest('button'); if (!b) return; [...$('#basis').children].forEach(x => x.setAttribute('aria-pressed', x === b)); sim.basis = b.dataset.b; simulate(); };
     bindRange('#pickup', 'pickupBps', v => v + ' bps'); bindRange('#move', 'moveUsd', v => compact(v)); bindRange('#tvl', 'tvlCapPct', v => v + '% of venue TVL (incl. holdings)');
+    $('#xFrom').onchange = e => { sim.xFrom = e.target.value; simulate(); };
+    $('#xTo').onchange = e => { sim.xTo = e.target.value; simulate(); };
+    let xDeb = null; $('#xAmt').oninput = e => { sim.xAmt = Number(e.target.value || 0); clearTimeout(xDeb); xDeb = setTimeout(simulate, 400); };
     simulate();
 
     $('#opsCaveat').textContent = snap.ops_tools_caveat || '';
@@ -196,11 +201,31 @@
 
   /* Same method as scripts/assess.py: per asset group, fill the best permitted venues from idle
      balances and laggards, bounded by venue TVL cap and policy protocol-cap headroom. */
+  const XQUEUE = { lido: 'Lido withdrawal queue', stader: 'Stader unstake queue (no CoW depth for ETHx)', ether_fi: 'ether.fi withdrawal', stakewise_v3: 'StakeWise exit queue', rocket_pool: 'Rocket Pool burn' };
+  function syncCross(cats) {
+    const k = snap.client + '|' + cats.join(',');
+    if ($('#xFrom').dataset.k !== k) {
+      $('#xFrom').dataset.k = k;
+      sim.xFrom = cats.includes('ETH') ? 'ETH' : cats[0] || null; sim.xTo = cats.find(c => c !== sim.xFrom) || null;
+      // default size: the policy's regular tranche, if it has one (ENS: 1,500 ETH a fortnight)
+      sim.xAmt = Math.round((snap.policy?.rebalance_tranche_eth || 0) * (priceOf('ETH') || 0) / 1000) * 1000;
+      const opt = c => `<option value="${esc(c)}">${esc(c)}</option>`;
+      $('#xFrom').innerHTML = cats.map(opt).join(''); $('#xTo').innerHTML = cats.map(opt).join('');
+      $('#xAmt').value = sim.xAmt || '';
+    }
+    $('#xFrom').value = sim.xFrom || ''; $('#xTo').value = sim.xTo || '';
+  }
+
+  /* Same method as scripts/assess.py: per asset group, fill the best permitted venues from idle
+     balances and laggards, bounded by venue TVL cap and policy protocol-cap headroom. A second pass
+     rotates capital between categories (mandate moves) through the same ledger, so dilution and caps
+     are counted once across both. */
   function simulate() {
     const nav = snap.nav_usd; const cap = snap.policy?.protocol_cap_pct_nav;
     const byProto = {}; snap.book.forEach(b => { if (b.kind !== 'idle') byProto[b.protocol] = (byProto[b.protocol] || 0) + b.usd; });
     const minPick = sim.pickupBps / 1e4; moves = []; let before = 0, den = 0, idleDeployed = 0;
-    const heldMap = new Map(), dep = new Map();   // venue -> what we already hold / what this plan adds
+    const heldMap = new Map(), dep = new Map(), headroom = new Map();   // venue -> held / added by this plan / room left
+    const taken = new Map(); const avail = b => b.usd - (taken.get(b) || 0);   // book row -> already committed by an earlier pass
     // one protocol-cap budget shared by every venue of that protocol, spent as moves are allocated
     const protoRoom = new Map();
     Object.keys(byProto).concat(snap.permitted.map(p => p.protocol)).forEach(p => {
@@ -210,66 +235,132 @@
     const STABLE_SYMS = ['USDC', 'USDT', 'USDS', 'DAI', 'GHO', 'EURC', 'PYUSD', 'RLUSD'];
     const isStable = s => STABLE_SYMS.some(t => (s || '').toUpperCase().includes(t));
     const IDLE_FLOOR = 5000;
-    for (const g of [...new Set(snap.book.map(b => b.asset_group))]) {
+    const groups = [...new Set(snap.book.map(b => b.asset_group))];
+    const cats = groups.filter(g => g !== 'OTHER' && g !== 'REWARDS');
+    syncCross(cats);
+    const venuesOf = g => snap.permitted.filter(p => p.asset_group === g && p.priced && apyOf(p) != null && !sim.exclude.has(p.protocol)).sort((a, b) => apyOf(b) - apyOf(a));
+    // the threshold governs the resulting position, so subtract what we already own in the venue
+    const roomFor = v => { if (!heldMap.has(v)) heldMap.set(v, heldIn(v)); if (!headroom.has(v)) headroom.set(v, v.tvl_usd ? Math.max(0, sim.tvlCapPct / 100 * v.tvl_usd - heldMap.get(v)) : Infinity); return headroom.get(v); };
+    // place up to `rem` dollars of `src` into `venues`, best first; returns what was placed
+    function place(src, rem, venues, g, o, key) {
+      let placed = 0;
+      for (const v of venues) {
+        if (!o.cross && rem < sim.moveUsd && src.kind !== 'idle') break;
+        if (sameVenue(src, v)) continue;
+        if (!o.cross) {
+          const st = (src.symbol || '').toUpperCase(), vt = (v.asset || '').toUpperCase();
+          if (!(st === vt || (isStable(st) && isStable(vt)) || g === 'ETH')) continue;
+        }
+        const amt = Math.min(rem, roomFor(v), protoRoom.get(v.protocol) ?? Infinity);
+        // the pickup is judged on the rate we would actually receive once this money lands
+        const pick = diluted(apyOf(v), v.tvl_usd, (dep.get(v) || 0) + Math.max(amt, 0)) - src.apy;
+        if (!o.cross && pick < minPick && src.kind === 'position' && !sim.exclude.has(src.protocol)) break;
+        if (amt <= 0 || (!o.cross && amt < Math.min(sim.moveUsd, rem))) continue;
+        moves.push({ id: moves.length, g, from: src, to: v, amt, pick, toApy: apyOf(v), forced: !!o.forced, cross: !!o.cross });
+        dep.set(v, (dep.get(v) || 0) + amt); headroom.set(v, headroom.get(v) - amt);
+        protoRoom.set(v.protocol, (protoRoom.get(v.protocol) ?? Infinity) - amt);
+        rem -= amt; placed += amt; if (rem <= 0) break;
+      }
+      if (key) taken.set(key, (taken.get(key) || 0) + placed);
+      return placed;
+    }
+    // ---- pass 1 (mandate first): between categories, worst performers of `from` into the best venues of `to`
+    let xShort = 0, xOut = 0;
+    if (sim.xFrom && sim.xTo && sim.xFrom !== sim.xTo && sim.xAmt > 0) {
+      const venues = venuesOf(sim.xTo);
+      const srcs = snap.book.filter(b => b.asset_group === sim.xFrom && (b.kind === 'idle' || (b.kind === 'position' && b.apy != null && !b.untracked)))
+        .sort((a, b) => (a.kind === 'idle' ? -1 : a.apy) - (b.kind === 'idle' ? -1 : b.apy));   // idle earns nothing: it goes first
+      let rem = sim.xAmt;
+      for (const src of srcs) {
+        if (rem <= 0) break;
+        const take = Math.min(rem, avail(src));
+        if (take < Math.min(sim.moveUsd, rem)) continue;   // no crumbs: a leg is at least the min move unless it completes the amount
+        const p = place({ ...src, apy: src.apy || 0 }, take, venues, `${sim.xFrom} → ${sim.xTo}`, { cross: true }, src);
+        rem -= p; xOut += p;
+        if (p < take - 1) break;   // destination venues are full under the share and protocol caps
+      }
+      xShort = Math.max(0, sim.xAmt - xOut);
+    }
+    // ---- pass 2: within each category, on what the rotation left
+    const stats = {};
+    for (const g of groups) {
       if (g === 'OTHER') continue;   // governance / non-yield tokens are never rotated
       const pos = snap.book.filter(b => b.asset_group === g && b.kind === 'position' && b.apy != null && !b.untracked);
-      const idle = snap.book.filter(b => b.asset_group === g && b.kind === 'idle' && b.usd >= IDLE_FLOOR);
-      const venues = snap.permitted.filter(p => p.asset_group === g && p.priced && apyOf(p) != null && !sim.exclude.has(p.protocol)).sort((a, b) => apyOf(b) - apyOf(a));
+      const idle = snap.book.filter(b => b.asset_group === g && b.kind === 'idle' && avail(b) >= IDLE_FLOOR);
+      const venues = venuesOf(g);
+      let gUsd = 0, gY = 0; pos.concat(idle).forEach(b => { gUsd += b.usd; gY += b.usd * (b.apy || 0); });
+      stats[g] = { usd: gUsd, apy: gUsd ? gY / gUsd : null, best: venues[0] || null, idle: idle.reduce((s, b) => s + b.usd, 0) };
       pos.forEach(b => { before += b.usd * b.apy; den += b.usd; });
       if (!venues.length) continue;
       const best = apyOf(venues[0]);
-      venues.forEach(v => { if (!heldMap.has(v)) heldMap.set(v, heldIn(v)); });
-      // the threshold governs the resulting position, so subtract what we already own in the venue
-      const headroom = new Map(venues.map(v => [v, v.tvl_usd ? Math.max(0, sim.tvlCapPct / 100 * v.tvl_usd - heldMap.get(v)) : Infinity]));
-      const sources = [...idle.map(b => ({ ...b, apy: 0 })), ...pos.filter(b => sim.exclude.has(b.protocol) || (best - b.apy >= minPick && b.usd >= sim.moveUsd)).sort((a, b) => a.apy - b.apy)];
-      for (const src of sources) {
-        let rem = src.usd;
-        for (const v of venues) {
-          if (rem < sim.moveUsd && src.kind !== 'idle') break;
-          if (sameVenue(src, v)) continue;
-          const st = (src.symbol || '').toUpperCase(), vt = (v.asset || '').toUpperCase();
-          const compatible = st === vt || (isStable(st) && isStable(vt)) || g === 'ETH';
-          if (!compatible) continue;
-          const amt = Math.min(rem, headroom.get(v), protoRoom.get(v.protocol) ?? Infinity);
-          // the pickup is judged on the rate we would actually receive once this money lands
-          const pick = diluted(apyOf(v), v.tvl_usd, (dep.get(v) || 0) + Math.max(amt, 0)) - src.apy;
-          if (pick < minPick && src.kind === 'position' && !sim.exclude.has(src.protocol)) break;
-          if (amt < Math.min(sim.moveUsd, rem) || amt <= 0) continue;
-          moves.push({ id: moves.length, g, from: src, to: v, amt, pick, toApy: apyOf(v), forced: sim.exclude.has(src.protocol) });
-          dep.set(v, (dep.get(v) || 0) + amt);
-          headroom.set(v, headroom.get(v) - amt);
-          protoRoom.set(v.protocol, (protoRoom.get(v.protocol) ?? Infinity) - amt);
-          rem -= amt; if (src.kind === 'idle') idleDeployed += amt;
-          if (rem <= 0) break;
-        }
-      }
+      const sources = [...idle.map(b => ({ ...b, apy: 0, key: b })), ...pos.filter(b => sim.exclude.has(b.protocol) || (best - b.apy >= minPick && avail(b) >= sim.moveUsd)).map(b => ({ ...b, key: b })).sort((a, b) => a.apy - b.apy)];
+      for (const src of sources) { const p = place(src, avail(src.key), venues, g, { forced: sim.exclude.has(src.protocol) }, src.key); if (src.kind === 'idle') idleDeployed += p; }
     }
     // several moves can land in the same venue, so settle every rate against that venue's plan total
-    let dilutionCost = 0;
-    for (const [v, added] of dep) dilutionCost += (heldMap.get(v) || 0) * (apyOf(v) - diluted(apyOf(v), v.tvl_usd, added));
+    let dilW = 0, dilX = 0;
+    for (const [v, added] of dep) {
+      const drag = (heldMap.get(v) || 0) * (apyOf(v) - diluted(apyOf(v), v.tvl_usd, added));
+      const xa = moves.filter(m => m.cross && m.to === v).reduce((s, m) => s + m.amt, 0);
+      dilX += drag * xa / added; dilW += drag * (1 - xa / added);
+    }
     moves.forEach(m => {
       const added = dep.get(m.to) || 0;
       m.toApyDiluted = diluted(apyOf(m.to), m.to.tvl_usd, added);
       m.pick = m.toApyDiluted - m.from.apy;
       m.shareAfter = m.to.tvl_usd ? ((heldMap.get(m.to) || 0) + added) / (m.to.tvl_usd + added) : null;
     });
-    const gross = moves.reduce((s, m) => s + m.amt * m.pick, 0);
-    const pickup = gross - dilutionCost; const after = before + pickup; den += idleDeployed;
-    const headlineGross = moves.reduce((s, m) => s + m.amt * (m.toApy - m.from.apy), 0);
+    const W = moves.filter(m => !m.cross), X = moves.filter(m => m.cross);
+    const gross = W.reduce((s, m) => s + m.amt * m.pick, 0);
+    const pickup = gross - dilW; const after = before + pickup; den += idleDeployed;
+    const headlineGross = W.reduce((s, m) => s + m.amt * (m.toApy - m.from.apy), 0);
     const gx = (snap.roles_gate && snap.roles_gate.excluded) || [];
     let gateNote = $('#gateNote'); if (!gateNote) { gateNote = document.createElement('div'); gateNote.id = 'gateNote'; gateNote.className = 'sw-note'; $('#simOut').parentNode.insertBefore(gateNote, $('#simOut')); }
     gateNote.hidden = !gx.length;
     gateNote.innerHTML = gx.length ? `<div><b>Excluded, not in on-chain Roles:</b> ${gx.map(e => { const p = snap.permitted.find(q => q.vault === e.vault); return `${esc(e.protocol)} ${esc(e.asset)}${p && p.apy_total != null ? ` (${pct(p.apy_total)})` : ''}`; }).join(', ')}. The Strategy API lists them as permitted, but the Safe cannot call them until the PUR lands, so they never appear as candidates here.</div>` : '';
-    $('#simOut').innerHTML = [
-      ['Candidate moves', moves.length], ['Capital moved', compact(moves.reduce((s, m) => s + m.amt, 0))],
+    const tiles = rows => rows.map(([t, v]) => `<div class="o"><div class="t">${t}</div><div class="v num">${v}</div></div>`).join('');
+    $('#simOut').innerHTML = tiles([
+      ['Candidate moves', W.length], ['Capital moved', compact(W.reduce((s, m) => s + m.amt, 0))],
       ['Blended APY before', den ? pct(before / (den - idleDeployed)) : 'n/a'], ['Blended APY after', den ? pct(after / den) : 'n/a'],
-      ['Yield dilution', headlineGross ? '-' + compact(headlineGross - gross + dilutionCost) : '$0'],
+      ['Yield dilution', headlineGross ? '-' + compact(headlineGross - gross + dilW) : '$0'],
       ['Pickup per year', compact(pickup)],
-    ].map(([t, v]) => `<div class="o"><div class="t">${t}</div><div class="v num">${v}</div></div>`).join('');
-    $('#simMoves').innerHTML = moves.length ? moves.map(m => `<div class="mv ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path"><b>${m.g}</b> · ${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → <b>${pct(m.toApyDiluted)}</b>${m.toApyDiluted < m.toApy - 1e-6 ? ` after dilution (${pct(m.toApy)} headline)` : ''}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.shareAfter != null ? ` · our share after ${(m.shareAfter * 100).toFixed(1)}%` : ''}${m.forced ? ' · excluded venue: exit is mandatory' : ''}</small></div><div class="amt num">${usd(m.amt)}<small>+${usd(m.amt * m.pick)}/yr</small></div><button class="btn ${executorOn ? '' : 'ghost'}" data-exec="${m.id}" type="button" title="${executorOn ? 'Build, simulate and propose via the local SafeAgent executor' : 'Start scripts/executor.py to enable'}">Execute</button></div>`).join('')
-      : '<p class="empty">No move clears these thresholds. Laggards are noted, not traded.</p>';
-    $('#simMoves').onclick = e => { const b = e.target.closest('button[data-exec]'); if (b) openModal(moves[Number(b.dataset.exec)]); };
+    ]);
+    const execBtn = m => `<button class="btn ${executorOn ? '' : 'ghost'}" data-exec="${m.id}" type="button" title="${executorOn ? 'Build, simulate and propose via the local SafeAgent executor' : 'Start scripts/executor.py to enable'}">Execute</button>`;
+    const mvRow = m => `<div class="mv ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path">${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → <b>${pct(m.toApyDiluted)}</b>${m.toApyDiluted < m.toApy - 1e-6 ? ` after dilution (${pct(m.toApy)} headline)` : ''}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.shareAfter != null ? ` · our share after ${(m.shareAfter * 100).toFixed(1)}%` : ''}${m.forced ? ' · excluded venue: exit is mandatory' : ''}</small></div><div class="amt num">${usd(m.amt)}<small>+${usd(m.amt * m.pick)}/yr</small></div>${execBtn(m)}</div>`;
+    $('#simMoves').innerHTML = cats.filter(g => stats[g]).map(g => {
+      const st = stats[g], gm = W.filter(m => m.g === g);
+      return `<div class="cat"><div class="grp-h"><h3>${esc(g)}</h3><div class="tot"><b>${compact(st.usd)}</b> · blended <b>${st.apy != null ? pct(st.apy) : 'n/a'}</b>${st.best ? ` · best permitted ${esc(st.best.protocol)} ${esc(st.best.asset)} ${pct(apyOf(st.best))}` : ' · no priced venue in Roles'}${st.idle >= IDLE_FLOOR ? ` · idle ${compact(st.idle)}` : ''}</div></div>
+        ${gm.length ? gm.map(mvRow).join('') : '<p class="empty">Nothing clears the thresholds in this category. Laggards are noted, not traded.</p>'}</div>`;
+    }).join('') || '<p class="empty">No yield-bearing category in the book.</p>';
+    // ---- between categories: tiles, policy effect and the swap-then-deposit legs
+    const xGiven = X.reduce((s, m) => s + m.amt * m.from.apy, 0), xGain = X.reduce((s, m) => s + m.amt * m.toApyDiluted, 0) - dilX;
+    const usdNow = snap.book.filter(b => b.asset_group === 'USD' && b.kind !== 'in_flight').reduce((s, b) => s + b.usd, 0);
+    const usdAfter = usdNow + (sim.xTo === 'USD' ? xOut : 0) - (sim.xFrom === 'USD' ? xOut : 0);
+    const floor = snap.policy?.stable_floor_usd;
+    const hint = [];
+    if (floor) hint.push(usdNow < floor ? `stables ${compact(floor - usdNow)} short of the floor` : `floor met by ${compact(usdNow - floor)}`);
+    if (snap.policy?.rebalance_tranche_eth && priceOf('ETH')) hint.push(`tranche ${snap.policy.rebalance_tranche_eth.toLocaleString()} ETH ≈ ${compact(snap.policy.rebalance_tranche_eth * priceOf('ETH'))}`);
+    $('#xHint').textContent = hint.join(' · ');
+    $('#xOut').innerHTML = X.length ? tiles([
+      ['Capital rotated', compact(xOut)], ['Yield given up', '-' + compact(xGiven) + '/yr'], ['Yield gained, after dilution', '+' + compact(xGain) + '/yr'],
+      ['Net', (xGain - xGiven >= 0 ? '+' : '-') + compact(Math.abs(xGain - xGiven)) + '/yr'],
+      ['Stables after', `${compact(usdAfter)} · ${(100 * usdAfter / nav).toFixed(1)}% of NAV`],
+      floor ? ['Floor gap after', usdAfter >= floor ? 'met' : compact(floor - usdAfter) + ' short'] : ['Destination venues', new Set(X.map(m => m.to)).size],
+    ]) : '';
+    const xRow = m => { const sym = m.from.symbol; const viaSwap = m.from.kind === 'idle' ? canSwap(sym) : canSwap(sym) && upper(sym) !== 'ETH';
+      const leg1 = m.from.kind === 'idle' ? `swap ${esc(sym)} → ${esc(m.to.asset)}` : viaSwap ? `sell ${esc(sym)} on CoW → ${esc(m.to.asset)}` : `${esc(XQUEUE[m.from.protocol] || 'withdraw')}, then swap → ${esc(m.to.asset)}`;
+      return `<div class="mv cross ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path">${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> <span class="leg">${leg1}</span> <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → <b>${pct(m.toApyDiluted)}</b>${m.toApyDiluted < m.toApy - 1e-6 ? ` after dilution (${pct(m.toApy)} headline)` : ''}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.shareAfter != null ? ` · our share after ${(m.shareAfter * 100).toFixed(1)}%` : ''} · before swap fee and slippage</small></div><div class="amt num">${usd(m.amt)}<small>${m.pick >= 0 ? '+' : '-'}${usd(Math.abs(m.amt * m.pick))}/yr</small></div>${viaSwap ? `<button class="btn ${executorOn ? '' : 'ghost'}" data-xswap="${m.id}" type="button" title="Prefill the Swap panel with this leg; once the order fills the deposit shows up above as an idle move">Swap</button>` : '<span class="dim" style="font-size:11.5px">exit first</span>'}</div>`; };
+    $('#xMoves').innerHTML = !sim.xAmt ? '<p class="empty">Enter an amount to size a rotation between categories.</p>' : X.length ? X.map(xRow).join('') + (xShort > 1 ? `<p class="empty">${compact(xShort)} could not be placed: the ${esc(sim.xTo)} venues in Roles are full under the share and protocol caps.</p>` : '') : `<p class="empty">No ${esc(sim.xTo)} venue in Roles has room under the caps, or nothing in ${esc(sim.xFrom)} can be moved.</p>`;
+    const onMv = e => { const b = e.target.closest('button[data-exec],button[data-xswap]'); if (!b) return; if (b.dataset.exec != null) openModal(moves[Number(b.dataset.exec)]); else prefillSwap(moves[Number(b.dataset.xswap)]); };
+    $('#simMoves').onclick = onMv; $('#xMoves').onclick = onMv;
     renderRewards(); renderStage2(); renderSwap(); renderPending(); pollPending();
+  }
+  // a cross-category leg lands in the Swap panel: sell the source token for the destination asset, sized in tokens
+  function prefillSwap(m) {
+    const sym = m.from.symbol, p = priceOf(sym);
+    sw.sell = disp(sym); sw.buy = pairOk(sym, m.to.asset) ? disp(m.to.asset) : defaultBuy(sym);
+    $('#swapAmount').value = p ? (Math.floor(m.amt / p * 1e6) / 1e6).toString() : '';
+    sw.quote = null; swapPaint(); swapSchedule(); refreshSafeBalances();
+    $('#swapSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   /* ------------------------------------------------------------------ rewards sweep */
@@ -401,9 +492,17 @@
     } catch (e) { sw.live = null; $('#swapMsg').textContent = 'Live Safe balance unavailable (' + e.message + '); showing the snapshot figure.'; }
     finally { sw.liveBusy = false; swapPaint(); }
   }
-  const sellable = () => [...new Set(sw.groups.flatMap(g => g.sell))].sort();
-  const buyableFor = s => [...new Set(sw.groups.filter(g => g.sell.includes(s)).flatMap(g => g.buy))].filter(b => b !== s).sort();
-  const pairOk = (s, b) => sw.groups.some(g => g.sell.includes(s) && g.buy.includes(b));
+  // native ETH is not in any Roles CoW group (the group names WETH); the bot wraps on the way in, so ETH offers every
+  // WETH pair plus the 1:1 wrap itself, and WETH offers the unwrap
+  const WRAP = { ETH: 'WETH', XDAI: 'WXDAI' }, UNWRAP = { WETH: 'ETH', WXDAI: 'XDAI' };
+  const aliases = s => [upper(s), WRAP[upper(s)], UNWRAP[upper(s)]].filter(Boolean);
+  const inSet = (arr, s) => arr.some(x => aliases(s).includes(upper(x)));
+  const canon = () => { if (sw._canonG !== sw.groups) { sw._canon = new Map(); (sw.groups || []).forEach(g => [...g.sell, ...g.buy].forEach(t => sw._canon.set(upper(t), t))); sw._canonG = sw.groups; } return sw._canon; };
+  const disp = u => canon().get(upper(u)) || upper(u);
+  const sellable = () => { const s = new Set(sw.groups.flatMap(g => g.sell).map(upper)); [...s].forEach(x => { if (UNWRAP[x]) s.add(UNWRAP[x]); }); return [...s].map(disp).sort(); };
+  const buyableFor = s => { const b = new Set(sw.groups.filter(g => inSet(g.sell, s)).flatMap(g => g.buy).map(upper)); if (WRAP[upper(s)]) b.add(WRAP[upper(s)]); if (UNWRAP[upper(s)]) b.add(UNWRAP[upper(s)]); b.delete(upper(s)); return [...b].map(disp).sort(); };
+  const pairOk = (s, b) => WRAP[upper(s)] === upper(b) || UNWRAP[upper(s)] === upper(b) || sw.groups.some(g => inSet(g.sell, s) && g.buy.some(x => upper(x) === upper(b)));
+  const canSwap = s => (sw.groups || []).some(g => inSet(g.sell, s));
   const buildable = sym => !sw.known || sw.known.includes(upper(sym));
   const isSettle = sym => SETTLEMENT.includes(upper(sym));
   // default counter-asset: USDC, or WETH when selling a dollar stable, else the first buildable settlement asset
@@ -413,6 +512,8 @@
     clearInterval(sw.timer); clearInterval(sw.tick); sw.quote = null; sw.sell = sw.buy = null;
     try { const r = await loadJSON(EXECUTOR + '/swap-pairs/' + snap.client); sw.groups = r.groups || []; sw.known = r.known_tokens && r.known_tokens.length ? r.known_tokens : null; }
     catch (e) { sw.known = null; try { sw.groups = (await loadJSON('data/' + snap.client + '.strategy.json')).raw_permissions.allPermissions.cowswap.filter(g => g.action === 'swap' && !g.isTWAP).map(g => ({ sell: g.sellAssets, buy: g.buyAssets })); } catch (e2) { sw.groups = []; } }
+    // the rebalancing legs need the pair groups to decide what is CoW-sellable: redraw them once, when the groups first arrive
+    if (sw._groupsFor !== snap.client) { sw._groupsFor = snap.client; simulate(); return; }
     renderRewards();
     const sells = sellable();
     if (!sells.length) { $('#swapMsg').textContent = 'No CoW swap permission found for this client in the strategy cache.'; swapPaint(); return; }
@@ -525,7 +626,7 @@
     const q = upper($('#swapPickerQ').value.trim()); const list = sw.picking === 'sell' ? sellable() : buyableFor(sw.sell);
     const rows = list.filter(t => !q || upper(t).includes(q)).map(t => ({ t, bal: idleOf(t), px: priceOf(t), ok: buildable(t) }));
     const section = (title, items) => items.length ? `<div class="sw-grp">${title}</div>` + items.map(i => `<button class="sw-opt ${i.ok ? '' : 'grey'}" type="button" data-t="${esc(i.t)}" ${i.ok ? '' : 'title="not in the bot token registry"'}>
-        <span class="sym">${esc(i.t)}</span><span class="bal num">${i.bal > 0 ? fmtTok(i.bal) + (i.px ? ` <span class="dim">${usd(i.bal * i.px, 0)}</span>` : '') : '<span class="dim">–</span>'}</span></button>`).join('') : '';
+        <span class="sym">${esc(i.t)}</span><span class="bal num">${(i.px ? i.bal * i.px >= 0.01 : i.bal >= 1e-6) ? fmtTok(i.bal) + (i.px ? ` <span class="dim">${usd(i.bal * i.px, 0)}</span>` : '') : '<span class="dim">–</span>'}</span></button>`).join('') : '';
     const byVal = (x, y) => (y.bal * (y.px || 0)) - (x.bal * (x.px || 0)) || x.t.localeCompare(y.t);
     $('#swapPickerList').innerHTML = section('Settlement assets', rows.filter(r => isSettle(r.t)).sort(byVal)) + section('Other permitted', rows.filter(r => !isSettle(r.t)).sort(byVal)) || '<div class="empty">No permitted token matches.</div>';
     $('#swapPickerList').querySelectorAll('.sw-opt').forEach(b => b.onclick = () => {
@@ -583,23 +684,23 @@
   /* Fast lane: GET /live/<client> rebuilds the snapshot from DeBank + Safe + vaults.fyi in a few seconds and reruns the
      policy, move and reward engines. Executed moves vanish because the balances moved. The full pipeline stays the
      audited record (reconciliation, git history) and sits behind the "full refresh" link. */
-  async function liveRefresh(quiet) {
+  async function liveRefresh(quiet, force) {
     if (!snap || !executorOn) return false;
     const msg = $('#refreshMsg');
     try {
-      let r = await fetch(EXECUTOR + '/live/' + snap.client, { cache: 'no-store', headers: authHeaders() });
-      if (r.status === 401 && !quiet && askToken('Executor token needed for the live view')) r = await fetch(EXECUTOR + '/live/' + snap.client, { cache: 'no-store', headers: authHeaders() });
+      let r = await fetch(EXECUTOR + '/live/' + snap.client + (force ? '?force=1' : ''), { cache: 'no-store', headers: authHeaders() });
+      if (r.status === 401 && !quiet && askToken('Executor token needed for the live view')) r = await fetch(EXECUTOR + '/live/' + snap.client + (force ? '?force=1' : ''), { cache: 'no-store', headers: authHeaders() });
       const j = await r.json();
       if (!r.ok || j.error) throw new Error(j.error || r.statusText);
       snap = j; render();
-      if (!quiet) { msg.hidden = false; msg.className = 'refresh-msg ok'; msg.innerHTML = `Live view in ${j.live_seconds}s${j.live_cached ? ' (cached, under 15 s old)' : ''} · NAV ${compact(j.nav_usd)} · positions DeBank, units Safe, APYs vaults.fyi (${j.vault_apys_live} vaults), rewards on-chain · permissions and policy from the stored snapshot of ${new Date(j.base_as_of).toISOString().slice(0, 16).replace('T', ' ')} UTC`; }
+      if (!quiet) { msg.hidden = false; msg.className = 'refresh-msg ok'; msg.innerHTML = `Live view in ${j.live_seconds}s${j.live_cached ? ` (served from cache, ${j.live_age_s < 90 ? j.live_age_s + ' s' : Math.round(j.live_age_s / 60) + ' min'} old)` : ''} · NAV ${compact(j.nav_usd)} · positions DeBank, units Safe, APYs vaults.fyi (${j.vault_apys_live} vaults), rewards on-chain · permissions and policy from the stored snapshot of ${new Date(j.base_as_of).toISOString().slice(0, 16).replace('T', ' ')} UTC`; }
       return true;
     } catch (e) { if (!quiet) { msg.hidden = false; msg.className = 'refresh-msg err'; msg.textContent = 'Live view failed: ' + e.message; } return false; }
   }
   async function refreshClient(full) {
     if (!snap || !executorOn) return;
     const btn = $('#refreshBtn'), msg = $('#refreshMsg');
-    if (!full) { btn.classList.add('busy'); btn.textContent = '↻ Live…'; try { await liveRefresh(false); } finally { btn.classList.remove('busy'); btn.textContent = '↻ Refresh client'; } return; }
+    if (!full) { btn.classList.add('busy'); btn.textContent = '↻ Live…'; try { await liveRefresh(false, true); } finally { btn.classList.remove('busy'); btn.textContent = '↻ Refresh client'; } return; }
     btn.classList.add('busy'); btn.textContent = '↻ Full refresh…'; msg.hidden = false; msg.className = 'refresh-msg';
     msg.textContent = `Running holdings (Syncrone, Safe, Etherscan), yields and assessment for ${snap.display_name} on the executor host. Usually 1 to 3 minutes.`;
     try {

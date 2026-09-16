@@ -57,16 +57,17 @@ ALLOWED_ORIGINS = ("http://localhost:", "http://127.0.0.1:", "https://jktranslat
 PROTECTED = ("/plan", "/propose", "/refresh/", "/live/")   # need Authorization: Bearer <EXECUTOR_TOKEN>
 LIVE_CACHE: dict[str, tuple[float, dict]] = {}   # slug -> (built_at, snapshot); the fast lane is cheap but not free
 LIVE_LOCK = threading.Lock()
-LIVE_TTL = 15.0
+LIVE_TTL = 600.0        # a DeBank rebuild costs ~36 units; a view is reused for 10 min unless a Safe tx executed (safe-tx poll drops it)
+LIVE_FORCE_MIN = 60.0   # the Refresh button forces a rebuild, but never more than once a minute
 
 
 def live_view(slug: str, force: bool = False) -> dict:
-    """Snapshot-shaped live view from DeBank + Safe + vaults.fyi (scripts/live_lane.py), built in-process, cached 15 s."""
+    """Snapshot-shaped live view from DeBank + Safe + vaults.fyi (scripts/live_lane.py), built in-process, cached LIVE_TTL."""
     now = time.time()
     with LIVE_LOCK:
         hit = LIVE_CACHE.get(slug)
-        if hit and not force and now - hit[0] < LIVE_TTL:
-            return dict(hit[1], live_cached=True)
+        if hit and now - hit[0] < (LIVE_FORCE_MIN if force else LIVE_TTL):
+            return dict(hit[1], live_cached=True, live_age_s=round(now - hit[0]))
     from live_lane import live_snapshot
     snap = live_snapshot(slug, load_snapshot(slug))
     with LIVE_LOCK:
