@@ -17,7 +17,7 @@
     : b.apy == null ? '' : b.apy_source && b.apy_source !== 'vaults.fyi' ? `<span class="src" title="${esc(b.apy_source)}">${b.apy_source.startsWith('defillama') ? 'llama' : b.apy_source.includes('stale') ? 'stale' : b.apy_source === 'vaults.fyi live' ? 'live' : b.apy_source.startsWith('vaults.fyi') ? '' : 'realised'}</span>` : '';
 
   let index = null, snap = null, live = null, moves = [], executorOn = false;
-  let sim = { pickupBps: 50, moveUsd: 250000, tvlCapPct: 10, basis: 'apy', exclude: new Set(), xFrom: null, xTo: null, xAmt: 0 };
+  let sim = { pickupBps: 50, moveUsd: 250000, tvlCapPct: 10, basis: 'apy', exclude: new Set(), xFrom: null, xTo: null, xAmt: 0, override: {} };
 
   async function loadJSON(p) { const r = await fetch(p, { cache: 'no-store' }); if (!r.ok) throw new Error(p + ' ' + r.status); return r.json(); }
 
@@ -205,7 +205,7 @@
   function syncCross(cats) {
     const k = snap.client + '|' + cats.join(',');
     if ($('#xFrom').dataset.k !== k) {
-      $('#xFrom').dataset.k = k;
+      $('#xFrom').dataset.k = k; sim.override = {};
       sim.xFrom = cats.includes('ETH') ? 'ETH' : cats[0] || null; sim.xTo = cats.find(c => c !== sim.xFrom) || null;
       // default size: the policy's regular tranche, if it has one (ENS: 1,500 ETH a fortnight)
       sim.xAmt = Math.round((snap.policy?.rebalance_tranche_eth || 0) * (priceOf('ETH') || 0) / 1000) * 1000;
@@ -241,20 +241,26 @@
     const venuesOf = g => snap.permitted.filter(p => p.asset_group === g && p.priced && apyOf(p) != null && !sim.exclude.has(p.protocol)).sort((a, b) => apyOf(b) - apyOf(a));
     // the threshold governs the resulting position, so subtract what we already own in the venue
     const roomFor = v => { if (!heldMap.has(v)) heldMap.set(v, heldIn(v)); if (!headroom.has(v)) headroom.set(v, v.tvl_usd ? Math.max(0, sim.tvlCapPct / 100 * v.tvl_usd - heldMap.get(v)) : Infinity); return headroom.get(v); };
+    const compatible = (src, v, g) => { const st = (src.symbol || '').toUpperCase(), vt = (v.asset || '').toUpperCase(); return st === vt || (isStable(st) && isStable(vt)) || g === 'ETH'; };
+    // receipt or vault names to the asset that goes in: cUSDCv3, aEthUSDC, fUSDC, sUSDS, kpk USDC Prime v2 -> USDC / USDS
+    const UNDER = s => { s = (s || '').trim(); let m; if ((m = /^c(USDC|USDT|USDS)v3$/i.exec(s))) return m[1].toUpperCase(); if ((m = /^kpk[\s_]+([A-Za-z]+)[\s_]/i.exec(s))) return m[1].toUpperCase(); if ((m = /^aEth([A-Za-z]+)$/.exec(s))) return m[1].toUpperCase(); if ((m = /^s(USDS|DAI)$/i.exec(s))) return m[1].toUpperCase(); if ((m = /^f(USDC|USDT|GHO)$/.exec(s))) return m[1]; return s.toUpperCase(); };
+    const sameAsset = (src, v) => UNDER(src.symbol) === UNDER(v.asset);
+    const needsSwap = (src, v) => isStable(src.symbol) && isStable(v.asset) && !sameAsset(src, v);
+    const vkey = v => `${v.protocol}|${v.asset}|${v.vault || ''}`, skey = s => `${s.protocol}|${s.venue}|${s.symbol}`;
+    // venue order for one source: the destination the user picked, then venues that take the asset as it is
+    // (no stable-to-stable swap), then the rest; APY decides within each tier
+    const orderFor = (src, venues) => { const ov = sim.override[skey(src)]; const rank = v => (ov && vkey(v) === ov) ? 0 : needsSwap(src, v) ? 2 : 1; return [...venues].sort((a, b) => rank(a) - rank(b) || apyOf(b) - apyOf(a)); };
     // place up to `rem` dollars of `src` into `venues`, best first; returns what was placed
     function place(src, rem, venues, g, o, key) {
       let placed = 0;
-      for (const v of venues) {
+      for (const v of orderFor(src, venues)) {
         if (!o.cross && rem < sim.moveUsd && src.kind !== 'idle') break;
         if (sameVenue(src, v)) continue;
-        if (!o.cross) {
-          const st = (src.symbol || '').toUpperCase(), vt = (v.asset || '').toUpperCase();
-          if (!(st === vt || (isStable(st) && isStable(vt)) || g === 'ETH')) continue;
-        }
+        if (!o.cross && !compatible(src, v, g)) continue;
         const amt = Math.min(rem, roomFor(v), protoRoom.get(v.protocol) ?? Infinity);
         // the pickup is judged on the rate we would actually receive once this money lands
         const pick = diluted(apyOf(v), v.tvl_usd, (dep.get(v) || 0) + Math.max(amt, 0)) - src.apy;
-        if (!o.cross && pick < minPick && src.kind === 'position' && !sim.exclude.has(src.protocol)) break;
+        if (!o.cross && pick < minPick && src.kind === 'position' && !sim.exclude.has(src.protocol)) continue;   // venues are tiered, not APY-sorted: keep looking
         if (amt <= 0 || (!o.cross && amt < Math.min(sim.moveUsd, rem))) continue;
         moves.push({ id: moves.length, g, from: src, to: v, amt, pick, toApy: apyOf(v), forced: !!o.forced, cross: !!o.cross });
         dep.set(v, (dep.get(v) || 0) + amt); headroom.set(v, headroom.get(v) - amt);
@@ -324,8 +330,14 @@
       ['Yield dilution', headlineGross ? '-' + compact(headlineGross - gross + dilW) : '$0'],
       ['Pickup per year', compact(pickup)],
     ]);
-    const execBtn = m => `<button class="btn ${executorOn ? '' : 'ghost'}" data-exec="${m.id}" type="button" title="${executorOn ? 'Build, simulate and propose via the local SafeAgent executor' : 'Start scripts/executor.py to enable'}">Execute</button>`;
-    const mvRow = m => `<div class="mv ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path">${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → <b>${pct(m.toApyDiluted)}</b>${m.toApyDiluted < m.toApy - 1e-6 ? ` after dilution (${pct(m.toApy)} headline)` : ''}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.shareAfter != null ? ` · our share after ${(m.shareAfter * 100).toFixed(1)}%` : ''}${m.forced ? ' · excluded venue: exit is mandatory' : ''}</small></div><div class="amt num">${usd(m.amt)}<small>+${usd(m.amt * m.pick)}/yr</small></div>${execBtn(m)}</div>`;
+    const altsFor = m => (m.cross ? venuesOf(sim.xTo) : venuesOf(m.g)).filter(v => !sameVenue(m.from, v) && (m.cross || compatible(m.from, v, m.g)))
+      .map(v => ({ v, apy: diluted(apyOf(v), v.tvl_usd, (dep.get(v) || 0) + (v === m.to ? 0 : m.amt)), swap: !m.cross && needsSwap(m.from, v), room: v === m.to || Math.min(roomFor(v), protoRoom.get(v.protocol) ?? Infinity) > 0 }))
+      .sort((a, b) => (a.swap - b.swap) || (b.apy - a.apy));
+    const optsRow = m => { const alts = altsFor(m); if (alts.length < 2) return ''; return `<div class="mv-opts"><label>Destination</label><select class="mv-alt" data-src="${esc(skey(m.from))}">${alts.map(a => `<option value="${esc(vkey(a.v))}" ${a.v === m.to ? 'selected' : ''} ${a.room ? '' : 'disabled'}>${esc(a.v.protocol)} ${esc(a.v.asset)} · ${pct(a.apy)}${a.swap ? ` · swap ${esc(UNDER(m.from.symbol))}→${esc(UNDER(a.v.asset))}` : ''}${a.room ? '' : ' · no room under the caps'}</option>`).join('')}</select>${needsSwap(m.from, m.to) ? `<span class="warn">needs a ${esc(UNDER(m.from.symbol))} → ${esc(UNDER(m.to.asset))} swap ${m.from.kind === 'idle' ? 'first' : 'between the withdraw and the deposit'}</span>` : ''}</div>`; };
+    const execBtn = m => (!m.cross && needsSwap(m.from, m.to) && m.from.kind === 'idle')
+      ? `<button class="btn ${executorOn ? '' : 'ghost'}" data-xswap="${m.id}" type="button" title="Prefill the Swap panel with ${esc(UNDER(m.from.symbol))} → ${esc(UNDER(m.to.asset))}; the deposit shows up here once the order fills">Swap first</button>`
+      : `<button class="btn ${executorOn ? '' : 'ghost'}" data-exec="${m.id}" type="button" title="${executorOn ? 'Build, simulate and propose via the local SafeAgent executor' : 'Start scripts/executor.py to enable'}">Execute</button>`;
+    const mvRow = m => `<div class="mv ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path">${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → <b>${pct(m.toApyDiluted)}</b>${m.toApyDiluted < m.toApy - 1e-6 ? ` after dilution (${pct(m.toApy)} headline)` : ''}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.shareAfter != null ? ` · our share after ${(m.shareAfter * 100).toFixed(1)}%` : ''}${m.forced ? ' · excluded venue: exit is mandatory' : ''}</small>${optsRow(m)}</div><div class="amt num">${usd(m.amt)}<small>+${usd(m.amt * m.pick)}/yr</small></div>${execBtn(m)}</div>`;
     $('#simMoves').innerHTML = cats.filter(g => stats[g]).map(g => {
       const st = stats[g], gm = W.filter(m => m.g === g);
       return `<div class="cat"><div class="grp-h"><h3>${esc(g)}</h3><div class="tot"><b>${compact(st.usd)}</b> · blended <b>${st.apy != null ? pct(st.apy) : 'n/a'}</b>${st.best ? ` · best permitted ${esc(st.best.protocol)} ${esc(st.best.asset)} ${pct(apyOf(st.best))}` : ' · no priced venue in Roles'}${st.idle >= IDLE_FLOOR ? ` · idle ${compact(st.idle)}` : ''}</div></div>
@@ -348,16 +360,18 @@
     ]) : '';
     const xRow = m => { const sym = m.from.symbol; const viaSwap = m.from.kind === 'idle' ? canSwap(sym) : canSwap(sym) && upper(sym) !== 'ETH';
       const leg1 = m.from.kind === 'idle' ? `swap ${esc(sym)} → ${esc(m.to.asset)}` : viaSwap ? `sell ${esc(sym)} on CoW → ${esc(m.to.asset)}` : `${esc(XQUEUE[m.from.protocol] || 'withdraw')}, then swap → ${esc(m.to.asset)}`;
-      return `<div class="mv cross ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path">${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> <span class="leg">${leg1}</span> <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → <b>${pct(m.toApyDiluted)}</b>${m.toApyDiluted < m.toApy - 1e-6 ? ` after dilution (${pct(m.toApy)} headline)` : ''}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.shareAfter != null ? ` · our share after ${(m.shareAfter * 100).toFixed(1)}%` : ''} · before swap fee and slippage</small></div><div class="amt num">${usd(m.amt)}<small>${m.pick >= 0 ? '+' : '-'}${usd(Math.abs(m.amt * m.pick))}/yr</small></div>${viaSwap ? `<button class="btn ${executorOn ? '' : 'ghost'}" data-xswap="${m.id}" type="button" title="Prefill the Swap panel with this leg; once the order fills the deposit shows up above as an idle move">Swap</button>` : '<span class="dim" style="font-size:11.5px">exit first</span>'}</div>`; };
+      return `<div class="mv cross ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path">${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> <span class="leg">${leg1}</span> <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → <b>${pct(m.toApyDiluted)}</b>${m.toApyDiluted < m.toApy - 1e-6 ? ` after dilution (${pct(m.toApy)} headline)` : ''}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.shareAfter != null ? ` · our share after ${(m.shareAfter * 100).toFixed(1)}%` : ''} · before swap fee and slippage</small>${optsRow(m)}</div><div class="amt num">${usd(m.amt)}<small>${m.pick >= 0 ? '+' : '-'}${usd(Math.abs(m.amt * m.pick))}/yr</small></div>${viaSwap ? `<button class="btn ${executorOn ? '' : 'ghost'}" data-xswap="${m.id}" type="button" title="Prefill the Swap panel with this leg; once the order fills the deposit shows up above as an idle move">Swap</button>` : '<span class="dim" style="font-size:11.5px">exit first</span>'}</div>`; };
     $('#xMoves').innerHTML = !sim.xAmt ? '<p class="empty">Enter an amount to size a rotation between categories.</p>' : X.length ? X.map(xRow).join('') + (xShort > 1 ? `<p class="empty">${compact(xShort)} could not be placed: the ${esc(sim.xTo)} venues in Roles are full under the share and protocol caps.</p>` : '') : `<p class="empty">No ${esc(sim.xTo)} venue in Roles has room under the caps, or nothing in ${esc(sim.xFrom)} can be moved.</p>`;
     const onMv = e => { const b = e.target.closest('button[data-exec],button[data-xswap]'); if (!b) return; if (b.dataset.exec != null) openModal(moves[Number(b.dataset.exec)]); else prefillSwap(moves[Number(b.dataset.xswap)]); };
     $('#simMoves').onclick = onMv; $('#xMoves').onclick = onMv;
+    const onAlt = e => { const s = e.target.closest('select.mv-alt'); if (!s) return; sim.override[s.dataset.src] = s.value; simulate(); };
+    $('#simMoves').onchange = onAlt; $('#xMoves').onchange = onAlt;
     renderRewards(); renderStage2(); renderSwap(); renderPending(); pollPending();
   }
   // a cross-category leg lands in the Swap panel: sell the source token for the destination asset, sized in tokens
   function prefillSwap(m) {
     const sym = m.from.symbol, p = priceOf(sym);
-    sw.sell = disp(sym); sw.buy = pairOk(sym, m.to.asset) ? disp(m.to.asset) : defaultBuy(sym);
+    const tgt = UNDER(m.to.asset); sw.sell = disp(sym); sw.buy = pairOk(sym, tgt) ? disp(tgt) : defaultBuy(sym);
     $('#swapAmount').value = p ? (Math.floor(m.amt / p * 1e6) / 1e6).toString() : '';
     sw.quote = null; swapPaint(); swapSchedule(); refreshSafeBalances();
     $('#swapSection').scrollIntoView({ behavior: 'smooth', block: 'start' });

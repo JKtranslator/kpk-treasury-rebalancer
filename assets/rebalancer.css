@@ -149,3 +149,7 @@ th.ck,td.ck{width:28px;padding-right:0!important;} td.ck input,th.ck input{curso
 .mv.cross .amt small{color:var(--good);}
 .sim-grid.cross{margin-bottom:10px;}
 .sim-grid.cross select,.sim-grid.cross input[type=number]{width:100%;padding:8px 10px;border:1px solid rgba(0,0,0,.14);border-radius:9px;font:inherit;font-size:13px;background:#fff;color:var(--ink);}
+.mv-opts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:11.5px;color:var(--muted);}
+.mv-opts label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+.mv-opts select{font:inherit;font-size:12px;padding:4px 8px;border:1px solid rgba(0,0,0,.14);border-radius:8px;background:#fff;color:var(--ink);max-width:100%;}
+.mv-opts .warn{color:var(--warn);}

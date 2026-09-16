@@ -38,6 +38,17 @@ def load(out: Path, name: str) -> dict:
     return json.loads(p.read_text(encoding="utf-8"))
 
 
+def venue_label(r: dict) -> str:
+    """Syncrone names every Morpho position 'Morpho v2 Yield on Ethereum'; a kpk vault share says which vault it is
+    (KPK_USDC_Prime -> kpk USDC Prime), and Prime and Yield are different vaults with different permissions."""
+    import re
+    sym = r.get("symbol") or ""
+    m = re.match(r"(?i)kpk[_ ]([a-z]+)[_ ](prime|yield)", sym)
+    if m:
+        return f"kpk {m.group(1).upper()} {m.group(2).title()} vault (Morpho) [{sym}]"
+    return f"{r['position']} [{sym}]"
+
+
 def build_book(h: dict, reg: dict) -> list[dict]:
     book = []
     for r in h["positions"]:
@@ -67,7 +78,7 @@ def build_book(h: dict, reg: dict) -> list[dict]:
                 and r["usd"] > reg["spam_dust_usd"]:
             # Strategy API / vaults.fyi does not price this protocol: keep the Syncrone row, APY unknown
             proto = reg["protocol_aliases"].get(r["protocol"].lower(), r["protocol"].lower())
-            book.append(dict(kind="position", protocol=proto, venue=f"{r['position']} [{r['symbol']}]", symbol=r["symbol"],
+            book.append(dict(kind="position", protocol=proto, venue=venue_label(r), symbol=r["symbol"],
                              asset_group=r["asset_group"], usd=r["usd"], apy=None, apy_base=None, source="syncrone",
                              untracked=True, realised_apr=r.get("realised_apr"), realised_days=r.get("realised_days")))
     return book
