@@ -190,11 +190,18 @@ def do_plan(client_dir: Path, payload: dict):
         if nw.get("shortfall"):
             it["wrap_shortfall_human"] = nw["shortfall"]
         all_steps, labels = [], []
-        for it in intents:
+        cow_submits, cow_submit = [], None     # the rebuild re-quotes every CoW order: what the Safe signs is the NEW order
+        for it, cmd_ in zip(intents, commands):
             try:
                 steps, extra = pp.build_steps(it)
             except Exception as e:
                 fail(f"rebuild with ETH wrap failed: {e}", trace=traceback.format_exc(limit=3))
+            if extra.get("_cow_submit"):
+                x = dict(extra["_cow_submit"])
+                parts = str(cmd_).split()
+                x.setdefault("sell_symbol", (it.get("token") or "").upper()); x.setdefault("buy_symbol", (it.get("buy_token") or "").upper())
+                x.setdefault("sell_human", parts[2] if len(parts) > 2 else None); x.setdefault("command", cmd_)
+                cow_submits.append(x); cow_submit = cow_submits[0]
             for _s in steps:
                 labels.append(f"{it['protocol']} {it['action']}" + (f" {it.get('amount_human')}" if it.get("amount_human") else ""))
             all_steps.extend(steps)
@@ -207,6 +214,13 @@ def do_plan(client_dir: Path, payload: dict):
         sim["error"] = f"needs ETH wrap: {sim['needs_wrap']}"
     tl = tenderly_links(sim) if (sim.get("link") or sim.get("links")) else dict(links=[], share_note=None)
 
+    signed = signed_orders(all_steps)
+    if signed or cow_submits:
+        if len(signed) != len(cow_submits) or not all(any(orders_match(sg, sb) for sb in cow_submits) for sg in signed):
+            fail("internal consistency check failed: the CoW order(s) the steps pre-sign do not match the order(s) queued for API "
+                 f"submission ({len(signed)} signed vs {len(cow_submits)} queued). Refusing to write a plan that would leave an unsigned order.",
+                 signed=[dict(sell_amount=s["sell_amount"], buy_amount=s["buy_amount"], valid_to=s["valid_to"]) for s in signed],
+                 queued=[dict(sell_amount=s.get("sell_amount"), buy_amount=s.get("buy_amount"), valid_to=s.get("valid_to")) for s in cow_submits])
     plan_id = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:6]
     plans_dir = Path(payload.get("plans_dir") or (Path(__file__).resolve().parent.parent / "runs" / "plans"))
     plans_dir.mkdir(parents=True, exist_ok=True)
@@ -296,12 +310,92 @@ def do_quote(client_dir: Path, payload: dict):
              valid_to=quote.get("validTo"), expiration=q.get("expiration"), command=f"cowswap swap {amount} {sell} {buy}", note=note))
 
 
+SIGN_ORDER_SEL = "0x569d3489"   # CowswapOrderSigner.signOrder(GPv2Order.Data, uint32 validDuration, uint256 feeAmountBP)
+
+
+def decode_sign_order(data: str) -> dict | None:
+    """The GPv2Order.Data struct inside a signOrder call. This is exactly the order the Safe pre-signs on-chain."""
+    d = (data or "").lower()
+    i = d.find(SIGN_ORDER_SEL[2:])
+    if i < 0:
+        return None
+    seg = d[i + 8:]
+    w = lambda k: seg[k * 64:(k + 1) * 64]
+    try:
+        return dict(sell_token="0x" + w(0)[24:], buy_token="0x" + w(1)[24:], receiver="0x" + w(2)[24:],
+                    sell_amount=int(w(3), 16), buy_amount=int(w(4), 16), valid_to=int(w(5), 16),
+                    app_data="0x" + w(6), fee_amount=int(w(7), 16), partially_fillable=bool(int(w(9), 16)))
+    except Exception:
+        return None
+
+
+def signed_orders(steps: list) -> list[dict]:
+    out = []
+    for s in steps or []:
+        o = decode_sign_order(s.get("data") or "")
+        if o:
+            out.append(o)
+    return out
+
+
+def orders_match(signed: dict, sub: dict) -> bool:
+    """Same order iff the fields that enter the order digest agree."""
+    g = lambda k: str(sub.get(k) if sub.get(k) is not None else "").lower()
+    return (g("sell_token") == signed["sell_token"] and g("buy_token") == signed["buy_token"]
+            and int(sub.get("sell_amount") or 0) == signed["sell_amount"] and int(sub.get("buy_amount") or 0) == signed["buy_amount"]
+            and int(sub.get("valid_to") or 0) == signed["valid_to"]
+            and g("receiver") in ("", signed["receiver"]))
+
+
 def do_tokens(client_dir: Path, payload: dict):
     """Symbols the client's bot token registry knows: the swap panel greys out everything else."""
     load_runtime(client_dir)
     from token_registry import TOKENS
     out(dict(tokens=sorted(TOKENS.keys()), addresses={k: v["address"].lower() for k, v in TOKENS.items()},
              decimals={k: v.get("decimals", 18) for k, v in TOKENS.items()}))
+
+
+def do_resubmit(client_dir: Path, payload: dict):
+    """Re-place a CoW order that a Safe transaction has already pre-signed on-chain but that never reached the API.
+    Decodes the GPv2Order from the signOrder calldata of `tx_hash`, checks it is not expired and that the settlement
+    contract emitted PreSignature for its owner, then submits it through the bot's cow_api. The UID the API returns
+    must equal the one in the PreSignature event, otherwise the params differ and nothing useful was created."""
+    load_runtime(client_dir)
+    import time as _t
+    import config
+    from cow_api import submit_presign_order, order_url
+    from planner_utils import get_w3
+    w3 = get_w3()
+    txh = payload.get("tx_hash")
+    if not txh:
+        fail("tx_hash required")
+    tx = w3.eth.get_transaction(txh); rc = w3.eth.get_transaction_receipt(txh)
+    if rc.status != 1:
+        fail(f"{txh} did not succeed on-chain")
+    orders = signed_orders([dict(data=tx["input"].hex() if hasattr(tx["input"], "hex") else tx["input"])])
+    if not orders:
+        fail("no signOrder call found in that transaction")
+    settlement = "0x9008d19f58aabd9ed0d60971565aa8510560ab41"
+    uids = []
+    for lg in rc.logs:
+        if lg.address.lower() == settlement:
+            d = lg.data.hex() if hasattr(lg.data, "hex") else str(lg.data)
+            d = d[2:] if d.startswith("0x") else d
+            ln = int(d[128:192], 16); uids.append("0x" + d[192:192 + ln * 2])
+    results = []
+    for o in orders:
+        if o["receiver"] != config.SAFE_ADDRESS.lower():
+            fail(f"order receiver {o['receiver']} is not this client's Safe {config.SAFE_ADDRESS}")
+        if o["valid_to"] < int(_t.time()):
+            fail(f"order expired at {dt.datetime.fromtimestamp(o['valid_to'], dt.timezone.utc).isoformat()}; a new order is needed")
+        if payload.get("dry_run"):
+            results.append(dict(order=o, presigned_uids=uids, dry_run=True)); continue
+        uid = submit_presign_order(sell_token=o["sell_token"], buy_token=o["buy_token"], sell_amount=o["sell_amount"],
+                                   buy_amount=o["buy_amount"], receiver=config.SAFE_ADDRESS, valid_to=o["valid_to"],
+                                   partially_fillable=o["partially_fillable"])
+        results.append(dict(order=o, uid=uid, url=order_url(uid), presigned_uids=uids,
+                            matches_presignature=uid.lower() in [u.lower() for u in uids]))
+    out(dict(tx_hash=txh, results=results))
 
 
 def do_propose(client_dir: Path, payload: dict):
@@ -321,6 +415,10 @@ def do_propose(client_dir: Path, payload: dict):
     cow_uids: list = []
     submits = rec.get("cow_submits") or ([rec["cow_submit"]] if rec.get("cow_submit") else [])
     cow_submit = submits[0] if submits else None
+    signed = signed_orders(rec.get("steps") or [])
+    if signed and (len(signed) != len(submits) or not all(any(orders_match(sg, sb) for sb in submits) for sg in signed)):
+        fail("refusing to propose: the CoW order(s) this plan pre-signs differ from the order(s) it would submit to the API "
+             "(a re-quote changed the order after the plan was built). Rebuild the plan.")
     if submits:
         from cow_api import submit_presign_order, order_url
         for sub in submits:
@@ -350,11 +448,11 @@ def do_propose(client_dir: Path, payload: dict):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--client-dir", required=True)
-    ap.add_argument("op", choices=["plan", "propose", "quote", "tokens"])
+    ap.add_argument("op", choices=["plan", "propose", "quote", "tokens", "resubmit"])
     a = ap.parse_args()
     payload = json.loads(sys.stdin.read() or "{}")
     try:
-        {"plan": do_plan, "propose": do_propose, "quote": do_quote, "tokens": do_tokens}[a.op](Path(a.client_dir).resolve(), payload)
+        {"plan": do_plan, "propose": do_propose, "quote": do_quote, "tokens": do_tokens, "resubmit": do_resubmit}[a.op](Path(a.client_dir).resolve(), payload)
     except SystemExit:
         raise
     except Exception as e:

@@ -496,8 +496,15 @@ class H(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(n) or b"{}")
         except json.JSONDecodeError:
             return self._json(400, dict(error="bad json"))
-        if self.path.startswith(("/plan", "/propose", "/quote")) and not self._authorized():
+        if self.path.startswith(("/plan", "/propose", "/quote", "/cow/resubmit")) and not self._authorized():
             return self._json(401, dict(error="unauthorized: set the executor token on the page"))
+        if self.path.startswith("/cow/resubmit"):
+            # recovery: re-place an order a Safe tx already pre-signed on-chain but that never reached the CoW API
+            slug = body.get("client")
+            if slug not in CLIENT_DIRS:
+                return self._json(400, dict(error=f"unknown client {slug}"))
+            res = run_worker(slug, "resubmit", dict(tx_hash=body.get("tx_hash"), dry_run=bool(body.get("dry_run"))))
+            return self._json(200 if not res.get("error") else 422, res)
         if self.path.startswith("/quote"):
             slug = body.get("client")
             if slug not in CLIENT_DIRS:
