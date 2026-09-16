@@ -4,20 +4,20 @@
   "chain_id": 1,
   "avatar_safe": "0x616dE58c011F8736fa20c7Ae5352F7f6FB9F0669",
   "ok": true,
-  "as_of": "2026-09-16T14:04:32+00:00",
+  "as_of": "2026-09-16T15:49:01+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 18339670,
+  "nav_usd": 18326788,
   "positions_usd": 17951251,
-  "idle_usd": 388419,
+  "idle_usd": 375537,
   "in_flight_usd": 0,
   "onchain_idle_eth": 0.0,
   "eth_price_usd": 2456.4499,
   "groups": {
     "OTHER": 579640,
-    "USD": 12150772,
+    "USD": 12137890,
     "ETH": 3051588,
     "EURO": 2558000
   },
@@ -125,8 +125,8 @@
     },
     {
       "symbol": "USDC",
-      "balance": 14142.962281,
-      "usd": 14143,
+      "balance": 1260.962281,
+      "usd": 1261,
       "asset_group": "USD"
     },
     {
@@ -183,11 +183,13 @@
     {
       "source": "uniswap",
       "symbol": "COW",
-      "amount": 181.04740806360263,
-      "usd": 24,
+      "amount": 206.61650071613772,
+      "usd": 27,
       "claimable": true
     }
   ],
-  "rewards_usd": 54,
-  "flags": []
+  "rewards_usd": 57,
+  "flags": [
+    "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 14,142.9623 -> 1,260.9623"
+  ]
 }
