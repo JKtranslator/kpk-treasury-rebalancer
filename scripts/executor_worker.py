@@ -118,8 +118,9 @@ def do_plan(client_dir: Path, payload: dict):
                 from planner_utils import get_w3
                 bal = get_w3().eth.get_balance(config.SAFE_ADDRESS)
                 if int(intent["amount"]) > bal:
-                    fail(f"`{cmd}` sells {int(intent['amount'])/1e18:.18f} ETH but the Safe holds {bal/1e18:.18f} ETH "
-                         f"({int(intent['amount'])-bal} wei short). Use a rounded-down amount; the page's Max button now floors to 6 decimals.",
+                    from decimal import Decimal
+                    fail(f"`{cmd}` sells {Decimal(int(intent['amount'])) / 10**18} ETH but the Safe holds {Decimal(bal) / 10**18} ETH "
+                         f"({int(intent['amount'])-bal} wei short). Use a rounded-down amount; the page's Max button floors to 6 decimals.",
                          command=cmd)
             except SystemExit:
                 raise
