@@ -207,7 +207,10 @@
       "receipt": null,
       "receipt_method": null,
       "unit_usd": null,
-      "units_at_run": null
+      "units_at_run": null,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     },
     {
       "kind": "reward",
@@ -227,7 +230,10 @@
       "receipt": null,
       "receipt_method": null,
       "unit_usd": null,
-      "units_at_run": null
+      "units_at_run": null,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     },
     {
       "kind": "reward",
@@ -247,7 +253,10 @@
       "receipt": null,
       "receipt_method": null,
       "unit_usd": null,
-      "units_at_run": null
+      "units_at_run": null,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     },
     {
       "kind": "idle",
@@ -267,7 +276,10 @@
       "receipt": null,
       "receipt_method": null,
       "unit_usd": null,
-      "units_at_run": null
+      "units_at_run": null,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     },
     {
       "kind": "idle",
@@ -287,7 +299,10 @@
       "receipt": null,
       "receipt_method": null,
       "unit_usd": null,
-      "units_at_run": null
+      "units_at_run": null,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     },
     {
       "kind": "position",
@@ -306,8 +321,11 @@
       "vault": null,
       "receipt": "0x207158a267cbd2598bb3d611d8cbdee2709f2f8c",
       "receipt_method": "erc20",
-      "unit_usd": 1.0005510043863561,
-      "units_at_run": 500167.129018
+      "unit_usd": 0.9999,
+      "units_at_run": 500167.129018,
+      "receipt_underlying": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "receipt_kind": "comet",
+      "receipt_rate": 1.0
     },
     {
       "kind": "idle",
@@ -327,7 +345,10 @@
       "receipt": null,
       "receipt_method": null,
       "unit_usd": null,
-      "units_at_run": null
+      "units_at_run": null,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     },
     {
       "kind": "idle",
@@ -347,7 +368,10 @@
       "receipt": null,
       "receipt_method": null,
       "unit_usd": null,
-      "units_at_run": null
+      "units_at_run": null,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     },
     {
       "kind": "position",
@@ -367,7 +391,10 @@
       "receipt": null,
       "receipt_method": null,
       "unit_usd": null,
-      "units_at_run": null
+      "units_at_run": null,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     },
     {
       "kind": "position",
@@ -386,8 +413,11 @@
       "vault": "0x98c23e9d8f34fefb1b7bd6a91b7ff122f4e16f5c",
       "receipt": "0x98c23e9d8f34fefb1b7bd6a91b7ff122f4e16f5c",
       "receipt_method": "erc20",
-      "unit_usd": 0.999932423237533,
-      "units_at_run": 4827.132702
+      "unit_usd": 0.9999,
+      "units_at_run": 4827.132702,
+      "receipt_underlying": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "receipt_kind": "aave",
+      "receipt_rate": 1.0
     },
     {
       "kind": "position",
@@ -407,7 +437,10 @@
       "receipt": "0x4da27a545c0c5b758a6ba100e3a049001de870f5",
       "receipt_method": "erc20",
       "unit_usd": 0.002785246709930311,
-      "units_at_run": 19549.399270760605
+      "units_at_run": 19549.399270760605,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     },
     {
       "kind": "position",
@@ -427,7 +460,10 @@
       "receipt": "0x4da27a545c0c5b758a6ba100e3a049001de870f5",
       "receipt_method": "erc20",
       "unit_usd": 122.21999999629854,
-      "units_at_run": 19549.399270760605
+      "units_at_run": 19549.399270760605,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     },
     {
       "kind": "position",
@@ -447,7 +483,10 @@
       "receipt": null,
       "receipt_method": null,
       "unit_usd": null,
-      "units_at_run": null
+      "units_at_run": null,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     },
     {
       "kind": "position",
@@ -467,7 +506,10 @@
       "receipt": null,
       "receipt_method": null,
       "unit_usd": null,
-      "units_at_run": null
+      "units_at_run": null,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     },
     {
       "kind": "position",
@@ -487,7 +529,10 @@
       "receipt": "0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee",
       "receipt_method": "erc20",
       "unit_usd": 2646.030864676376,
-      "units_at_run": 350.8383512047732
+      "units_at_run": 350.8383512047732,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     },
     {
       "kind": "position",
@@ -506,8 +551,11 @@
       "vault": "0x4ef53d2caa51c447fdfeeedee8f07fd1962c9ee6",
       "receipt": "0x4ef53d2caa51c447fdfeeedee8f07fd1962c9ee6",
       "receipt_method": "erc20",
-      "unit_usd": 1.0334769664840433,
-      "units_at_run": 1367178.4492758848
+      "unit_usd": 1.0334646432,
+      "units_at_run": 1367178.4492758848,
+      "receipt_underlying": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "receipt_kind": "erc4626",
+      "receipt_rate": 1.033568
     },
     {
       "kind": "position",
@@ -526,8 +574,11 @@
       "vault": "0xd5cce260e7a755ddf0fb9cdf06443d593aaeaa13",
       "receipt": "0xd5cce260e7a755ddf0fb9cdf06443d593aaeaa13",
       "receipt_method": "erc20",
-      "unit_usd": 1.0481199517169395,
-      "units_at_run": 612266.6086536901
+      "unit_usd": 1.0481401755000002,
+      "units_at_run": 612266.6086536901,
+      "receipt_underlying": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "receipt_kind": "erc4626",
+      "receipt_rate": 1.048245
     },
     {
       "kind": "position",
@@ -547,7 +598,10 @@
       "receipt": "0xae78736cd615f374d3085123a210448e74fc6393",
       "receipt_method": "erc20",
       "unit_usd": 2808.6809861836855,
-      "units_at_run": 62.69448633227011
+      "units_at_run": 62.69448633227011,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     },
     {
       "kind": "position",
@@ -567,7 +621,10 @@
       "receipt": "0xac0f906e433d58fa868f936e8a43230473652885",
       "receipt_method": "shares",
       "unit_usd": 2609.1533026201832,
-      "units_at_run": 49.569794871814565
+      "units_at_run": 49.569794871814565,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     },
     {
       "kind": "position",
@@ -587,7 +644,10 @@
       "receipt": "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56",
       "receipt_method": "erc20",
       "unit_usd": 0.7018688421422504,
-      "units_at_run": 21827.015932550967
+      "units_at_run": 21827.015932550967,
+      "receipt_underlying": null,
+      "receipt_kind": null,
+      "receipt_rate": null
     }
   ],
   "permitted": [
