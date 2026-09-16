@@ -288,13 +288,16 @@
     const sameAsset = (src, v) => UNDER(src.symbol) === UNDER(v.asset);
     const needsSwap = (src, v) => isStable(src.symbol) && isStable(v.asset) && !sameAsset(src, v);
     const vkey = v => `${v.protocol}|${v.asset}|${v.vault || ''}`, skey = s => `${s.protocol}|${s.venue}|${s.symbol}`;
-    // venue order for one source: the destination the user picked, then venues that take the asset as it is
-    // (no stable-to-stable swap), then the rest; APY decides within each tier
-    const orderFor = (src, venues) => { const ov = sim.override[skey(src)]; const rank = v => (ov && vkey(v) === ov) ? 0 : needsSwap(src, v) ? 2 : 1; return [...venues].sort((a, b) => rank(a) - rank(b) || apyOf(b) - apyOf(a)); };
+    // venue order for one source: the destination the user pinned, then best outcome first — the rate this money
+    // would actually earn once it has diluted that venue at this size, not the headline. A venue that needs a
+    // stable-to-stable swap only wins the tie-break, never the ranking.
+    const landing = (v, rem) => diluted(apyOf(v), v.tvl_usd, (dep.get(v) || 0) + Math.max(0, Math.min(rem, roomFor(v))));
+    const orderFor = (src, venues, rem) => { const ov = sim.override[skey(src)];
+      return [...venues].sort((a, b) => ((ov && vkey(b) === ov) - (ov && vkey(a) === ov)) || landing(b, rem) - landing(a, rem) || (needsSwap(src, a) - needsSwap(src, b))); };
     // place up to `rem` dollars of `src` into `venues`, best first; returns what was placed
     function place(src, rem, venues, g, o, key) {
       let placed = 0;
-      for (const v of orderFor(src, venues)) {
+      for (const v of orderFor(src, venues, rem)) {
         if (!o.cross && rem < sim.moveUsd && src.kind !== 'idle') break;
         if (sameVenue(src, v)) continue;
         if (!o.cross && !compatible(src, v, g)) continue;
@@ -371,7 +374,7 @@
     ]);
     const altsFor = m => (m.cross ? venuesOf(sim.xTo) : venuesOf(m.g)).filter(v => !sameVenue(m.from, v) && (m.cross || compatible(m.from, v, m.g)))
       .map(v => ({ v, apy: diluted(apyOf(v), v.tvl_usd, (dep.get(v) || 0) + (v === m.to ? 0 : m.amt)), swap: !m.cross && needsSwap(m.from, v), room: v === m.to || Math.min(roomFor(v), protoRoom.get(v.protocol) ?? Infinity) > 0 }))
-      .sort((a, b) => (a.swap - b.swap) || (b.apy - a.apy));
+      .sort((a, b) => (b.room - a.room) || (b.apy - a.apy) || (a.swap - b.swap));   // best outcome first; venues with no room sink
     const optsRow = m => { const alts = altsFor(m); if (alts.length < 2) return ''; return `<div class="mv-opts"><label>Destination</label><select class="mv-alt" data-src="${esc(skey(m.from))}">${alts.map(a => `<option value="${esc(vkey(a.v))}" ${a.v === m.to ? 'selected' : ''} ${a.room ? '' : 'disabled'}>${esc(a.v.protocol)} ${esc(a.v.asset)} · ${pct(a.apy)}${a.swap ? ` · swap ${esc(UNDER(m.from.symbol))}→${esc(UNDER(a.v.asset))}` : ''}${a.room ? '' : ' · no room under the caps'}</option>`).join('')}</select>${needsSwap(m.from, m.to) ? `<span class="warn">needs a ${esc(UNDER(m.from.symbol))} → ${esc(UNDER(m.to.asset))} swap ${m.from.kind === 'idle' ? 'first' : 'between the withdraw and the deposit'}</span>` : ''}</div>`; };
     const execBtn = m => (!m.cross && needsSwap(m.from, m.to) && m.from.kind === 'idle')
       ? `<button class="btn ${executorOn ? '' : 'ghost'}" data-xswap="${m.id}" type="button" title="Prefill the Swap panel with ${esc(UNDER(m.from.symbol))} → ${esc(UNDER(m.to.asset))}; the deposit shows up here once the order fills">Swap first</button>`
