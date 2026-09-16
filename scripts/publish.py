@@ -48,11 +48,13 @@ def snapshot(slug: str, run: Path) -> dict:
                  apy=b.get("apy"), apy_source=b.get("apy_source"), venue_tvl_usd=b.get("venue_tvl_usd"),
                  untracked=b.get("untracked", False), balance=b.get("balance"), claimable=b.get("claimable", False),
                  claim_cmd=b.get("claim_cmd"), vault=b.get("vault"), receipt=b.get("receipt"), receipt_method=b.get("receipt_method"),
+                 apy_intrinsic=b.get("apy_intrinsic"), apy_vault_own=b.get("apy_vault_own"), apy_denom=b.get("apy_denom"),
                  unit_usd=b.get("unit_usd"), units_at_run=b.get("units_at_run"), receipt_underlying=b.get("receipt_underlying"),
                  receipt_kind=b.get("receipt_kind"), receipt_rate=b.get("receipt_rate")) for b in a["book"] if fnum(b["usd"]) >= 1]
     permitted = [dict(protocol=p["protocol"], asset=p["asset"], action=p["action"], asset_group=p["asset_group"],
                       apy=p.get("apy_total"), apy_30d=p.get("apy_30d"), apy_1d=p.get("apy_1d"), tvl_usd=p.get("tvl_usd"), priced=p["priced"],
-                      vault=p.get("vault"), apy_source=p.get("apy_source"), in_roles=p.get("in_roles"), roles_note=p.get("roles_note"))
+                      vault=p.get("vault"), apy_source=p.get("apy_source"), in_roles=p.get("in_roles"), roles_note=p.get("roles_note"),
+                      apy_intrinsic=p.get("apy_intrinsic_lst"), apy_vault_own=p.get("apy_vault_own"), apy_denom=p.get("apy_denom"))
                  for p in y.get("permitted", []) if p["action"] in ("deposit", "stake", "swap")]
     ob = y.get("ops_tools_best_strategy") or {}
     ops = [dict(asset_group=r["assetGroup"], current_apy=fnum(r["currentWeightedAPY"]),

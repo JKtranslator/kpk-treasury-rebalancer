@@ -175,11 +175,15 @@ def live_snapshot(slug: str, base: dict | None = None) -> dict:
         d = va.get((b.get("vault") or "").lower())
         if d and d.get(per) is not None:
             b["apy"], b["apy_source"], b["venue_tvl_usd"] = d[per], "vaults.fyi live", d.get("tvl_usd") or b.get("venue_tvl_usd")
+            if d.get("composite"):
+                b["apy_intrinsic"], b["apy_vault_own"], b["apy_denom"] = d.get("intrinsic_7d"), d.get("vault_own_7d"), d.get("denom")
     for p in permitted:
         d = va.get((p.get("vault") or "").lower())
         if d and d.get(per) is not None and p.get("in_roles") is not False:
             p.update(apy=d[per], apy_total=d[per], apy_1d=d["apy_1d"], apy_30d=d["apy_30d"], tvl_usd=d.get("tvl_usd") or p.get("tvl_usd"),
-                     priced=True, apy_source="vaults.fyi live")
+                     priced=True, apy_source="vaults.fyi live",
+                     apy_intrinsic=d.get("intrinsic_7d") if d.get("composite") else None,
+                     apy_vault_own=d.get("vault_own_7d") if d.get("composite") else None, apy_denom=d.get("denom"))
         p.setdefault("apy_total", p.get("apy"))
 
     # ---- rewards: same collector as the pipeline, priced from the run's marks
@@ -218,6 +222,7 @@ def live_snapshot(slug: str, base: dict | None = None) -> dict:
                    usd=round(fnum(b["usd"]), 2), apy=b.get("apy"), apy_source=b.get("apy_source"), venue_tvl_usd=b.get("venue_tvl_usd"),
                    untracked=b.get("untracked", False), balance=b.get("balance"), claimable=b.get("claimable", False),
                    claim_cmd=b.get("claim_cmd"), vault=b.get("vault"), receipt=b.get("receipt"), unit_usd=b.get("unit_usd"),
+                   apy_intrinsic=b.get("apy_intrinsic"), apy_vault_own=b.get("apy_vault_own"), apy_denom=b.get("apy_denom"),
                    live=b.get("live")) for b in book if fnum(b["usd"]) >= 1],
         permitted=permitted, policy_checks=checks, rewards_sweep=sweep,
         apy_sources={k: sum(1 for p in permitted if (p.get("apy_source") or "none") == k) for k in sorted({(p.get("apy_source") or "none") for p in permitted})},

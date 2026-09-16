@@ -71,10 +71,20 @@ def vaults_fyi_vault(chain_id: int, addr: str) -> dict | None:
         _VF_CACHE[ck] = None
         print(f"  vaults.fyi {addr[:10]}: {str(e)[:90]}")
         return None
-    apy = d.get("apy") or {}
+    # A vault denominated in a yield-bearing asset quotes its own rate in that asset: Gearbox's wstETH market pays
+    # 0.67% *in wstETH*, on top of the 2.28% the wstETH is already earning from staking. vaults.fyi carries both --
+    # `apy` is the vault's own rate, `apyComposite.totalApy` the return measured in the group's base asset (ETH,
+    # USD), intrinsic and vault rate compounded. The composite is the number comparable to everything else in the
+    # same asset group, so it wins whenever the API publishes one (it is null for WETH/ETH/USDC-denominated vaults).
+    comp = (d.get("apyComposite") or {}).get("totalApy")
+    apy = comp or d.get("apy") or {}
     g = lambda w, f="total": (apy.get(w) or {}).get(f)
+    intr = (d.get("apyComposite") or {}).get("intrinsicApy") or {}
     out = dict(apy_1h=g("1hour"), apy_1d=g("1day"), apy_7d=g("7day"), apy_30d=g("30day"),
                apy_base_7d=g("7day", "base"), apy_reward_7d=g("7day", "reward"),
+               composite=bool(comp), intrinsic_7d=(intr.get("7day") or {}).get("total"),
+               vault_own_7d=((d.get("apy") or {}).get("7day") or {}).get("total"),
+               denom=(d.get("asset") or {}).get("symbol"),
                tvl_usd=fnum((d.get("tvl") or {}).get("usd")), name=d.get("name"),
                is_transactional=d.get("isTransactional"), remaining_capacity=d.get("remainingCapacity"),
                max_capacity=d.get("maxCapacity"), updated=d.get("lastUpdateTimestamp"), warnings=d.get("warnings"))
@@ -97,7 +107,9 @@ def vaults_fyi_refresh(rows: list[dict], chain_id: int, period: str) -> tuple[in
         r.update(apy_total=d[per], apy_1d=d["apy_1d"], apy_30d=d["apy_30d"], apy_1h=d["apy_1h"],
                  apy_base=d["apy_base_7d"] if period == "7day" else r.get("apy_base"),
                  tvl_usd=d["tvl_usd"] if d["tvl_usd"] else r.get("tvl_usd"),
-                 priced=True, apy_source="vaults.fyi live", vf_updated=d["updated"])
+                 priced=True, apy_source="vaults.fyi live", vf_updated=d["updated"],
+                 apy_intrinsic_lst=d.get("intrinsic_7d") if d.get("composite") else None,
+                 apy_vault_own=d.get("vault_own_7d") if d.get("composite") else None, apy_denom=d.get("denom"))
         n += 1
     return n, vault_apys
 

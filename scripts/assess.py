@@ -410,6 +410,8 @@ def main():
         d = va.get((b.get("vault") or "").lower())
         if b["kind"] == "position" and d and d.get(per) is not None:
             b["apy"], b["apy_source"] = d[per], "vaults.fyi live"
+            if d.get("composite"):        # rate measured in the group's base asset: LST staking + the venue's own rate
+                b["apy_intrinsic"], b["apy_vault_own"], b["apy_denom"] = d.get("intrinsic_7d"), d.get("vault_own_7d"), d.get("denom")
             if d.get("tvl_usd"):
                 b["venue_tvl_usd"] = d["tvl_usd"]
     # Off-network: Syncrone rows are the whole book; match APY from the permitted venues (vaults.fyi via
