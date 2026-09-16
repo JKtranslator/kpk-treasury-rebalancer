@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
   "ok": true,
-  "as_of": "2026-09-16T15:08:43+00:00",
+  "as_of": "2026-09-16T15:44:45+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -124,7 +124,7 @@
   "idle": [],
   "in_flight_items": [],
   "token_check": {
-    "checked": 9,
+    "checked": 8,
     "disagree": 0,
     "etherscan_source": "etherscan"
   },
@@ -142,7 +142,7 @@
       "source": "merkl",
       "symbol": "COMP",
       "amount": 8.382076,
-      "usd": 158,
+      "usd": 159,
       "claimable": true
     },
     {
@@ -160,7 +160,7 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 1845,
+  "rewards_usd": 1846,
   "flags": [
     "NOTE: idle re-based on the live Safe (Syncrone lagging): ETH 548.8487 -> 0.0000"
   ]
