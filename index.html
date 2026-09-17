@@ -6,8 +6,8 @@
 <title>Treasury Rebalancer | KPK</title>
 <meta name="description" content="Holdings, policy checks and permitted yield moves for the treasuries KPK manages. Snapshot-driven; simulate thresholds in the browser.">
 <link rel="icon" href="assets/kpk.png">
-<link rel="stylesheet" href="assets/styles.css?v=cdc4e4419f">
-<link rel="stylesheet" href="assets/rebalancer.css?v=cdc4e4419f">
+<link rel="stylesheet" href="assets/styles.css?v=50263d16c7">
+<link rel="stylesheet" href="assets/rebalancer.css?v=50263d16c7">
 </head>
 <body>
 <div class="gate" id="gate" hidden>
@@ -16,7 +16,7 @@
     <h1>Treasury rebalancer</h1>
     <p>Internal working view. The executor token unlocks the snapshots; it is stored in this browser, so you are asked once per device.</p>
     <input type="password" id="gateInput" placeholder="Executor token" autocomplete="off" spellcheck="false">
-    <div class="gate-row"><button class="btn" id="gateBtn" type="button">Unlock</button><button class="lnk" id="gateWipe" type="button">forget the stored token</button><button class="lnk" id="gateReset" type="button">reset connection</button></div>
+    <div class="gate-row"><button class="btn" id="gateBtn" type="button">Unlock</button><button class="lnk" id="gateWipe" type="button">forget the stored token</button><button class="lnk" id="gateReset" type="button">reset connection</button><button class="lnk" id="gateDiag" type="button">run diagnostics</button></div>
     <div class="gate-msg" id="gateMsg"></div>
     <p class="fine">The token lives on the box in <code>~/kpk-treasury-rebalancer/.env.local</code> as <code>EXECUTOR_TOKEN</code>. Nothing on this page signs a transaction.<br>Talking to <code id="gateHost">…</code> · build <code id="gateBuild">…</code></p>
   </div>
@@ -225,6 +225,6 @@
     </div>
   </div>
 </div>
-<script src="assets/app.js?v=cdc4e4419f"></script>
+<script src="assets/app.js?v=50263d16c7"></script>
 </body>
 </html>

@@ -20,7 +20,7 @@
     gateWhy = '';
     if (!token()) return false;
     try {
-      const r = await withTimeout(EXECUTOR + '/auth', 12000, { cache: 'no-store', headers: authHeaders() });
+      const r = await withTimeout(EXECUTOR + '/auth', 8000, { cache: 'no-store', headers: authHeaders() });
       if (r.status === 401) return false;
       if (!r.ok) { gateWhy = 'the executor answered ' + r.status; return null; }
       return true;
@@ -50,9 +50,15 @@
     localStorage.setItem('kpk_executor_token', v);
     gate('', true);
     clearTimeout(gateGuard);
-    gateGuard = setTimeout(() => { if ($('#gateBtn').disabled) gate('Gave up waiting for ' + EXECUTOR + '. Nothing came back at all — if this repeats, reload with a hard refresh (Ctrl+Shift+R) so an old page cannot be the cause.'); }, 25000);
+    // count up while we wait, so a stalled request is visibly a stalled request and not a dead button
+    const t0 = Date.now();
+    gateGuard = setInterval(() => {
+      if (!$('#gateBtn').disabled) return clearInterval(gateGuard);
+      $('#gateMsg').className = 'gate-msg';
+      $('#gateMsg').textContent = 'Asking ' + EXECUTOR + ' … ' + Math.round((Date.now() - t0) / 1000) + 's';
+    }, 500);
     const ok = await tokenOk();
-    clearTimeout(gateGuard);
+    clearInterval(gateGuard);
     if (ok) { $('#gate').hidden = true; $('#wrap').hidden = false; return init(); }
     if (ok === null) return gate('Cannot reach the executor at ' + EXECUTOR + ' — ' + gateWhy + '. The token has been kept.');
     localStorage.removeItem('kpk_executor_token');
@@ -62,6 +68,24 @@
     $('#gateBtn').onclick = unlock;
     $('#gateInput').addEventListener('keydown', ev => { if (ev.key === 'Enter') unlock(); });
     $('#gateWipe').onclick = () => { localStorage.removeItem('kpk_executor_token'); $('#gateInput').value = ''; gate('Token cleared.'); };
+    $('#gateDiag').onclick = async () => {
+      const steps = [['/health (no token)', EXECUTOR + '/health', {}],
+                     ['/auth (with token)', EXECUTOR + '/auth', { headers: authHeaders() }],
+                     ['snapshot', EXECUTOR + '/data/index.json', { headers: authHeaders() }]];
+      const out = [];
+      for (const [label, url, opt] of steps) {
+        const t = Date.now();
+        try {
+          const r = await withTimeout(url, 8000, { cache: 'no-store', ...opt });
+          out.push(`${label}: HTTP ${r.status} in ${Date.now() - t} ms`);
+        } catch (e) {
+          out.push(`${label}: ${e.name === 'AbortError' ? 'no answer in 8 s' : (e.name + ' — ' + e.message)} after ${Date.now() - t} ms`);
+        }
+      }
+      out.push(`page origin ${location.origin} · executor ${EXECUTOR} · token ${token() ? token().length + ' chars stored' : 'none stored'}`);
+      $('#gateMsg').className = 'gate-msg';
+      $('#gateMsg').innerHTML = out.map(esc).join('<br>');
+    };
     $('#gateReset').onclick = () => { localStorage.removeItem('kpk_executor'); localStorage.removeItem('kpk_executor_token'); location.reload(); };
     $('#gateHost').textContent = EXECUTOR;
     const me = [...document.scripts].map(s => s.src).find(s => /app\.js/.test(s)) || '';
