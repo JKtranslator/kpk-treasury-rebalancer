@@ -8,12 +8,31 @@
   const authHeaders = (h = {}) => token() ? { ...h, Authorization: 'Bearer ' + token() } : h;
   /* The token is the key to the whole view, not just to refreshing it: the page asks for it before it loads a
      single snapshot, and the executor refuses /data/ without it too. Stored in this browser, so it is asked once. */
+  // Never leave the gate spinning: a request that hangs (a network that drops traffic to the box, a stale
+  // executor override, a tunnel that is not up) has to end in a message, not in "Checking..." forever.
+  async function withTimeout(url, ms, opts) {
+    const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms);
+    try { return await fetch(url, { ...opts, signal: ac.signal }); }
+    finally { clearTimeout(t); }
+  }
+  let gateWhy = '';
   async function tokenOk() {
+    gateWhy = '';
     if (!token()) return false;
     try {
-      const r = await fetch(EXECUTOR + '/auth', { cache: 'no-store', headers: authHeaders() });
-      return r.ok;
-    } catch (e) { return null; }            // executor unreachable: cannot judge the token, do not throw it away
+      const r = await withTimeout(EXECUTOR + '/auth', 12000, { cache: 'no-store', headers: authHeaders() });
+      if (r.status === 401) return false;
+      if (!r.ok) { gateWhy = 'the executor answered ' + r.status; return null; }
+      return true;
+    } catch (e) {
+      // tell the two apart: the box unreachable, or reachable but refusing us
+      gateWhy = e.name === 'AbortError' ? 'no answer within 12 s' : (e.message || 'network error');
+      try {
+        const h = await withTimeout(EXECUTOR + '/health', 8000, { cache: 'no-store' });
+        if (h.ok) gateWhy += ' (the executor is up, so this is the /auth call specifically)';
+      } catch (e2) { gateWhy += ' — the executor did not answer /health either'; }
+      return null;
+    }
   }
   function gate(msg, busy) {
     let g = $('#gate');
@@ -31,16 +50,19 @@
     gate('', true);
     const ok = await tokenOk();
     if (ok) { $('#gate').hidden = true; $('#wrap').hidden = false; return init(); }
+    if (ok === null) return gate('Cannot reach the executor at ' + EXECUTOR + ' — ' + gateWhy + '. The token has been kept.');
     localStorage.removeItem('kpk_executor_token');
-    gate(ok === null ? 'Cannot reach the executor at ' + EXECUTOR + '. Check the tunnel or the host, then try again.' : 'That token was refused.');
+    gate('That token was refused.');
   }
   async function start() {
     $('#gateBtn').onclick = unlock;
     $('#gateInput').addEventListener('keydown', ev => { if (ev.key === 'Enter') unlock(); });
     $('#gateWipe').onclick = () => { localStorage.removeItem('kpk_executor_token'); $('#gateInput').value = ''; gate('Token cleared.'); };
+    $('#gateReset').onclick = () => { localStorage.removeItem('kpk_executor'); localStorage.removeItem('kpk_executor_token'); location.reload(); };
+    $('#gateHost').textContent = EXECUTOR;
     const ok = await tokenOk();
     if (ok) { $('#gate').hidden = true; $('#wrap').hidden = false; return init(); }
-    gate(token() ? (ok === null ? 'Cannot reach the executor at ' + EXECUTOR + '.' : 'The stored token is no longer accepted.') : '');
+    gate(token() ? (ok === null ? 'Cannot reach the executor at ' + EXECUTOR + ' — ' + gateWhy + '.' : 'The stored token is no longer accepted.') : '');
   }
   function askToken(msg) { const t = prompt((msg || 'Executor token') + '\n(stored in this browser only; find it on the box: ~/kpk-treasury-rebalancer/.env.local -> EXECUTOR_TOKEN)', token()); if (t != null) { localStorage.setItem('kpk_executor_token', t.trim()); } return !!token(); }
   const $ = (s, el = document) => el.querySelector(s);
