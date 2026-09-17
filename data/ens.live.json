@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
   "ok": true,
-  "as_of": "2026-09-17T04:45:50+00:00",
+  "as_of": "2026-09-17T05:49:21+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -150,7 +150,7 @@
       "source": "merkl",
       "symbol": "COMP",
       "amount": 8.382076,
-      "usd": 160,
+      "usd": 161,
       "claimable": true
     },
     {
@@ -168,7 +168,7 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 1886,
+  "rewards_usd": 1887,
   "flags": [
     "NOTE: $2,655,377 is in-flight (withdrawal queues) per Syncrone and invisible to Safe/Etherscan/Strategy API: 1,000.00 ETHx in stader."
   ]

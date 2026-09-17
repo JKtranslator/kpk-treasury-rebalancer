@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
   "ok": true,
-  "as_of": "2026-09-17T04:48:23+00:00",
+  "as_of": "2026-09-17T05:51:57+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -160,8 +160,8 @@
     {
       "source": "aave_safety_module",
       "symbol": "AAVE",
-      "amount": 1.8611147511164943,
-      "usd": 223,
+      "amount": 1.9131852219444032,
+      "usd": 229,
       "claimable": true
     },
     {
@@ -200,6 +200,6 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 316,
+  "rewards_usd": 323,
   "flags": []
 }
