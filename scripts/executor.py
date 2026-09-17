@@ -131,7 +131,7 @@ def safe_queue(chain_id: int, safe: str, slug: str) -> dict:
     roles = ((snap.get("safes") or {}).get("roles_mod") or "").lower()
     if roles:
         names.setdefault(roles, "Roles modifier")
-    out, recent, nonces = [], [], {}
+    out, nonces = [], {}
     rows = []
     for role, addr in safes:
         info = get(f"{base}/safes/{addr}/")
@@ -139,9 +139,6 @@ def safe_queue(chain_id: int, safe: str, slug: str) -> dict:
         nonces[role] = dict(safe=addr, nonce=n, threshold=info.get("threshold"))
         q = get(f"{base}/safes/{addr}/multisig-transactions/?executed=false&nonce__gte={n}&ordering=nonce&limit=40")
         rows += [(role, addr, t, False) for t in q.get("results", [])]
-        # what just went through, so a proposal that executed between two page loads does not vanish unexplained
-        h = get(f"{base}/safes/{addr}/multisig-transactions/?executed=true&ordering=-nonce&limit=6")
-        rows += [(role, addr, t, True) for t in h.get("results", [])]
     # a bot proposal arrives as multiSend(execTransactionWithRole, ...) through the Roles modifier, so the method the
     # Safe reports says nothing. The verb is the call data's selector and the venue is the Roles call's own target.
     VERBS = {"0x095ea7b3": "approve", "0x6e553f65": "deposit", "0xb6b55f25": "deposit", "0x617ba037": "supply",
@@ -191,12 +188,9 @@ def safe_queue(chain_id: int, safe: str, slug: str) -> dict:
                    legs=[dict(verb=v, to=a, name=names.get(a)) for v, a in lg],
                    value=t.get("value"), executed=done, executed_at=t.get("executionDate"),
                    tx_hash=t.get("transactionHash"), successful=t.get("isSuccessful"))
-        (recent if done else out).append(row)
-    cut = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=36)).isoformat()
-    recent = [r for r in recent if (r.get("executed_at") or "") >= cut]
-    recent.sort(key=lambda r: r.get("executed_at") or "", reverse=True)
+        out.append(row)
     out.sort(key=lambda r: (r.get("nonce") or 0))
-    return dict(client=slug, safes=nonces, queued=out, recent=recent[:6])
+    return dict(client=slug, safes=nonces, queued=out)
 
 
 def underlying(symbol: str | None, asset_group: str) -> str:
