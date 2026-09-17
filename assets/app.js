@@ -43,12 +43,16 @@
     $('#gateBtn').textContent = busy ? 'Checking…' : 'Unlock';
     if (!busy) $('#gateInput').focus();
   }
+  let gateGuard = null;
   async function unlock() {
     const v = $('#gateInput').value.trim();
     if (!v) return gate('Enter the executor token.');
     localStorage.setItem('kpk_executor_token', v);
     gate('', true);
+    clearTimeout(gateGuard);
+    gateGuard = setTimeout(() => { if ($('#gateBtn').disabled) gate('Gave up waiting for ' + EXECUTOR + '. Nothing came back at all — if this repeats, reload with a hard refresh (Ctrl+Shift+R) so an old page cannot be the cause.'); }, 25000);
     const ok = await tokenOk();
+    clearTimeout(gateGuard);
     if (ok) { $('#gate').hidden = true; $('#wrap').hidden = false; return init(); }
     if (ok === null) return gate('Cannot reach the executor at ' + EXECUTOR + ' — ' + gateWhy + '. The token has been kept.');
     localStorage.removeItem('kpk_executor_token');
@@ -60,6 +64,8 @@
     $('#gateWipe').onclick = () => { localStorage.removeItem('kpk_executor_token'); $('#gateInput').value = ''; gate('Token cleared.'); };
     $('#gateReset').onclick = () => { localStorage.removeItem('kpk_executor'); localStorage.removeItem('kpk_executor_token'); location.reload(); };
     $('#gateHost').textContent = EXECUTOR;
+    const me = [...document.scripts].map(s => s.src).find(s => /app\.js/.test(s)) || '';
+    $('#gateBuild').textContent = (me.match(/v=([a-f0-9]+)/) || [, 'unstamped'])[1];
     const ok = await tokenOk();
     if (ok) { $('#gate').hidden = true; $('#wrap').hidden = false; return init(); }
     gate(token() ? (ok === null ? 'Cannot reach the executor at ' + EXECUTOR + ' — ' + gateWhy + '.' : 'The stored token is no longer accepted.') : '');
