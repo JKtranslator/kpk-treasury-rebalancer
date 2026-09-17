@@ -118,7 +118,8 @@ def safe_queue(chain_id: int, safe: str, slug: str) -> dict:
             if a:
                 names.setdefault(a.lower(), f"{b['protocol']} {b.get('symbol') or ''}".strip())
     for a, t in (reg.get("receipt_tokens") or {}).items():
-        names.setdefault(a.lower(), t.get("position") or t.get("symbol") or "")
+        if isinstance(t, dict):        # the registry keeps a _comment string alongside the entries
+            names.setdefault(a.lower(), t.get("position") or t.get("symbol") or "")
     roles = ((snap.get("safes") or {}).get("roles_mod") or "").lower()
     if roles:
         names.setdefault(roles, "Roles modifier")
