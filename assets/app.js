@@ -471,7 +471,7 @@
     const onAlt = e => { const s = e.target.closest('select.mv-alt, select.mv-route'); if (!s) return;
       (s.classList.contains('mv-route') ? sim.route : sim.override)[s.dataset.src] = s.value; simulate(); };
     $('#simMoves').onchange = onAlt; $('#xMoves').onchange = onAlt;
-    renderRewards(); renderStage2(); renderSwap(); renderPending(); pollPending();
+    renderRewards(); renderStage2(); renderSwap(); renderPending(); pollPending(); loadQueue();
   }
   // a cross-category leg lands in the Swap panel: sell the source token for the destination asset, sized in tokens
   function prefillSwap(m) {
@@ -562,7 +562,17 @@
     l.push({ hash, plan_id: plan.plan_id, labels: (plan.transactions || []).map(t => t.label), commands: plan.commands || [], created: Date.now(), status: null });
     localStorage.setItem(pendKey(), JSON.stringify(l)); renderPending(); pollPending();
   }
-  let pendTimer = null;
+  let pendTimer = null, queued = [];
+  // the Safe's own queue: proposals from this page and from the bot both land there, and the page should show both
+  async function loadQueue() {
+    if (!snap || !executorOn) { queued = []; return; }
+    try {
+      const r = await fetch(EXECUTOR + '/queue/' + snap.client, { cache: 'no-store', headers: authHeaders() });
+      const j = await r.json();
+      queued = (r.ok && !j.error) ? (j.queued || []) : [];
+    } catch (e) { queued = []; }
+    renderPending();
+  }
   async function pollPending() {
     clearTimeout(pendTimer);
     const l = pendingList(); if (!l.length || !executorOn) return;
@@ -577,14 +587,33 @@
     localStorage.setItem(pendKey(), JSON.stringify(keep));
     if (changed) renderPending();
     if (executed) await liveRefresh(true);
+    await loadQueue();
     if (keep.length) pendTimer = setTimeout(pollPending, 30000);
   }
   function renderPending() {
     let box = $('#pendingBox'); if (!box) { box = document.createElement('div'); box.id = 'pendingBox'; const sim = $('#simOut'); sim.parentNode.insertBefore(box, sim); }
-    const l = pendingList();
-    box.hidden = !l.length;
-    box.innerHTML = l.map(p => { const s = p.status || {}; const st = s.is_executed ? 'executed' : s.confirmations != null ? `${s.confirmations}/${s.required} signatures` : 'awaiting signers';
-      return `<div class="mv"><div class="path"><span class="pill p-pend">proposed</span> <b>${esc((p.commands || p.labels || []).join(' · '))}</b>${s.nonce != null ? ` · nonce ${s.nonce}` : ''}<br><small>${esc(st)} · proposed ${new Date(p.created).toISOString().slice(0, 16).replace('T', ' ')} UTC · the live view drops this move once the Safe executes it</small></div><div class="amt num">${esc(p.hash.slice(0, 10))}…</div><button class="btn ghost" data-drop="${esc(p.hash)}" type="button" title="Forget this proposal here (does not cancel it in the Safe)">dismiss</button></div>`; }).join('');
+    const mine = new Map(pendingList().map(p => [String(p.hash).toLowerCase(), p]));
+    // one row per queued Safe transaction; ours carry the command we sent, the bot's are read off the queue
+    const rows = queued.map(q => {
+      const p = mine.get(String(q.safe_tx_hash).toLowerCase());
+      const what = p ? (p.commands || p.labels || []).join(' · ')
+                     : [q.method, q.target_name].filter(Boolean).join(' → ') || 'transaction';
+      return { hash: q.safe_tx_hash, source: p ? 'this page' : 'bot', what, nonce: q.nonce,
+               sigs: `${q.confirmations}/${q.required} signatures`, when: q.submitted, mineOnly: false };
+    });
+    // anything we proposed that the queue no longer lists: executed, or replaced by the same nonce
+    for (const p of mine.values()) {
+      if (!queued.some(q => String(q.safe_tx_hash).toLowerCase() === String(p.hash).toLowerCase())) {
+        const s = p.status || {};
+        if (s.is_executed) continue;                       // gone because it executed; the live view already has it
+        rows.push({ hash: p.hash, source: 'this page', what: (p.commands || p.labels || []).join(' · '),
+                    nonce: s.nonce, sigs: s.confirmations != null ? `${s.confirmations}/${s.required} signatures` : 'not in the Safe queue',
+                    when: new Date(p.created).toISOString(), mineOnly: true });
+      }
+    }
+    rows.sort((x, y) => (x.nonce ?? 1e9) - (y.nonce ?? 1e9));
+    box.hidden = !rows.length;
+    box.innerHTML = rows.map(r => `<div class="mv"><div class="path"><span class="pill p-pend">queued</span> <span class="pill ${r.source === 'bot' ? 'p-bot' : 'p-ui'}">${esc(r.source)}</span> <b>${esc(r.what)}</b>${r.nonce != null ? ` · nonce ${r.nonce}` : ''}<br><small>${esc(r.sigs)}${r.when ? ` · proposed ${esc(String(r.when).slice(0, 16).replace('T', ' '))} UTC` : ''}${r.mineOnly ? ' · not in the Safe queue any more (replaced at this nonce, or rejected)' : ''} · the live view drops it once the Safe executes it</small></div><div class="amt num">${esc(String(r.hash).slice(0, 10))}…</div>${r.source === 'this page' ? `<button class="btn ghost" data-drop="${esc(r.hash)}" type="button" title="Forget this proposal here (does not cancel it in the Safe)">dismiss</button>` : '<span class="dim" style="font-size:11.5px">from the bot</span>'}</div>`).join('');
     box.querySelectorAll('button[data-drop]').forEach(b => b.onclick = () => { localStorage.setItem(pendKey(), JSON.stringify(pendingList().filter(p => p.hash !== b.dataset.drop))); renderPending(); });
   }
 

@@ -165,3 +165,5 @@ th.ck,td.ck{width:28px;padding-right:0!important;} td.ck input,th.ck input{curso
 .chk input{margin-top:2px;accent-color:var(--ink);width:15px;height:15px;flex:none;}
 .chk em{display:block;font-style:normal;font-size:11.5px;line-height:1.4;color:var(--muted);margin-top:2px;}
 #clashNote{margin-top:10px;}
+.pill.p-ui{background:rgba(0,0,0,.06);color:var(--ink);}
+.pill.p-bot{background:rgba(37,99,235,.12);color:#1d4ed8;}

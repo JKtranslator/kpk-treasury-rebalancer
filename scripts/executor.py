@@ -89,6 +89,58 @@ def safe_tx_status(chain_id: int, safe_tx_hash: str) -> dict:
                 confirmations=len(d.get("confirmations") or []), required=d.get("confirmationsRequired"))
 
 
+def safe_queue(chain_id: int, safe: str, slug: str) -> dict:
+    """Everything awaiting signatures on the Safe, whoever proposed it. The page can only know about proposals it
+    made itself; the bot's go straight to the Safe, and a queue you cannot see is a queue you sign blind."""
+    reg = registry()
+    svc = reg["safe_tx_service"][str(chain_id)]
+    k = os.environ.get("SAFE_API_KEY", "")
+    import urllib.request
+    base = svc["gateway"] if k else svc["legacy"]
+    hdr = {"Authorization": f"Bearer {k}"} if k else {}
+
+    def get(url):
+        req = urllib.request.Request(url, headers=hdr)
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read().decode())
+
+    info = get(f"{base}/safes/{safe}/")
+    nonce = int(info.get("nonce") or 0)
+    d = get(f"{base}/safes/{safe}/multisig-transactions/?executed=false&nonce__gte={nonce}&ordering=nonce&limit=40")
+    # name what the transaction touches, so a bot proposal is not just an address
+    names = {}
+    snap = load_snapshot(slug) if slug in CLIENT_DIRS else {}
+    for p in (snap.get("permitted") or []):
+        if p.get("vault"):
+            names[p["vault"].lower()] = f"{p['protocol']} {p['asset']}"
+    for b in (snap.get("book") or []):
+        for a in (b.get("vault"), b.get("receipt")):
+            if a:
+                names.setdefault(a.lower(), f"{b['protocol']} {b.get('symbol') or ''}".strip())
+    for a, t in (reg.get("receipt_tokens") or {}).items():
+        names.setdefault(a.lower(), t.get("position") or t.get("symbol") or "")
+    roles = ((snap.get("safes") or {}).get("roles_mod") or "").lower()
+    if roles:
+        names.setdefault(roles, "Roles modifier")
+    out = []
+    for t in d.get("results", []):
+        dec = t.get("dataDecoded") or {}
+        target = (t.get("to") or "").lower()
+        # a Roles call carries the real target inside its first argument
+        inner = None
+        for p in (dec.get("parameters") or []):
+            if (p.get("name") or "").lower() in ("to", "target") and isinstance(p.get("value"), str) and p["value"].startswith("0x"):
+                inner = p["value"].lower()
+                break
+        out.append(dict(safe_tx_hash=t.get("safeTxHash"), nonce=t.get("nonce"),
+                        confirmations=len(t.get("confirmations") or []), required=t.get("confirmationsRequired"),
+                        submitted=t.get("submissionDate"), proposer=t.get("proposer"),
+                        method=dec.get("method"), to=t.get("to"),
+                        target_name=names.get(inner or target) or names.get(target),
+                        value=t.get("value"), trusted=t.get("trusted")))
+    return dict(client=slug, safe=safe, nonce=nonce, threshold=info.get("threshold"), queued=out)
+
+
 def underlying(symbol: str | None, asset_group: str) -> str:
     """Token the bot command needs, from a Strategy API asset label."""
     s = (symbol or "").upper()
@@ -482,6 +534,16 @@ class H(BaseHTTPRequestHandler):
                 return self._json(200, live_view(slug, force="force" in self.path))
             except Exception as e:
                 return self._json(502, dict(error=f"live view failed: {str(e)[:200]}"))
+        if self.path.startswith("/queue/"):
+            slug = self.path.split("/queue/", 1)[1].split("?")[0]
+            if slug not in CLIENT_DIRS:
+                return self._json(404, dict(error="unknown client"))
+            try:
+                snap = load_snapshot(slug)
+                safe = (snap.get("safes") or {}).get("avatar") or snap.get("avatar_safe")
+                return self._json(200, safe_queue(int(snap.get("chain_id") or 1), safe, slug))
+            except Exception as e:
+                return self._json(502, dict(error=f"safe queue lookup failed: {str(e)[:160]}"))
         if self.path.startswith("/safe-tx/"):
             parts = self.path.split("/safe-tx/", 1)[1].split("?")[0].split("/")
             if len(parts) != 2 or parts[0] not in CLIENT_DIRS:
