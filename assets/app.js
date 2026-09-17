@@ -19,7 +19,7 @@
     : b.apy == null ? '' : b.apy_source && b.apy_source !== 'vaults.fyi' ? `<span class="src" title="${esc(b.apy_source)}">${b.apy_source.startsWith('defillama') ? 'llama' : b.apy_source.includes('stale') ? 'stale' : b.apy_source === 'vaults.fyi live' ? 'live' : b.apy_source.startsWith('vaults.fyi') ? '' : 'realised'}</span>` : '';
 
   let index = null, snap = null, live = null, moves = [], executorOn = false;
-  let sim = { pickupBps: 50, moveUsd: 250000, tvlCapPct: 20, basis: 'apy', exclude: new Set(), xFrom: null, xTo: null, xAmt: 0, xUser: false, override: {}, route: {} };
+  let sim = { pickupBps: 50, moveUsd: 250000, tvlCapPct: 20, basis: 'apy', exclude: new Set(), xFrom: null, xTo: null, xAmt: 0, xUser: false, reserve: false, override: {}, route: {} };
 
   async function loadJSON(p) { const r = await fetch(p, { cache: 'no-store' }); if (!r.ok) throw new Error(p + ' ' + r.status); return r.json(); }
 
@@ -171,6 +171,8 @@
     // a new pair is a new question: drop the typed amount and the per-leg choices, and re-size from the policy
     const xPair = which => e => { sim[which] = e.target.value; sim.xUser = false; sim.override = {}; sim.route = {}; simulate(); };
     $('#xFrom').onchange = xPair('xFrom'); $('#xTo').onchange = xPair('xTo');
+    $('#xReserve').checked = sim.reserve;
+    $('#xReserve').onchange = e => { sim.reserve = e.target.checked; simulate(); };
     let xDeb = null; $('#xAmt').oninput = e => { sim.xAmt = Number(e.target.value || 0); sim.xUser = true; clearTimeout(xDeb); xDeb = setTimeout(simulate, 400); };
     simulate();
 
@@ -286,13 +288,17 @@
     const nav = snap.nav_usd; const cap = snap.policy?.protocol_cap_pct_nav;
     const byProto = {}; snap.book.forEach(b => { if (b.kind !== 'idle') byProto[b.protocol] = (byProto[b.protocol] || 0) + b.usd; });
     const minPick = sim.pickupBps / 1e4; moves = []; let before = 0, den = 0, idleDeployed = 0;
-    const heldMap = new Map(), dep = new Map(), headroom = new Map();   // venue -> held / added by this plan / room left
-    const taken = new Map(); const avail = b => b.usd - (taken.get(b) || 0);   // book row -> already committed by an earlier pass
-    // one protocol-cap budget shared by every venue of that protocol, spent as moves are allocated
-    const protoRoom = new Map();
+    const heldMap = new Map();                                         // venue -> what we already hold there
+    // A ledger is one plan's claim on capacity: what it adds per venue, the room left, the protocol budget it has
+    // spent, and which book rows it has drawn on. The rotation and the within-category moves get their own unless
+    // the rotation is ticked as already executed -- capacity must not be reserved against a proposal nobody has run.
+    const baseProto = new Map();
     Object.keys(byProto).concat(snap.permitted.map(p => p.protocol)).forEach(p => {
-      if (!protoRoom.has(p)) protoRoom.set(p, cap ? Math.max(0, cap / 100 * nav - (byProto[p] || 0)) : Infinity);
+      if (!baseProto.has(p)) baseProto.set(p, cap ? Math.max(0, cap / 100 * nav - (byProto[p] || 0)) : Infinity);
     });
+    const newLedger = () => ({ dep: new Map(), headroom: new Map(), taken: new Map(), proto: new Map(baseProto) });
+    let L = newLedger();
+    const avail = b => b.usd - (L.taken.get(b) || 0);
     const apyOf = p => (sim.basis === 'apy_30d' && p.apy_30d != null) ? p.apy_30d : (sim.basis === 'apy_1d' && p.apy_1d != null) ? p.apy_1d : p.apy;
     const STABLE_SYMS = ['USDC', 'USDT', 'USDS', 'DAI', 'GHO', 'EURC', 'PYUSD', 'RLUSD'];
     const isStable = s => STABLE_SYMS.some(t => (s || '').toUpperCase().includes(t));
@@ -302,7 +308,8 @@
     const prop = syncCross(cats);
     const venuesOf = g => snap.permitted.filter(p => p.asset_group === g && p.priced && apyOf(p) != null && !sim.exclude.has(p.protocol)).sort((a, b) => apyOf(b) - apyOf(a));
     // the threshold governs the resulting position, so subtract what we already own in the venue
-    const roomFor = v => { if (!heldMap.has(v)) heldMap.set(v, heldIn(v)); if (!headroom.has(v)) headroom.set(v, v.tvl_usd ? Math.max(0, sim.tvlCapPct / 100 * v.tvl_usd - heldMap.get(v)) : Infinity); return headroom.get(v); };
+    const baseRoom = v => { if (!heldMap.has(v)) heldMap.set(v, heldIn(v)); return v.tvl_usd ? Math.max(0, sim.tvlCapPct / 100 * v.tvl_usd - heldMap.get(v)) : Infinity; };
+    const roomFor = (v, l) => { l = l || L; if (!l.headroom.has(v)) l.headroom.set(v, baseRoom(v)); return l.headroom.get(v); };
     const compatible = (src, v, g) => { const st = (src.symbol || '').toUpperCase(), vt = (v.asset || '').toUpperCase(); return st === vt || (isStable(st) && isStable(vt)) || g === 'ETH'; };
     const sameAsset = (src, v) => UNDER(src.symbol) === UNDER(v.asset);
     const needsSwap = (src, v) => isStable(src.symbol) && isStable(v.asset) && !sameAsset(src, v);
@@ -310,7 +317,7 @@
     // venue order for one source: the destination the user pinned, then best outcome first — the rate this money
     // would actually earn once it has diluted that venue at this size, not the headline. A venue that needs a
     // stable-to-stable swap only wins the tie-break, never the ranking.
-    const landing = (v, rem) => diluted(apyOf(v), v.tvl_usd, (dep.get(v) || 0) + Math.max(0, Math.min(rem, roomFor(v))));
+    const landing = (v, rem) => diluted(apyOf(v), v.tvl_usd, (L.dep.get(v) || 0) + Math.max(0, Math.min(rem, roomFor(v))));
     const orderFor = (src, venues, rem) => { const ov = sim.override[skey(src)];
       return [...venues].sort((a, b) => ((ov && vkey(b) === ov) - (ov && vkey(a) === ov)) || landing(b, rem) - landing(a, rem) || (needsSwap(src, a) - needsSwap(src, b))); };
     // place up to `rem` dollars of `src` into `venues`, best first; returns what was placed
@@ -320,17 +327,17 @@
         if (!o.cross && rem < sim.moveUsd && src.kind !== 'idle') break;
         if (sameVenue(src, v)) continue;
         if (!o.cross && !compatible(src, v, g)) continue;
-        const amt = Math.min(rem, roomFor(v), protoRoom.get(v.protocol) ?? Infinity);
+        const amt = Math.min(rem, roomFor(v), L.proto.get(v.protocol) ?? Infinity);
         // the pickup is judged on the rate we would actually receive once this money lands
-        const pick = diluted(apyOf(v), v.tvl_usd, (dep.get(v) || 0) + Math.max(amt, 0)) - src.apy;
+        const pick = diluted(apyOf(v), v.tvl_usd, (L.dep.get(v) || 0) + Math.max(amt, 0)) - src.apy;
         if (!o.cross && pick < minPick && src.kind === 'position' && !sim.exclude.has(src.protocol)) continue;   // venues are tiered, not APY-sorted: keep looking
         if (amt <= 0 || (!o.cross && amt < Math.min(sim.moveUsd, rem))) continue;
-        moves.push({ id: moves.length, g, from: src, to: v, amt, pick, toApy: apyOf(v), forced: !!o.forced, cross: !!o.cross });
-        dep.set(v, (dep.get(v) || 0) + amt); headroom.set(v, headroom.get(v) - amt);
-        protoRoom.set(v.protocol, (protoRoom.get(v.protocol) ?? Infinity) - amt);
+        moves.push({ id: moves.length, g, from: src, to: v, amt, pick, toApy: apyOf(v), forced: !!o.forced, cross: !!o.cross, L });
+        L.dep.set(v, (L.dep.get(v) || 0) + amt); L.headroom.set(v, L.headroom.get(v) - amt);
+        L.proto.set(v.protocol, (L.proto.get(v.protocol) ?? Infinity) - amt);
         rem -= amt; placed += amt; if (rem <= 0) break;
       }
-      if (key) taken.set(key, (taken.get(key) || 0) + placed);
+      if (key) L.taken.set(key, (L.taken.get(key) || 0) + placed);
       return placed;
     }
     // ---- pass 1 (mandate first): between categories, worst performers of `from` into the best venues of `to`
@@ -351,7 +358,10 @@
       }
       xShort = Math.max(0, sim.xAmt - xOut);
     }
-    // ---- pass 2: within each category, on what the rotation left
+    const Lx = L;
+    if (!sim.reserve) L = newLedger();     // the rotation is a proposal: it holds no capacity until we say it does
+    const Lw = L;
+    // ---- pass 2: within each category
     const stats = {};
     for (const g of groups) {
       if (g === 'OTHER') continue;   // governance / non-yield tokens are never rotated
@@ -368,13 +378,13 @@
     }
     // several moves can land in the same venue, so settle every rate against that venue's plan total
     let dilW = 0, dilX = 0;
-    for (const [v, added] of dep) {
+    for (const l of new Set([Lx, Lw])) for (const [v, added] of l.dep) {
       const drag = (heldMap.get(v) || 0) * (apyOf(v) - diluted(apyOf(v), v.tvl_usd, added));
-      const xa = moves.filter(m => m.cross && m.to === v).reduce((s, m) => s + m.amt, 0);
+      const xa = moves.filter(m => m.cross && m.to === v && m.L === l).reduce((s, m) => s + m.amt, 0);
       dilX += drag * xa / added; dilW += drag * (1 - xa / added);
     }
     moves.forEach(m => {
-      const added = dep.get(m.to) || 0;
+      const added = m.L.dep.get(m.to) || 0;
       m.toApyDiluted = diluted(apyOf(m.to), m.to.tvl_usd, added);
       m.pick = m.toApyDiluted - m.from.apy;
       m.shareAfter = m.to.tvl_usd ? ((heldMap.get(m.to) || 0) + added) / (m.to.tvl_usd + added) : null;
@@ -392,19 +402,18 @@
       ['Pickup per year', compact(pickup)],
     ]);
     // why a venue cannot take more: the ceiling it is already at, the protocol budget, or room this plan spent elsewhere
-    function blockedBy(v) {
-      if (Math.min(roomFor(v), protoRoom.get(v.protocol) ?? Infinity) > 0) return null;
-      const baseVenue = v.tvl_usd ? sim.tvlCapPct / 100 * v.tvl_usd - (heldMap.get(v) || 0) : Infinity;
-      const baseProto = cap ? cap / 100 * nav - (byProto[v.protocol] || 0) : Infinity;
-      if (roomFor(v) <= 0 && baseVenue <= 0) return `already at the ${sim.tvlCapPct}% venue ceiling`;
-      if ((protoRoom.get(v.protocol) ?? Infinity) <= 0 && baseProto <= 0) return `${v.protocol} already at the ${cap}% protocol cap`;
-      const taken = dep.get(v) || 0;
-      return taken > 0 ? `its ${compact(taken)} of room is taken by another leg of this plan`
-                       : `${v.protocol}'s remaining ${cap}% budget is taken by another leg of this plan`;
+    function blockedBy(v, l) {
+      if (Math.min(roomFor(v, l), l.proto.get(v.protocol) ?? Infinity) > 0) return null;
+      const bp = baseProto.get(v.protocol) ?? Infinity;
+      if (roomFor(v, l) <= 0 && baseRoom(v) <= 0) return `already at the ${sim.tvlCapPct}% venue ceiling`;
+      if ((l.proto.get(v.protocol) ?? Infinity) <= 0 && bp <= 0) return `${v.protocol} already at the ${cap}% protocol cap`;
+      const t = l.dep.get(v) || 0;
+      return t > 0 ? `its ${compact(t)} of room is taken by another leg of this block`
+                   : `${v.protocol}'s remaining ${cap}% budget is taken by another leg of this block`;
     }
     const altsFor = m => (m.cross ? venuesOf(sim.xTo) : venuesOf(m.g)).filter(v => !sameVenue(m.from, v) && (m.cross || compatible(m.from, v, m.g)))
-      .map(v => { const why = v === m.to ? null : blockedBy(v);
-        return { v, apy: diluted(apyOf(v), v.tvl_usd, (dep.get(v) || 0) + (v === m.to ? 0 : m.amt)), swap: !m.cross && needsSwap(m.from, v), room: !why, why }; })
+      .map(v => { const why = v === m.to ? null : blockedBy(v, m.L);
+        return { v, apy: diluted(apyOf(v), v.tvl_usd, (m.L.dep.get(v) || 0) + (v === m.to ? 0 : m.amt)), swap: !m.cross && needsSwap(m.from, v), room: !why, why }; })
       .sort((a, b) => (b.room - a.room) || (b.apy - a.apy) || (a.swap - b.swap));   // best outcome first; venues with no room sink
     const optsRow = m => { const alts = altsFor(m); if (alts.length < 2) return ''; return `<div class="mv-opts"><label>Destination</label><select class="mv-alt" data-src="${esc(skey(m.from))}">${alts.map(a => `<option value="${esc(vkey(a.v))}" ${a.v === m.to ? 'selected' : ''} ${a.room ? '' : 'disabled'}>${esc(a.v.protocol)} ${esc(a.v.asset)} · ${pct(a.apy)}${a.v.apy_intrinsic != null ? ` incl. ${pct(a.v.apy_intrinsic)} staking` : ''}${a.swap ? ` · swap ${esc(UNDER(m.from.symbol))}→${esc(UNDER(a.v.asset))}` : ''}${a.why ? ' · ' + esc(a.why) : ''}</option>`).join('')}</select>${needsSwap(m.from, m.to) ? `<span class="warn">needs a ${esc(UNDER(m.from.symbol))} → ${esc(UNDER(m.to.asset))} swap ${m.from.kind === 'idle' ? 'first' : 'between the withdraw and the deposit'}</span>` : ''}</div>`; };
     const execBtn = m => (!m.cross && needsSwap(m.from, m.to) && m.from.kind === 'idle')
@@ -443,6 +452,20 @@
       const sel = rs.length > 1 ? `<div class="mv-opts"><label>Route</label><select class="mv-route" data-src="${esc(skey(m.from))}">${rs.map(x => `<option value="${x.id}" ${r && x.id === r.id ? 'selected' : ''}>${x.label}</option>`).join('')}</select></div>` : '';
       return `<div class="mv cross ${m.from.kind === 'idle' ? 'idle' : ''}"><div class="path">${esc(m.from.protocol)} ${esc(m.from.venue)} <span class="arr">→</span> <span class="leg">${r ? r.label : 'no permitted exit route'}</span> <span class="arr">→</span> ${esc(m.to.protocol)} ${esc(m.to.asset)} <small>(${m.to.action})</small><br><small>${pct(m.from.apy)} → <b>${pct(m.toApyDiluted)}</b>${m.toApyDiluted < m.toApy - 1e-6 ? ` after dilution (${pct(m.toApy)} headline)` : ''}${m.to.tvl_usd ? ` · venue TVL ${compact(m.to.tvl_usd)}` : ''}${m.shareAfter != null ? ` · our share after ${(m.shareAfter * 100).toFixed(1)}%` : ''} · before swap fee and slippage</small>${sel}${optsRow(m)}</div><div class="amt num">${usd(m.amt)}<small>${m.pick >= 0 ? '+' : '-'}${usd(Math.abs(m.amt * m.pick))}/yr</small></div>${r && r.swap ? `<button class="btn ${executorOn ? '' : 'ghost'}" data-xswap="${m.id}" type="button" title="Prefill the Swap panel with this leg and quote it on CoW; once the order fills the deposit shows up above as an idle move">Swap</button>` : '<span class="dim" style="font-size:11.5px">exit first</span>'}</div>`; };
     $('#xMoves').innerHTML = !sim.xAmt ? '<p class="empty">Enter an amount to size a rotation for this pair.</p>' : X.length ? X.map(xRow).join('') + (xShort > 1 ? `<p class="empty">${compact(xShort)} could not be placed: the ${esc(sim.xTo)} venues in Roles are full under the share and protocol caps.</p>` : '') : `<p class="empty">No ${esc(sim.xTo)} venue in Roles has room under the caps, or nothing in ${esc(sim.xFrom)} can be moved.</p>`;
+    // independent ledgers mean the two blocks can both claim the same room; name the overlap rather than hide it
+    let clash = [];
+    if (!sim.reserve && Lx !== Lw) {
+      const vs = new Set([...Lx.dep.keys()].filter(v => Lw.dep.has(v)));
+      for (const v of vs) {
+        const over = (Lx.dep.get(v) + Lw.dep.get(v)) - baseRoom(v);
+        if (over > 1) clash.push(`${v.protocol} ${v.asset} by ${compact(over)}`);
+      }
+      const srcs = [...Lx.taken.keys()].filter(b => Lw.taken.has(b) && (Lx.taken.get(b) + Lw.taken.get(b)) - b.usd > 1);
+      for (const b of srcs) clash.push(`${b.protocol} ${b.symbol || b.venue} by ${compact(Lx.taken.get(b) + Lw.taken.get(b) - b.usd)}`);
+    }
+    let clashBox = $('#clashNote'); if (!clashBox) { clashBox = document.createElement('div'); clashBox.id = 'clashNote'; clashBox.className = 'sw-note'; $('#xMoves').parentNode.insertBefore(clashBox, $('#xMoves').nextSibling); }
+    clashBox.hidden = !clash.length;
+    clashBox.innerHTML = clash.length ? `<div><b>The two blocks overlap.</b> Sized independently, they claim more than there is room for in ${esc(clash.join(', '))}. Execute one and re-run before the other, or tick the box above to size them together.</div>` : '';
     const onMv = e => { const b = e.target.closest('button[data-exec],button[data-xswap]'); if (!b) return; if (b.dataset.exec != null) openModal(moves[Number(b.dataset.exec)]); else prefillSwap(moves[Number(b.dataset.xswap)]); };
     $('#simMoves').onclick = onMv; $('#xMoves').onclick = onMv;
     const onAlt = e => { const s = e.target.closest('select.mv-alt, select.mv-route'); if (!s) return;
