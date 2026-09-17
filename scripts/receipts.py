@@ -130,7 +130,7 @@ def resolve_receipts(book: list[dict], h: dict, reg: dict, permitted: list[dict]
         if not hit and not vault and permitted and h.get("avatar_safe"):
             # no Strategy API row either (off-network run): the protocol's single permitted vault, shares read on-chain
             cands = {(p.get("vault") or "").lower() for p in permitted if norm(p.get("protocol")) == proto
-                     and p.get("asset_group") == b.get("asset_group") and p.get("vault") and p.get("action") in ("deposit", "stake")}
+                     and p.get("asset_group") == b.get("asset_group") and p.get("vault")}
             if len(cands) == 1:
                 v = cands.pop()
                 try:
@@ -139,6 +139,11 @@ def resolve_receipts(book: list[dict], h: dict, reg: dict, permitted: list[dict]
                     sh = 0.0; print(f"  receipts: getShares {v[:10]}: {str(e)[:80]}")
                 if sh > 0:
                     hit = dict(receipt=v, receipt_method="shares", units_at_run=sh)
+        if not hit:
+            nm = lambda x: "".join(ch for ch in (x or "").lower() if ch.isalnum())
+            same = [r for r in safe.values() if nm(r.get("symbol")) == nm(b.get("symbol")) and r["token"] not in used]
+            if len(same) == 1 and fnum(same[0]["balance"]) > 0:
+                hit = dict(receipt=same[0]["token"], receipt_method="erc20", units_at_run=fnum(same[0]["balance"]))
         if hit and hit["units_at_run"] > 0:
             hit["unit_usd"] = fnum(b["usd"]) / hit["units_at_run"]
             rr = receipt_rate(int(h["chain_id"]), hit["receipt"])
