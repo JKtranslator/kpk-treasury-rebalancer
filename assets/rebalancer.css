@@ -169,3 +169,15 @@ th.ck,td.ck{width:28px;padding-right:0!important;} td.ck input,th.ck input{curso
 .pill.p-bot{background:rgba(37,99,235,.12);color:#1d4ed8;}
 .mv.done{opacity:.72;}
 .pill.p-ok{background:rgba(16,122,72,.12);color:var(--good);}
+
+/* token gate: the page shows nothing until the executor accepts the token */
+.gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.gate-card{background:var(--card);border-radius:16px;padding:28px 30px 24px;max-width:460px;width:100%;}
+.gate-card h1{font-size:21px;margin:14px 0 6px;}
+.gate-card p{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 16px;}
+.gate-card input{width:100%;padding:11px 13px;border:1px solid rgba(0,0,0,.16);border-radius:10px;font:inherit;font-size:14px;background:#fff;color:var(--ink);}
+.gate-card input:focus{outline:2px solid var(--ink);outline-offset:-1px;}
+.gate-row{display:flex;align-items:center;gap:14px;margin-top:14px;}
+.gate-msg{font-size:12.5px;color:var(--muted);margin-top:12px;min-height:17px;}
+.gate-msg.err{color:var(--bad);}
+.gate-card .fine{margin-top:16px;}

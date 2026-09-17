@@ -55,7 +55,7 @@ PROTO = {"morphoVaults": "morpho", "aave_v3": "aave", "compound_v3": "compound",
          "rocket_pool": "rocketpool", "gearbox": "gearbox"}
 STABLES = {"USDC", "USDT", "USDS", "DAI", "GHO", "EURC", "PYUSD", "RLUSD"}
 ALLOWED_ORIGINS = ("http://localhost:", "http://127.0.0.1:", "https://jktranslator.github.io", "https://82-70-94-93.sslip.io")
-PROTECTED = ("/plan", "/propose", "/refresh/", "/live/")   # need Authorization: Bearer <EXECUTOR_TOKEN>
+PROTECTED = ("/plan", "/propose", "/refresh/", "/live/", "/data/", "/queue/", "/auth")   # need Authorization: Bearer <EXECUTOR_TOKEN>
 LIVE_CACHE: dict[str, tuple[float, dict]] = {}   # slug -> (built_at, snapshot); the fast lane is cheap but not free
 LIVE_LOCK = threading.Lock()
 LIVE_TTL = 600.0        # a DeBank rebuild costs ~36 units; a view is reused for 10 min unless a Safe tx executed (safe-tx poll drops it)
@@ -570,7 +570,14 @@ class H(BaseHTTPRequestHandler):
             return self._json(200, dict(ok=True, host=socket.gethostname(), clients=clients, propose=propose, safeagent=str(SAFEAGENT), auth=bool(os.environ.get("EXECUTOR_TOKEN")),
                                         proposer_code=ensure_latest_proposer(),
                                         refresh_running=sorted(RUNNING), can_push=(ROOT / ".git").exists()))
+        if self.path.startswith("/auth"):
+            # the page calls this before it renders anything: a stored token is only good if the executor still takes it
+            if not self._authorized():
+                return self._json(401, dict(error="unauthorized"))
+            return self._json(200, dict(ok=True))
         if self.path.startswith("/data/"):
+            if not self._authorized():      # the snapshots are the data: gating the page but not the file it reads is theatre
+                return self._json(401, dict(error="unauthorized"))
             name = self.path.split("/data/", 1)[1].split("?")[0]
             f = ROOT / "data" / name
             if not name or "/" in name or ".." in name or not f.exists():

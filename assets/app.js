@@ -6,6 +6,42 @@
   const EXECUTOR = localStorage.getItem('kpk_executor') || (location.port === '8743' ? '' : location.hostname.endsWith('github.io') || location.hostname.endsWith('sslip.io') ? 'https://82-70-94-93.sslip.io' : 'http://127.0.0.1:8743');
   const token = () => localStorage.getItem('kpk_executor_token') || '';
   const authHeaders = (h = {}) => token() ? { ...h, Authorization: 'Bearer ' + token() } : h;
+  /* The token is the key to the whole view, not just to refreshing it: the page asks for it before it loads a
+     single snapshot, and the executor refuses /data/ without it too. Stored in this browser, so it is asked once. */
+  async function tokenOk() {
+    if (!token()) return false;
+    try {
+      const r = await fetch(EXECUTOR + '/auth', { cache: 'no-store', headers: authHeaders() });
+      return r.ok;
+    } catch (e) { return null; }            // executor unreachable: cannot judge the token, do not throw it away
+  }
+  function gate(msg, busy) {
+    let g = $('#gate');
+    g.hidden = false; $('#wrap').hidden = true;
+    $('#gateMsg').textContent = msg || '';
+    $('#gateMsg').className = 'gate-msg' + (msg ? ' err' : '');
+    $('#gateBtn').disabled = !!busy;
+    $('#gateBtn').textContent = busy ? 'Checking…' : 'Unlock';
+    if (!busy) $('#gateInput').focus();
+  }
+  async function unlock() {
+    const v = $('#gateInput').value.trim();
+    if (!v) return gate('Enter the executor token.');
+    localStorage.setItem('kpk_executor_token', v);
+    gate('', true);
+    const ok = await tokenOk();
+    if (ok) { $('#gate').hidden = true; $('#wrap').hidden = false; return init(); }
+    localStorage.removeItem('kpk_executor_token');
+    gate(ok === null ? 'Cannot reach the executor at ' + EXECUTOR + '. Check the tunnel or the host, then try again.' : 'That token was refused.');
+  }
+  async function start() {
+    $('#gateBtn').onclick = unlock;
+    $('#gateInput').addEventListener('keydown', ev => { if (ev.key === 'Enter') unlock(); });
+    $('#gateWipe').onclick = () => { localStorage.removeItem('kpk_executor_token'); $('#gateInput').value = ''; gate('Token cleared.'); };
+    const ok = await tokenOk();
+    if (ok) { $('#gate').hidden = true; $('#wrap').hidden = false; return init(); }
+    gate(token() ? (ok === null ? 'Cannot reach the executor at ' + EXECUTOR + '.' : 'The stored token is no longer accepted.') : '');
+  }
   function askToken(msg) { const t = prompt((msg || 'Executor token') + '\n(stored in this browser only; find it on the box: ~/kpk-treasury-rebalancer/.env.local -> EXECUTOR_TOKEN)', token()); if (t != null) { localStorage.setItem('kpk_executor_token', t.trim()); } return !!token(); }
   const $ = (s, el = document) => el.querySelector(s);
   const usd = (v, d = 0) => '$' + Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
@@ -21,7 +57,8 @@
   let index = null, snap = null, live = null, moves = [], executorOn = false;
   let sim = { pickupBps: 50, moveUsd: 250000, tvlCapPct: 20, basis: 'apy', exclude: new Set(), xFrom: null, xTo: null, xAmt: 0, xUser: false, reserve: false, override: {}, route: {} };
 
-  async function loadJSON(p) { const r = await fetch(p, { cache: 'no-store' }); if (!r.ok) throw new Error(p + ' ' + r.status); return r.json(); }
+  // every snapshot read carries the token: the executor now refuses /data/ without it
+  async function loadJSON(p) { const r = await fetch(p, { cache: 'no-store', headers: authHeaders() }); if (!r.ok) throw new Error(p + ' ' + r.status); return r.json(); }
 
   async function init() {
     try { index = await loadJSON('data/index.json'); }
@@ -958,5 +995,5 @@
     } catch (e) { steps({ build: 'done', sim: 'done', review: 'done', propose: 'fail' }); $('#mMsg').className = 'modal-msg err'; $('#mMsg').textContent = 'Propose failed: ' + e.message; }
   }
 
-  init();
+  start();
 })();
