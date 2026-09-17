@@ -16,9 +16,19 @@
     finally { clearTimeout(t); }
   }
   let gateWhy = '';
-  async function tokenOk() {
+  /* The box runs on two cores against other work, and a request can simply stall there while the next one
+     answers in 25 ms. One stalled call is not a verdict on the token, so ask again before giving up. */
+  async function tokenOk(tries = 3) {
     gateWhy = '';
     if (!token()) return false;
+    for (let i = 1; i <= tries; i++) {
+      const r = await authOnce(i, tries);
+      if (r !== null) return r;
+      if (i < tries) await new Promise(res => setTimeout(res, 700));
+    }
+    return null;
+  }
+  async function authOnce(attempt, tries) {
     try {
       const r = await withTimeout(EXECUTOR + '/auth', 8000, { cache: 'no-store', headers: authHeaders() });
       if (r.status === 401) return false;
@@ -26,11 +36,13 @@
       return true;
     } catch (e) {
       // tell the two apart: the box unreachable, or reachable but refusing us
-      gateWhy = e.name === 'AbortError' ? 'no answer within 12 s' : (e.message || 'network error');
-      try {
-        const h = await withTimeout(EXECUTOR + '/health', 8000, { cache: 'no-store' });
-        if (h.ok) gateWhy += ' (the executor is up, so this is the /auth call specifically)';
-      } catch (e2) { gateWhy += ' — the executor did not answer /health either'; }
+      gateWhy = (e.name === 'AbortError' ? 'no answer within 8 s' : (e.message || 'network error')) + ` (attempt ${attempt} of ${tries})`;
+      if (attempt === tries) {
+        try {
+          const h = await withTimeout(EXECUTOR + '/health', 8000, { cache: 'no-store' });
+          if (h.ok) gateWhy += ' — the executor is up, so the box is simply too busy to answer in time';
+        } catch (e2) { gateWhy += ' — the executor did not answer /health either'; }
+      }
       return null;
     }
   }
@@ -55,16 +67,17 @@
     gateGuard = setInterval(() => {
       if (!$('#gateBtn').disabled) return clearInterval(gateGuard);
       $('#gateMsg').className = 'gate-msg';
-      $('#gateMsg').textContent = 'Asking ' + EXECUTOR + ' … ' + Math.round((Date.now() - t0) / 1000) + 's';
+      $('#gateMsg').textContent = 'Asking the executor … ' + Math.round((Date.now() - t0) / 1000) + 's (it retries up to three times)';
     }, 500);
     let ok;
     try { ok = await tokenOk(); } catch (e) { clearInterval(gateGuard); return gateFail('Checking the token', e); }
     clearInterval(gateGuard);
     if (ok) {
       $('#gate').hidden = true; $('#wrap').hidden = false;
+      $('#gateBtn').disabled = false; $('#gateBtn').textContent = 'Unlock';
       try { return await init(); } catch (e) { return gateFail('Loading the snapshots', e); }
     }
-    if (ok === null) return gate('Cannot reach the executor at ' + EXECUTOR + ' — ' + gateWhy + '. The token has been kept.');
+    if (ok === null) return gate('Cannot reach the executor at ' + EXECUTOR + ' — ' + gateWhy + '. The token has been kept; press Unlock to try again.');
     localStorage.removeItem('kpk_executor_token');
     gate('That token was refused.');
   }
