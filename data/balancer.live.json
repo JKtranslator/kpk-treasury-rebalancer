@@ -4,27 +4,27 @@
   "chain_id": 1,
   "avatar_safe": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
   "ok": true,
-  "as_of": "2026-09-17T02:41:18+00:00",
+  "as_of": "2026-09-17T03:44:53+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 6945310,
-  "positions_usd": 6349165,
+  "nav_usd": 6904400,
+  "positions_usd": 6308255,
   "idle_usd": 596145,
   "in_flight_usd": 0,
   "onchain_idle_eth": 0.0,
-  "eth_price_usd": 2403.7141,
+  "eth_price_usd": 2413.0538,
   "groups": {
-    "OTHER": 2985610,
-    "USD": 2710601,
-    "ETH": 1249073
+    "OTHER": 2934924,
+    "USD": 2710841,
+    "ETH": 1258609
   },
   "sleeves": [
     {
       "protocol": "aave_v3",
       "asset_group": "OTHER",
-      "usd": 2389382,
+      "usd": 2338694,
       "in_flight_usd": 0,
       "positions": [
         "Aave v2 Staked on Ethereum"
@@ -33,7 +33,7 @@
     {
       "protocol": "morphoVaults",
       "asset_group": "USD",
-      "usd": 2054676,
+      "usd": 2054988,
       "in_flight_usd": 0,
       "positions": [
         "Morpho v2 Yield on Ethereum"
@@ -42,7 +42,7 @@
     {
       "protocol": "ether_fi",
       "asset_group": "ETH",
-      "usd": 928329,
+      "usd": 935464,
       "in_flight_usd": 0,
       "positions": [
         "Etherfi Staked on Ethereum"
@@ -60,7 +60,7 @@
     {
       "protocol": "rocket_pool",
       "asset_group": "ETH",
-      "usd": 176089,
+      "usd": 177768,
       "in_flight_usd": 0,
       "positions": [
         "Rocketpool Staked on Ethereum"
@@ -69,7 +69,7 @@
     {
       "protocol": "aave_v3",
       "asset_group": "USD",
-      "usd": 155482,
+      "usd": 155410,
       "in_flight_usd": 0,
       "positions": [
         "Aave v3 Lending on Ethereum",
@@ -80,7 +80,7 @@
     {
       "protocol": "stakewise_v3",
       "asset_group": "ETH",
-      "usd": 129335,
+      "usd": 129846,
       "in_flight_usd": 0,
       "positions": [
         "Stakewise Lending on Ethereum"
@@ -89,7 +89,7 @@
     {
       "protocol": "balancer_v2",
       "asset_group": "ETH",
-      "usd": 15320,
+      "usd": 15531,
       "in_flight_usd": 0,
       "positions": [
         "Balancer v2 Staked on Ethereum"
@@ -98,7 +98,7 @@
     {
       "protocol": "compound_v3",
       "asset_group": "OTHER",
-      "usd": 83,
+      "usd": 85,
       "in_flight_usd": 0,
       "positions": [
         "Compound v3 Lending on Ethereum"
@@ -139,7 +139,7 @@
   },
   "other_wallets": {
     "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 42161": 2138,
-    "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 100": 2207207
+    "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 100": 2207216
   },
   "unbooked": [],
   "rewards": [
@@ -160,8 +160,8 @@
     {
       "source": "aave_safety_module",
       "symbol": "AAVE",
-      "amount": 1.7571330937476437,
-      "usd": 215,
+      "amount": 1.8092059721605693,
+      "usd": 221,
       "claimable": true
     },
     {
@@ -200,6 +200,6 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 308,
+  "rewards_usd": 314,
   "flags": []
 }

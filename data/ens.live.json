@@ -4,45 +4,45 @@
   "chain_id": 1,
   "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
   "ok": true,
-  "as_of": "2026-09-17T02:38:43+00:00",
+  "as_of": "2026-09-17T03:42:16+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 90318903,
-  "positions_usd": 90318903,
+  "nav_usd": 92029048,
+  "positions_usd": 92029048,
   "idle_usd": 0,
-  "in_flight_usd": 0,
+  "in_flight_usd": 2655377,
   "onchain_idle_eth": 2.53404322427e-07,
   "eth_price_usd": 2403.7141,
   "groups": {
-    "ETH": 55031548,
-    "USD": 35287147,
-    "OTHER": 157
+    "ETH": 54700103,
+    "USD": 37328733,
+    "OTHER": 161
   },
   "sleeves": [
     {
-      "protocol": "ether_fi",
-      "asset_group": "ETH",
-      "usd": 19711107,
-      "in_flight_usd": 0,
-      "positions": [
-        "Etherfi Staked on Ethereum"
-      ]
-    },
-    {
       "protocol": "fluid",
       "asset_group": "USD",
-      "usd": 19220134,
+      "usd": 24458895,
       "in_flight_usd": 0,
       "positions": [
         "Fluid Yield on Ethereum"
       ]
     },
     {
+      "protocol": "ether_fi",
+      "asset_group": "ETH",
+      "usd": 19862600,
+      "in_flight_usd": 0,
+      "positions": [
+        "Etherfi Staked on Ethereum"
+      ]
+    },
+    {
       "protocol": "stakewise_v3",
       "asset_group": "ETH",
-      "usd": 17095843,
+      "usd": 17163372,
       "in_flight_usd": 0,
       "positions": [
         "Stakewise Lending on Ethereum"
@@ -51,8 +51,8 @@
     {
       "protocol": "stader",
       "asset_group": "ETH",
-      "usd": 15764626,
-      "in_flight_usd": 0,
+      "usd": 15919157,
+      "in_flight_usd": 2655377,
       "positions": [
         "Stader Staked on Ethereum"
       ]
@@ -60,7 +60,7 @@
     {
       "protocol": "morphoVaults",
       "asset_group": "USD",
-      "usd": 7927196,
+      "usd": 7928255,
       "in_flight_usd": 0,
       "positions": [
         "Morpho v2 Yield on Ethereum"
@@ -69,25 +69,16 @@
     {
       "protocol": "aave_v3",
       "asset_group": "USD",
-      "usd": 3369355,
+      "usd": 3369706,
       "in_flight_usd": 0,
       "positions": [
         "Aave v3 Lending on Ethereum"
       ]
     },
     {
-      "protocol": "sky",
-      "asset_group": "USD",
-      "usd": 3261568,
-      "in_flight_usd": 0,
-      "positions": [
-        "Sky Yield on Ethereum"
-      ]
-    },
-    {
       "protocol": "lido",
       "asset_group": "ETH",
-      "usd": 2459972,
+      "usd": 1754975,
       "in_flight_usd": 0,
       "positions": [
         "Lido Staked on Ethereum"
@@ -96,10 +87,19 @@
     {
       "protocol": "compound_v3",
       "asset_group": "USD",
-      "usd": 1507280,
+      "usd": 1507454,
       "in_flight_usd": 0,
       "positions": [
         "Compound v3 Lending on Ethereum"
+      ]
+    },
+    {
+      "protocol": "sky",
+      "asset_group": "USD",
+      "usd": 62809,
+      "in_flight_usd": 0,
+      "positions": [
+        "Sky Yield on Ethereum"
       ]
     },
     {
@@ -114,7 +114,7 @@
     {
       "protocol": "compound_v3",
       "asset_group": "OTHER",
-      "usd": 157,
+      "usd": 161,
       "in_flight_usd": 0,
       "positions": [
         "Compound v3 Lending on Ethereum"
@@ -122,7 +122,15 @@
     }
   ],
   "idle": [],
-  "in_flight_items": [],
+  "in_flight_items": [
+    {
+      "protocol": "stader",
+      "asset": "ETHx",
+      "balance": 1000.0,
+      "usd": 2655377,
+      "asset_id": "ethereum-stader-withdraw_process-ETHx-0xa35b1b31ce002fbf2058d22f30f95d405200a15b-0xcf5ea1b38380f6af39068375516daf40ed70d299-0x4f2083f5fbede34c2714affb3105539775f7fe64"
+    }
+  ],
   "token_check": {
     "checked": 9,
     "disagree": 0,
@@ -135,7 +143,7 @@
       "source": "merkl",
       "symbol": "GHO",
       "amount": 1724.4344171852897,
-      "usd": 1722,
+      "usd": 1721,
       "claimable": true
     },
     {
@@ -162,6 +170,7 @@
   ],
   "rewards_usd": 1886,
   "flags": [
+    "NOTE: $2,655,377 is in-flight (withdrawal queues) per Syncrone and invisible to Safe/Etherscan/Strategy API: 1,000.00 ETHx in stader.",
     "NOTE: idle re-based on the live Safe (Syncrone lagging): ETH 548.8487 -> 0.0000"
   ]
 }

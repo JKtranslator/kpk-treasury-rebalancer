@@ -4,28 +4,28 @@
   "chain_id": 1,
   "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
   "ok": true,
-  "as_of": "2026-09-17T02:39:24+00:00",
+  "as_of": "2026-09-17T03:42:56+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 7277674,
-  "positions_usd": 7146041,
+  "nav_usd": 7340914,
+  "positions_usd": 7209282,
   "idle_usd": 131632,
   "in_flight_usd": 0,
   "onchain_idle_eth": 9.08958728578e-07,
   "eth_price_usd": 2398.26,
   "groups": {
     "REWARDS": 117,
-    "OTHER": 4996496,
-    "USD": 1632540,
-    "ETH": 648489
+    "OTHER": 5047298,
+    "USD": 1641735,
+    "ETH": 651731
   },
   "sleeves": [
     {
       "protocol": "nexusmutual",
       "asset_group": "OTHER",
-      "usd": 4613819,
+      "usd": 4664582,
       "in_flight_usd": 0,
       "positions": [
         "Nexus Mutual Staked on Ethereum"
@@ -34,7 +34,7 @@
     {
       "protocol": "morphoVaults",
       "asset_group": "USD",
-      "usd": 1066691,
+      "usd": 1075636,
       "in_flight_usd": 0,
       "positions": [
         "Morpho v2 Yield on Ethereum"
@@ -43,7 +43,7 @@
     {
       "protocol": "ether_fi",
       "asset_group": "ETH",
-      "usd": 273893,
+      "usd": 275998,
       "in_flight_usd": 0,
       "positions": [
         "Etherfi Staked on Ethereum"
@@ -52,7 +52,7 @@
     {
       "protocol": "nexusmutual",
       "asset_group": "USD",
-      "usd": 256156,
+      "usd": 256197,
       "in_flight_usd": 0,
       "positions": [
         "Nexus Mutual v2 Yield on Ethereum"
@@ -61,7 +61,7 @@
     {
       "protocol": "uniswap",
       "asset_group": "OTHER",
-      "usd": 251161,
+      "usd": 251201,
       "in_flight_usd": 0,
       "positions": [
         "Uniswap v3 Liquidity Pool on Ethereum"
@@ -79,7 +79,7 @@
     {
       "protocol": "stakewise_v3",
       "asset_group": "ETH",
-      "usd": 193661,
+      "usd": 193416,
       "in_flight_usd": 0,
       "positions": [
         "Stakewise Staked on Ethereum"
@@ -88,7 +88,7 @@
     {
       "protocol": "gearbox",
       "asset_group": "ETH",
-      "usd": 180934,
+      "usd": 182317,
       "in_flight_usd": 0,
       "positions": [
         "Gearbox v3 Yield on Ethereum"
@@ -97,7 +97,7 @@
     {
       "protocol": "fluid",
       "asset_group": "USD",
-      "usd": 59593,
+      "usd": 59803,
       "in_flight_usd": 0,
       "positions": [
         "Fluid Yield on Ethereum"
