@@ -545,11 +545,11 @@
       "apy_intrinsic": null,
       "apy_vault_own": null,
       "apy_denom": null,
-      "unit_usd": 1.2165853293,
+      "unit_usd": 1.2165983280000001,
       "units_at_run": 16594753.995686,
       "receipt_underlying": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
       "receipt_kind": "erc4626",
-      "receipt_rate": 1.216707
+      "receipt_rate": 1.21672
     },
     {
       "kind": "position",
@@ -571,11 +571,11 @@
       "apy_intrinsic": null,
       "apy_vault_own": null,
       "apy_denom": null,
-      "unit_usd": 1.1238738478178216,
+      "unit_usd": 1.1238829852350798,
       "units_at_run": 2890149.766606412,
       "receipt_underlying": "0x40d16fc0246ad3160ccc09b8d0d3a2cd28ae6c2f",
       "receipt_kind": "erc4626",
-      "receipt_rate": 1.124548576964
+      "receipt_rate": 1.124557719867
     },
     {
       "kind": "position",
@@ -597,11 +597,11 @@
       "apy_intrinsic": null,
       "apy_vault_own": null,
       "apy_denom": null,
-      "unit_usd": 1.2068862294,
+      "unit_usd": 1.2068972371,
       "units_at_run": 845977.997791,
       "receipt_underlying": "0xdac17f958d2ee523a2206206994597c13d831ec7",
       "receipt_kind": "erc4626",
-      "receipt_rate": 1.206042
+      "receipt_rate": 1.206053
     },
     {
       "kind": "position",
@@ -649,11 +649,11 @@
       "apy_intrinsic": null,
       "apy_vault_own": null,
       "apy_denom": null,
-      "unit_usd": 1.0335746322000001,
+      "unit_usd": 1.0335876308999998,
       "units_at_run": 7670414.061352908,
       "receipt_underlying": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
       "receipt_kind": "erc4626",
-      "receipt_rate": 1.033678
+      "receipt_rate": 1.033691
     },
     {
       "kind": "position",
@@ -727,11 +727,11 @@
       "apy_intrinsic": null,
       "apy_vault_own": null,
       "apy_denom": null,
-      "unit_usd": 1.1103760668887417,
+      "unit_usd": 1.1103849133210142,
       "units_at_run": 56564.18370138438,
       "receipt_underlying": "0xdc035d45d973e3ec169d2276ddab16f1e407384f",
       "receipt_kind": "erc4626",
-      "receipt_rate": 1.1098211563105864
+      "receipt_rate": 1.1098299983218534
     },
     {
       "kind": "position",

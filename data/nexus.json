@@ -246,13 +246,13 @@
       "claimable": false,
       "claim_cmd": null,
       "vault": null,
-      "receipt": null,
-      "receipt_method": null,
+      "receipt": "0xd7c49cee7e9188cca6ad8ff264c1da2e69d4cf3b",
+      "receipt_method": "erc20",
       "apy_intrinsic": null,
       "apy_vault_own": null,
       "apy_denom": null,
-      "unit_usd": null,
-      "units_at_run": null,
+      "unit_usd": 5.523755431404743,
+      "units_at_run": 2136.208426773011,
       "receipt_underlying": null,
       "receipt_kind": null,
       "receipt_rate": null
@@ -537,11 +537,11 @@
       "apy_intrinsic": 0.0228,
       "apy_vault_own": 0.0067,
       "apy_denom": "wstETH",
-      "unit_usd": 3012.7818384348043,
+      "unit_usd": 3012.7857447197407,
       "units_at_run": 60.51495769026528,
       "receipt_underlying": "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0",
       "receipt_kind": "erc4626",
-      "receipt_rate": 1.0019890701898453
+      "receipt_rate": 1.0019903693396084
     },
     {
       "kind": "position",
@@ -563,11 +563,11 @@
       "apy_intrinsic": null,
       "apy_vault_own": null,
       "apy_denom": null,
-      "unit_usd": 1.0483021593000001,
+      "unit_usd": 1.0483181577,
       "units_at_run": 1026056.2247708869,
       "receipt_underlying": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
       "receipt_kind": "erc4626",
-      "receipt_rate": 1.048407
+      "receipt_rate": 1.048423
     },
     {
       "kind": "position",
@@ -584,16 +584,16 @@
       "claimable": false,
       "claim_cmd": null,
       "vault": null,
-      "receipt": null,
-      "receipt_method": null,
+      "receipt": "0xcafeaa466736ac01e0ac9ca72644bef348694731",
+      "receipt_method": "erc20",
       "apy_intrinsic": null,
       "apy_vault_own": null,
       "apy_denom": null,
-      "unit_usd": null,
-      "units_at_run": null,
-      "receipt_underlying": null,
-      "receipt_kind": null,
-      "receipt_rate": null
+      "unit_usd": 1.0298770019999999,
+      "units_at_run": 248758.966537,
+      "receipt_underlying": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "receipt_kind": "erc4626",
+      "receipt_rate": 1.02998
     },
     {
       "kind": "position",
@@ -693,11 +693,11 @@
       "apy_intrinsic": null,
       "apy_vault_own": null,
       "apy_denom": null,
-      "unit_usd": 1.2068872301,
+      "unit_usd": 1.2068972371,
       "units_at_run": 49551.087237,
       "receipt_underlying": "0xdac17f958d2ee523a2206206994597c13d831ec7",
       "receipt_kind": "erc4626",
-      "receipt_rate": 1.206043
+      "receipt_rate": 1.206053
     }
   ],
   "permitted": [
