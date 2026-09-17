@@ -1,6 +1,175 @@
 {
   "client": "ens",
-  "ok": false,
-  "as_of": "2026-09-17T18:14:32+00:00",
-  "error": "ERROR: SYNCRONE_API_KEY is not set. Export it or add it to /home/runner/.kpk/env (names only in .env.example; never commit .env.local)."
+  "display_name": "ENS DAO Endowment",
+  "chain_id": 1,
+  "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
+  "ok": true,
+  "as_of": "2026-09-17T18:51:41+00:00",
+  "syncrone_window": {
+    "from": "2026-09-01",
+    "to": "2026-10-01"
+  },
+  "nav_usd": 92029158,
+  "positions_usd": 92029158,
+  "idle_usd": 0,
+  "in_flight_usd": 2655377,
+  "onchain_idle_eth": 2.53404322427e-07,
+  "eth_price_usd": 2413.0538,
+  "groups": {
+    "ETH": 54700103,
+    "USD": 37328842,
+    "OTHER": 161
+  },
+  "sleeves": [
+    {
+      "protocol": "fluid",
+      "asset_group": "USD",
+      "usd": 24458895,
+      "in_flight_usd": 0,
+      "positions": [
+        "Fluid Yield on Ethereum"
+      ]
+    },
+    {
+      "protocol": "ether_fi",
+      "asset_group": "ETH",
+      "usd": 19862600,
+      "in_flight_usd": 0,
+      "positions": [
+        "Etherfi Staked on Ethereum"
+      ]
+    },
+    {
+      "protocol": "stakewise_v3",
+      "asset_group": "ETH",
+      "usd": 17163372,
+      "in_flight_usd": 0,
+      "positions": [
+        "Stakewise Lending on Ethereum"
+      ]
+    },
+    {
+      "protocol": "stader",
+      "asset_group": "ETH",
+      "usd": 15919157,
+      "in_flight_usd": 2655377,
+      "positions": [
+        "Stader Staked on Ethereum"
+      ]
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset_group": "USD",
+      "usd": 7928255,
+      "in_flight_usd": 0,
+      "positions": [
+        "Morpho v2 Yield on Ethereum"
+      ]
+    },
+    {
+      "protocol": "aave_v3",
+      "asset_group": "USD",
+      "usd": 3369706,
+      "in_flight_usd": 0,
+      "positions": [
+        "Aave v3 Lending on Ethereum"
+      ]
+    },
+    {
+      "protocol": "lido",
+      "asset_group": "ETH",
+      "usd": 1754975,
+      "in_flight_usd": 0,
+      "positions": [
+        "Lido Staked on Ethereum"
+      ]
+    },
+    {
+      "protocol": "compound_v3",
+      "asset_group": "USD",
+      "usd": 1507454,
+      "in_flight_usd": 0,
+      "positions": [
+        "Compound v3 Lending on Ethereum"
+      ]
+    },
+    {
+      "protocol": "sky",
+      "asset_group": "USD",
+      "usd": 62809,
+      "in_flight_usd": 0,
+      "positions": [
+        "Sky Yield on Ethereum"
+      ]
+    },
+    {
+      "protocol": "merkl",
+      "asset_group": "USD",
+      "usd": 1723,
+      "in_flight_usd": 0,
+      "positions": [
+        "Merkl Merkl Reward on Ethereum"
+      ]
+    },
+    {
+      "protocol": "compound_v3",
+      "asset_group": "OTHER",
+      "usd": 161,
+      "in_flight_usd": 0,
+      "positions": [
+        "Compound v3 Lending on Ethereum"
+      ]
+    }
+  ],
+  "idle": [],
+  "in_flight_items": [
+    {
+      "protocol": "stader",
+      "asset": "ETHx",
+      "balance": 1000.0,
+      "usd": 2655377,
+      "asset_id": "ethereum-stader-withdraw_process-ETHx-0xa35b1b31ce002fbf2058d22f30f95d405200a15b-0xcf5ea1b38380f6af39068375516daf40ed70d299-0x4f2083f5fbede34c2714affb3105539775f7fe64"
+    }
+  ],
+  "token_check": {
+    "checked": 9,
+    "disagree": 0,
+    "etherscan_source": "etherscan"
+  },
+  "other_wallets": {},
+  "unbooked": [],
+  "rewards": [
+    {
+      "source": "merkl",
+      "symbol": "GHO",
+      "amount": 1869.785777576553,
+      "usd": 1867,
+      "claimable": true
+    },
+    {
+      "source": "merkl",
+      "symbol": "COMP",
+      "amount": 8.382076,
+      "usd": 163,
+      "claimable": true
+    },
+    {
+      "source": "uniswap",
+      "symbol": "WETH",
+      "amount": 0.000924978132289274,
+      "usd": 2,
+      "claimable": true
+    },
+    {
+      "source": "uniswap",
+      "symbol": "sETH2",
+      "amount": 0.000946616781569995,
+      "usd": 2,
+      "claimable": true
+    }
+  ],
+  "rewards_usd": 2034,
+  "flags": [
+    "NOTE: $2,655,377 is in-flight (withdrawal queues) per Syncrone and invisible to Safe/Etherscan/Strategy API: 1,000.00 ETHx in stader."
+  ]
 }
