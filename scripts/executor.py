@@ -142,20 +142,53 @@ def safe_queue(chain_id: int, safe: str, slug: str) -> dict:
         # what just went through, so a proposal that executed between two page loads does not vanish unexplained
         h = get(f"{base}/safes/{addr}/multisig-transactions/?executed=true&ordering=-nonce&limit=6")
         rows += [(role, addr, t, True) for t in h.get("results", [])]
+    # a bot proposal arrives as multiSend(execTransactionWithRole, ...) through the Roles modifier, so the method the
+    # Safe reports says nothing. The verb is the call data's selector and the venue is the Roles call's own target.
+    VERBS = {"0x095ea7b3": "approve", "0x6e553f65": "deposit", "0xb6b55f25": "deposit", "0x617ba037": "supply",
+             "0xf2b9fdb8": "supply", "0x2e1a7d4d": "withdraw", "0xf3fef3a3": "withdraw", "0x69328dec": "withdraw",
+             "0xba087652": "redeem", "0xdb006a75": "redeem", "0x3ccfd60b": "withdraw", "0xd0e30db0": "wrap",
+             "0x569d3489": "sign CoW order", "0xccc143b8": "request withdrawal", "0x441a3e70": "withdraw",
+             "0x4782f779": "withdraw", "0xa9059cbb": "transfer", "0x1249c58b": "mint", "0xdd62ed3e": "allowance"}
+
+    def legs(t):
+        """(verb, target address) for every call this transaction really makes, unwrapping multiSend and Roles."""
+        outl = []
+        def walk(to, dec, data):
+            m = (dec or {}).get("method")
+            if m == "multiSend":
+                for pr in (dec.get("parameters") or []):
+                    for x in (pr.get("valueDecoded") or []):
+                        walk(x.get("to"), x.get("dataDecoded"), x.get("data"))
+                return
+            if m == "execTransactionWithRole" or (m or "").startswith("execTransaction"):
+                inner_to = inner_data = None
+                for pr in (dec.get("parameters") or []):
+                    if (pr.get("name") or "").lower() == "to":
+                        inner_to = pr.get("value")
+                    if (pr.get("name") or "").lower() == "data":
+                        inner_data = pr.get("value")
+                walk(inner_to, None, inner_data)
+                return
+            sel = (data or "")[:10].lower()
+            outl.append((VERBS.get(sel) or m or sel or "call", (to or "").lower()))
+        walk(t.get("to"), t.get("dataDecoded"), t.get("data"))
+        return outl
+
     for role, addr, t, done in rows:
         dec = t.get("dataDecoded") or {}
         target = (t.get("to") or "").lower()
-        # a Roles call carries the real target inside its first argument
-        inner = None
-        for p in (dec.get("parameters") or []):
-            if (p.get("name") or "").lower() in ("to", "target") and isinstance(p.get("value"), str) and p["value"].startswith("0x"):
-                inner = p["value"].lower()
-                break
+        lg = legs(t)
+        # the approve is plumbing; the transaction is named after what it actually does, and where
+        acts = [(v, a) for v, a in lg if v != "approve"] or lg
+        label = " + ".join(dict.fromkeys(v for v, _ in acts))
+        venue = next((names.get(a) for _, a in acts if names.get(a)), None)
+        inner = next((a for _, a in acts if a), None)
         row = dict(safe_tx_hash=t.get("safeTxHash"), nonce=t.get("nonce"), safe=addr, safe_role=role,
                    confirmations=len(t.get("confirmations") or []), required=t.get("confirmationsRequired"),
                    submitted=t.get("submissionDate"), proposer=t.get("proposer"),
-                   method=dec.get("method"), to=t.get("to"),
-                   target_name=names.get(inner or target) or names.get(target),
+                   method=label or dec.get("method"), to=t.get("to"),
+                   target_name=venue or names.get(inner or target) or names.get(target),
+                   legs=[dict(verb=v, to=a, name=names.get(a)) for v, a in lg],
                    value=t.get("value"), executed=done, executed_at=t.get("executionDate"),
                    tx_hash=t.get("transactionHash"), successful=t.get("isSuccessful"))
         (recent if done else out).append(row)
