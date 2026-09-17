@@ -159,7 +159,7 @@
       const tot = groups[g]; const ap = weightedApy(rows.filter(b => b.kind === 'position' && b.apy != null));
       return `<div class="grp"><div class="grp-h"><h3>${g}</h3><div class="tot"><b>${compact(tot)}</b> · ${(100 * tot / nav).toFixed(1)}% of NAV${ap != null ? ` · blended <b>${pct(ap)}</b>` : ''}</div></div>
         <div class="scroll"><table><thead><tr><th>Protocol</th><th>Venue</th><th class="n">Value</th><th class="n">% NAV</th><th class="n" title="Our position as a share of the venue's own TVL — the concentration the venue ceiling governs">Of pool</th><th class="n">APY</th><th class="n">30d</th></tr></thead><tbody>
-        ${rows.map(b => `<tr class="${b.kind === 'idle' ? 'idle' : b.kind === 'in_flight' ? 'inflight' : ''}"><td class="k">${esc(b.protocol)}</td><td>${esc(b.venue)}${b.untracked && b.apy == null ? ' <span class="pill p-warn">untracked</span>' : ''}</td><td class="n num">${usd(b.usd)}</td><td class="n num">${(100 * b.usd / nav).toFixed(1)}%</td><td class="n num">${(() => { const s = poolShare(b); if (s == null) return '<span class="dim">–</span>'; const over = s >= sim.tvlCapPct / 100; return `<span class="${over ? 'bad' : ''}" title="${usd(b.usd)} of a ${compact(poolTvl(b))} pool${over ? ` — above the ${sim.tvlCapPct}% venue ceiling` : ''}">${(100 * s).toFixed(1)}%</span>`; })()}</td><td class="n num"${b.apy_intrinsic != null ? ` title="${compo(b)}"` : ''}>${b.apy == null ? '<span class="dim">n/a</span>' : pct(b.apy) + srcTag(b)}</td><td class="n num dim">${apy30(b)}</td></tr>`).join('')}
+        ${rows.map(b => `<tr class="${b.kind === 'idle' ? 'idle' : b.kind === 'in_flight' ? 'inflight' : ''}"><td class="k">${esc(b.protocol)}</td><td>${esc(b.venue)}${b.untracked && b.apy == null ? ' <span class="pill p-warn">untracked</span>' : ''}</td><td class="n num">${usd(b.usd)}</td><td class="n num">${(100 * b.usd / nav).toFixed(1)}%</td><td class="n num">${(() => { const s = poolShare(b); if (s == null) return '<span class="dim">–</span>'; const over = s >= sim.tvlCapPct / 100; return `<span class="${over ? 'bad' : ''}" title="${usd(b.usd)} of a ${compact(poolTvl(b))} pool${over ? ` — above the ${sim.tvlCapPct}% venue ceiling` : ''}">${(100 * s).toFixed(1)}%</span>`; })()}</td><td class="n num"${b.apy == null ? '' : ` title="${apyTip(b)}"`}>${b.apy == null ? '<span class="dim">n/a</span>' : pct(b.apy) + srcTag(b)}</td><td class="n num dim">${apy30(b)}</td></tr>`).join('')}
         </tbody></table></div></div>`;
     }).join('');
 
@@ -178,7 +178,24 @@
     $('#ops').innerHTML = snap.ops_tools.length ? snap.ops_tools.map(o => `<div class="opsrow"><b>${o.asset_group}</b>: ${pct(o.current_apy)} → ${pct(o.recommended_apy)} by moving ${compact(o.changed_usd)}. ${o.allocations.map(a => `${esc(a.protocol)}/${esc(a.venue)} → ${compact(a.usd)} @ ${pct(a.apy)}`).join('; ')}</div>`).join('') : '<p class="empty">No optimizer output for this client/chain.</p>';
   }
 
-  function apy30(b) { const p = snap.permitted.find(p => p.protocol === b.protocol && p.priced && p.asset_group === b.asset_group && (p.asset === b.symbol || (p.vault && (b.venue || '').toLowerCase().includes((p.asset || '').toLowerCase())))); return p && p.apy_30d != null ? pct(p.apy_30d) : ''; }
+  // the permitted row for a held position: by vault address when we have one, else by protocol and asset
+  function permOf(b) {
+    const v = (b.vault || '').toLowerCase();
+    return (v && snap.permitted.find(p => (p.vault || '').toLowerCase() === v))
+      || snap.permitted.find(p => p.protocol === b.protocol && p.priced && p.asset_group === b.asset_group && (p.asset === b.symbol || (p.vault && (b.venue || '').toLowerCase().includes((p.asset || '').toLowerCase()))));
+  }
+  function apy30(b) { const p = permOf(b); return p && p.apy_30d != null ? pct(p.apy_30d) : ''; }
+  /* Why our number differs from a protocol's own dashboard: theirs is the rate right now, ours a trailing
+     average over the chosen basis. Show the whole curve so the gap explains itself. */
+  function apyTip(b) {
+    const p = permOf(b) || {}, parts = [];
+    if (p.apy_1d != null) parts.push(`spot ${pct(p.apy_1d)}`);
+    if (b.apy != null) parts.push(`7d ${pct(b.apy)}`);
+    if (p.apy_30d != null) parts.push(`30d ${pct(p.apy_30d)}`);
+    if (b.apy_intrinsic != null) parts.push(compo(b));
+    parts.push('a protocol UI shows the current rate, not a trailing average');
+    return parts.join(' · ');
+  }
   function card(t, v, foot) { return `<div class="card"><div class="t">${t}</div><div class="v num">${v}</div><div class="foot">${foot || ''}</div></div>`; }
   function weightedApy(rows) { const d = rows.reduce((s, b) => s + b.usd, 0); return d ? rows.reduce((s, b) => s + b.usd * b.apy, 0) / d : null; }
   function bindRange(sel, key, fmt) { const el = $(sel); el.value = sim[key]; const lab = $(sel + 'Val'); lab.textContent = fmt(sim[key]); el.oninput = () => { sim[key] = Number(el.value); lab.textContent = fmt(sim[key]); simulate(); }; }

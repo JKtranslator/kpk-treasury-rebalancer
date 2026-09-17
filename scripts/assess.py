@@ -406,6 +406,21 @@ def main():
     # live vaults.fyi APYs (fetched in fetch_yields by vault address) override the Strategy API's cached position APYs
     va = y.get("vault_apys") or {}
     per = {"1h": "apy_1h", "1day": "apy_1d", "7day": "apy_7d", "30day": "apy_30d"}.get(h.get("period", "7day"), "apy_7d")
+    # Syncrone books ERC-4626 positions under the underlying asset, so the row arrives without a vault address and
+    # the live APY below cannot be matched to it -- it used to fall through to DeFiLlama, and the same vault then
+    # showed one rate in the holdings table and another in the permitted list. The Safe's own balance settles it:
+    # if it holds a permitted vault's token, that is the vault this position sits in.
+    held = {r["token"] for r in (h.get("safe_balances") or []) if fnum(r.get("balance")) > 0}
+    perm_v = {(p.get("vault") or "").lower(): p for p in y.get("permitted", []) if p.get("vault")}
+    aliases = reg.get("protocol_aliases", {})
+    nrm = lambda p: aliases.get((p or "").lower(), (p or "").lower())
+    for b in book:
+        if b.get("vault") or b["kind"] != "position":
+            continue
+        hits = [v for v in held if v in perm_v and nrm(perm_v[v]["protocol"]) == nrm(b["protocol"])
+                and perm_v[v].get("asset_group") == b.get("asset_group")]
+        if len(hits) == 1:
+            b["vault"] = hits[0]
     for b in book:
         d = va.get((b.get("vault") or "").lower())
         if b["kind"] == "position" and d and d.get(per) is not None:
@@ -443,12 +458,14 @@ def main():
                 # "kpk usdc prime v2" vs "KPK_USDC_Prime": all words of the asset minus a version tag
                 words = [w for w in (p.get("asset") or "").lower().split() if not (w.startswith("v") and w[1:].isdigit())]
                 return 1 if words and all(norm(w) in sym for w in words) else 0
-            ranked = sorted(cands, key=lambda p: -score(p))
+            # vaults.fyi is the source of truth for rates: on an equal match it wins over a DeFiLlama-priced row
+            vf = lambda p: 0 if (p.get("apy_source") or "").startswith("vaults.fyi") else 1
+            ranked = sorted(cands, key=lambda p: (-score(p), vf(p)))
             hit = ranked[0] if ranked and score(ranked[0]) > 0 else None
             if hit and score(hit) == 1:
                 # prefer the newest version when several share the same words
                 same = [p for p in cands if score(p) == 1]
-                hit = sorted(same, key=lambda p: (p.get("asset") or ""))[-1]
+                hit = sorted(same, key=lambda p: (vf(p), p.get("asset") or ""))[0] if any(vf(p) == 0 for p in same)                     else sorted(same, key=lambda p: (p.get("asset") or ""))[-1]
             if hit is None and len({p.get("asset") for p in cands}) == 1:
                 hit = cands[0]
             if hit:
