@@ -61,7 +61,7 @@
   async function loadJSON(p) { const r = await fetch(p, { cache: 'no-store', headers: authHeaders() }); if (!r.ok) throw new Error(p + ' ' + r.status); return r.json(); }
 
   async function init() {
-    try { index = await loadJSON('data/index.json'); }
+    try { index = await loadJSON(EXECUTOR + '/data/index.json'); }
     catch (e) { $('#stamp').textContent = 'No snapshot yet. Run `python scripts/publish.py`.'; return; }
     const tabs = $('#clientTabs');
     tabs.innerHTML = index.clients.map((c, i) => `<button role="tab" data-c="${c.client}" aria-pressed="${i === 0}">${esc(c.display_name)}</button>`).join('');
@@ -91,10 +91,10 @@
     const q = new URLSearchParams(location.search); q.set('view', v); history.replaceState(null, '', '?' + q);
   }
 
-  async function fromExecutorOrSite(name) {
-    if (executorOn) { try { return await loadJSON(EXECUTOR + '/data/' + name); } catch (e) { /* fall through */ } }
-    return loadJSON('data/' + name);
-  }
+  // Snapshots come from the executor, never from the files next to the page: the gate has already proved the
+  // executor is reachable and the token good, and a fallback to a repo-served copy is a way for the data to be
+  // readable without one. The repository can hold code only.
+  async function fromExecutorOrSite(name) { return loadJSON(EXECUTOR + '/data/' + name); }
   async function select(slug) {
     snap = await fromExecutorOrSite(slug + '.json');
     try { live = await fromExecutorOrSite(slug + '.live.json'); } catch (e) { live = null; }
