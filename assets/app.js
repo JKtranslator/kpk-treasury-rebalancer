@@ -391,10 +391,22 @@
       ['Yield dilution', headlineGross ? '-' + compact(headlineGross - gross + dilW) : '$0'],
       ['Pickup per year', compact(pickup)],
     ]);
+    // why a venue cannot take more: the ceiling it is already at, the protocol budget, or room this plan spent elsewhere
+    function blockedBy(v) {
+      if (Math.min(roomFor(v), protoRoom.get(v.protocol) ?? Infinity) > 0) return null;
+      const baseVenue = v.tvl_usd ? sim.tvlCapPct / 100 * v.tvl_usd - (heldMap.get(v) || 0) : Infinity;
+      const baseProto = cap ? cap / 100 * nav - (byProto[v.protocol] || 0) : Infinity;
+      if (roomFor(v) <= 0 && baseVenue <= 0) return `already at the ${sim.tvlCapPct}% venue ceiling`;
+      if ((protoRoom.get(v.protocol) ?? Infinity) <= 0 && baseProto <= 0) return `${v.protocol} already at the ${cap}% protocol cap`;
+      const taken = dep.get(v) || 0;
+      return taken > 0 ? `its ${compact(taken)} of room is taken by another leg of this plan`
+                       : `${v.protocol}'s remaining ${cap}% budget is taken by another leg of this plan`;
+    }
     const altsFor = m => (m.cross ? venuesOf(sim.xTo) : venuesOf(m.g)).filter(v => !sameVenue(m.from, v) && (m.cross || compatible(m.from, v, m.g)))
-      .map(v => ({ v, apy: diluted(apyOf(v), v.tvl_usd, (dep.get(v) || 0) + (v === m.to ? 0 : m.amt)), swap: !m.cross && needsSwap(m.from, v), room: v === m.to || Math.min(roomFor(v), protoRoom.get(v.protocol) ?? Infinity) > 0 }))
+      .map(v => { const why = v === m.to ? null : blockedBy(v);
+        return { v, apy: diluted(apyOf(v), v.tvl_usd, (dep.get(v) || 0) + (v === m.to ? 0 : m.amt)), swap: !m.cross && needsSwap(m.from, v), room: !why, why }; })
       .sort((a, b) => (b.room - a.room) || (b.apy - a.apy) || (a.swap - b.swap));   // best outcome first; venues with no room sink
-    const optsRow = m => { const alts = altsFor(m); if (alts.length < 2) return ''; return `<div class="mv-opts"><label>Destination</label><select class="mv-alt" data-src="${esc(skey(m.from))}">${alts.map(a => `<option value="${esc(vkey(a.v))}" ${a.v === m.to ? 'selected' : ''} ${a.room ? '' : 'disabled'}>${esc(a.v.protocol)} ${esc(a.v.asset)} · ${pct(a.apy)}${a.v.apy_intrinsic != null ? ` incl. ${pct(a.v.apy_intrinsic)} staking` : ''}${a.swap ? ` · swap ${esc(UNDER(m.from.symbol))}→${esc(UNDER(a.v.asset))}` : ''}${a.room ? '' : ' · no room under the caps'}</option>`).join('')}</select>${needsSwap(m.from, m.to) ? `<span class="warn">needs a ${esc(UNDER(m.from.symbol))} → ${esc(UNDER(m.to.asset))} swap ${m.from.kind === 'idle' ? 'first' : 'between the withdraw and the deposit'}</span>` : ''}</div>`; };
+    const optsRow = m => { const alts = altsFor(m); if (alts.length < 2) return ''; return `<div class="mv-opts"><label>Destination</label><select class="mv-alt" data-src="${esc(skey(m.from))}">${alts.map(a => `<option value="${esc(vkey(a.v))}" ${a.v === m.to ? 'selected' : ''} ${a.room ? '' : 'disabled'}>${esc(a.v.protocol)} ${esc(a.v.asset)} · ${pct(a.apy)}${a.v.apy_intrinsic != null ? ` incl. ${pct(a.v.apy_intrinsic)} staking` : ''}${a.swap ? ` · swap ${esc(UNDER(m.from.symbol))}→${esc(UNDER(a.v.asset))}` : ''}${a.why ? ' · ' + esc(a.why) : ''}</option>`).join('')}</select>${needsSwap(m.from, m.to) ? `<span class="warn">needs a ${esc(UNDER(m.from.symbol))} → ${esc(UNDER(m.to.asset))} swap ${m.from.kind === 'idle' ? 'first' : 'between the withdraw and the deposit'}</span>` : ''}</div>`; };
     const execBtn = m => (!m.cross && needsSwap(m.from, m.to) && m.from.kind === 'idle')
       ? `<button class="btn ${executorOn ? '' : 'ghost'}" data-xswap="${m.id}" type="button" title="Prefill the Swap panel with ${esc(UNDER(m.from.symbol))} → ${esc(UNDER(m.to.asset))}; the deposit shows up here once the order fills">Swap first</button>`
       : `<button class="btn ${executorOn ? '' : 'ghost'}" data-exec="${m.id}" type="button" title="${executorOn ? 'Build, simulate and propose via the local SafeAgent executor' : 'Start scripts/executor.py to enable'}">Execute</button>`;
