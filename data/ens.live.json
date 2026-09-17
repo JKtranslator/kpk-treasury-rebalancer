@@ -4,19 +4,18 @@
   "chain_id": 1,
   "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
   "ok": true,
-  "as_of": "2026-09-17T10:42:16+00:00",
+  "as_of": "2026-09-17T12:46:03+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 93337767,
+  "nav_usd": 92029158,
   "positions_usd": 92029158,
-  "idle_usd": 1308610,
+  "idle_usd": 0,
   "in_flight_usd": 2655377,
   "onchain_idle_eth": 2.53404322427e-07,
   "eth_price_usd": 2413.0538,
   "groups": {
-    "REWARDS": 1308610,
     "ETH": 54700103,
     "USD": 37328842,
     "OTHER": 161
@@ -122,14 +121,7 @@
       ]
     }
   ],
-  "idle": [
-    {
-      "symbol": "GHO",
-      "balance": 1308479.0203624412,
-      "usd": 1308610,
-      "asset_group": "REWARDS"
-    }
-  ],
+  "idle": [],
   "in_flight_items": [
     {
       "protocol": "stader",
@@ -140,7 +132,7 @@
     }
   ],
   "token_check": {
-    "checked": 11,
+    "checked": 9,
     "disagree": 0,
     "etherscan_source": "etherscan"
   },
@@ -174,18 +166,10 @@
       "amount": 0.000946616781569995,
       "usd": 2,
       "claimable": true
-    },
-    {
-      "source": "wallet",
-      "symbol": "GHO",
-      "amount": 1308479.0203624412,
-      "usd": 1308610,
-      "claimable": false
     }
   ],
-  "rewards_usd": 1310586,
+  "rewards_usd": 1977,
   "flags": [
-    "NOTE: $2,655,377 is in-flight (withdrawal queues) per Syncrone and invisible to Safe/Etherscan/Strategy API: 1,000.00 ETHx in stader.",
-    "NOTE: idle re-based on the live Safe (Syncrone lagging): GHO 0.0000 -> 1,308,479.0204"
+    "NOTE: $2,655,377 is in-flight (withdrawal queues) per Syncrone and invisible to Safe/Etherscan/Strategy API: 1,000.00 ETHx in stader."
   ]
 }
