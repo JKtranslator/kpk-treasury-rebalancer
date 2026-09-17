@@ -90,6 +90,9 @@ def live_snapshot(slug: str, base: dict | None = None) -> dict:
     eth_factor = (eth_live / eth_base) if (eth_live and eth_base) else 1.0
     factor = lambda grp: eth_factor if grp == "ETH" else 1.0
     prices = base.get("prices") or {}
+    # addresses we can vouch for: what the run priced, plus every underlying a permitted vault settles in
+    ZERO = "0x0000000000000000000000000000000000000000"
+    known_underlying = set(prices) | {(b.get("receipt_underlying") or "").lower() for b in base.get("book", []) if b.get("receipt_underlying")}
     notes = []
 
     # ---- positions: Safe units now x unit mark at run
@@ -145,12 +148,15 @@ def live_snapshot(slug: str, base: dict | None = None) -> dict:
         pr = prices.get(t)
         if pr:
             px = pr["price"] * factor(pr.get("asset_group") or asset_group_of(sym, reg))
-        elif sym.upper() == "ETH" and eth_live:
-            px = eth_live
-        elif sym.upper() in STABLE_SYMS:
-            px = 1.0
+        elif t == ZERO and eth_live:
+            px = eth_live                                            # native ETH, identified by its address
+        elif sym.upper() in STABLE_SYMS and t in known_underlying:
+            px = 1.0                                                 # a stable a permitted vault actually uses
         else:
-            continue                                                 # unknown token, unknown price: spam guard
+            # A symbol is not an identity: the Safe collects airdropped tokens that call themselves ETH or USDC,
+            # and pricing one of those by name valued a spam balance at 1.96e58 ETH. No price of its own, and not
+            # an address we can vouch for, means it is not in the book.
+            continue
         usd = bal * px
         if usd < reg.get("spam_dust_usd", 50):
             continue
