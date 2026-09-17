@@ -57,14 +57,26 @@
       $('#gateMsg').className = 'gate-msg';
       $('#gateMsg').textContent = 'Asking ' + EXECUTOR + ' … ' + Math.round((Date.now() - t0) / 1000) + 's';
     }, 500);
-    const ok = await tokenOk();
+    let ok;
+    try { ok = await tokenOk(); } catch (e) { clearInterval(gateGuard); return gateFail('Checking the token', e); }
     clearInterval(gateGuard);
-    if (ok) { $('#gate').hidden = true; $('#wrap').hidden = false; return init(); }
+    if (ok) {
+      $('#gate').hidden = true; $('#wrap').hidden = false;
+      try { return await init(); } catch (e) { return gateFail('Loading the snapshots', e); }
+    }
     if (ok === null) return gate('Cannot reach the executor at ' + EXECUTOR + ' — ' + gateWhy + '. The token has been kept.');
     localStorage.removeItem('kpk_executor_token');
     gate('That token was refused.');
   }
+  function gateFail(where, e) {
+    const g = $('#gate');
+    if (g) { g.hidden = false; $('#wrap').hidden = true; }
+    if ($('#gateBtn')) { $('#gateBtn').disabled = false; $('#gateBtn').textContent = 'Unlock'; }
+    if ($('#gateMsg')) { $('#gateMsg').className = 'gate-msg err'; $('#gateMsg').textContent = where + ': ' + ((e && (e.message || e.reason && (e.reason.message || e.reason))) || e || 'unknown error'); }
+  }
   async function start() {
+    window.addEventListener('error', ev => gateFail('Page error at ' + (ev.filename || '').split('/').pop() + ':' + ev.lineno, ev.error || ev.message));
+    window.addEventListener('unhandledrejection', ev => gateFail('Unhandled rejection', ev));
     $('#gateBtn').onclick = unlock;
     $('#gateInput').addEventListener('keydown', ev => { if (ev.key === 'Enter') unlock(); });
     $('#gateWipe').onclick = () => { localStorage.removeItem('kpk_executor_token'); $('#gateInput').value = ''; gate('Token cleared.'); };
@@ -90,8 +102,12 @@
     $('#gateHost').textContent = EXECUTOR;
     const me = [...document.scripts].map(s => s.src).find(s => /app\.js/.test(s)) || '';
     $('#gateBuild').textContent = (me.match(/v=([a-f0-9]+)/) || [, 'unstamped'])[1];
-    const ok = await tokenOk();
-    if (ok) { $('#gate').hidden = true; $('#wrap').hidden = false; return init(); }
+    let ok;
+    try { ok = await tokenOk(); } catch (e) { return gateFail('Checking the stored token', e); }
+    if (ok) {
+      $('#gate').hidden = true; $('#wrap').hidden = false;
+      try { return await init(); } catch (e) { return gateFail('Loading the snapshots', e); }
+    }
     gate(token() ? (ok === null ? 'Cannot reach the executor at ' + EXECUTOR + ' — ' + gateWhy + '.' : 'The stored token is no longer accepted.') : '');
   }
   function askToken(msg) { const t = prompt((msg || 'Executor token') + '\n(stored in this browser only; find it on the box: ~/kpk-treasury-rebalancer/.env.local -> EXECUTOR_TOKEN)', token()); if (t != null) { localStorage.setItem('kpk_executor_token', t.trim()); } return !!token(); }
