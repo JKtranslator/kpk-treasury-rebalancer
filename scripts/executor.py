@@ -15,6 +15,7 @@ loads a private key itself.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import socket
 import subprocess
@@ -104,9 +105,16 @@ def safe_queue(chain_id: int, safe: str, slug: str) -> dict:
         with urllib.request.urlopen(req, timeout=30) as r:
             return json.loads(r.read().decode())
 
-    info = get(f"{base}/safes/{safe}/")
-    nonce = int(info.get("nonce") or 0)
-    d = get(f"{base}/safes/{safe}/multisig-transactions/?executed=false&nonce__gte={nonce}&ordering=nonce&limit=40")
+    # proposals are raised on the manager Safe, which signs and calls the Roles modifier on the avatar; the avatar
+    # itself is checked too, since an owner can always propose there directly
+    c = client(slug)
+    safes = []
+    for role in ("manager", "avatar"):
+        a = (c["safes"].get(str(chain_id)) or {}).get(role)
+        if a and a.lower() not in [x[1].lower() for x in safes]:
+            safes.append((role, a))
+    if not safes:
+        safes = [("avatar", safe)]
     # name what the transaction touches, so a bot proposal is not just an address
     names = {}
     snap = load_snapshot(slug) if slug in CLIENT_DIRS else {}
@@ -123,8 +131,18 @@ def safe_queue(chain_id: int, safe: str, slug: str) -> dict:
     roles = ((snap.get("safes") or {}).get("roles_mod") or "").lower()
     if roles:
         names.setdefault(roles, "Roles modifier")
-    out = []
-    for t in d.get("results", []):
+    out, recent, nonces = [], [], {}
+    rows = []
+    for role, addr in safes:
+        info = get(f"{base}/safes/{addr}/")
+        n = int(info.get("nonce") or 0)
+        nonces[role] = dict(safe=addr, nonce=n, threshold=info.get("threshold"))
+        q = get(f"{base}/safes/{addr}/multisig-transactions/?executed=false&nonce__gte={n}&ordering=nonce&limit=40")
+        rows += [(role, addr, t, False) for t in q.get("results", [])]
+        # what just went through, so a proposal that executed between two page loads does not vanish unexplained
+        h = get(f"{base}/safes/{addr}/multisig-transactions/?executed=true&ordering=-nonce&limit=6")
+        rows += [(role, addr, t, True) for t in h.get("results", [])]
+    for role, addr, t, done in rows:
         dec = t.get("dataDecoded") or {}
         target = (t.get("to") or "").lower()
         # a Roles call carries the real target inside its first argument
@@ -133,13 +151,19 @@ def safe_queue(chain_id: int, safe: str, slug: str) -> dict:
             if (p.get("name") or "").lower() in ("to", "target") and isinstance(p.get("value"), str) and p["value"].startswith("0x"):
                 inner = p["value"].lower()
                 break
-        out.append(dict(safe_tx_hash=t.get("safeTxHash"), nonce=t.get("nonce"),
-                        confirmations=len(t.get("confirmations") or []), required=t.get("confirmationsRequired"),
-                        submitted=t.get("submissionDate"), proposer=t.get("proposer"),
-                        method=dec.get("method"), to=t.get("to"),
-                        target_name=names.get(inner or target) or names.get(target),
-                        value=t.get("value"), trusted=t.get("trusted")))
-    return dict(client=slug, safe=safe, nonce=nonce, threshold=info.get("threshold"), queued=out)
+        row = dict(safe_tx_hash=t.get("safeTxHash"), nonce=t.get("nonce"), safe=addr, safe_role=role,
+                   confirmations=len(t.get("confirmations") or []), required=t.get("confirmationsRequired"),
+                   submitted=t.get("submissionDate"), proposer=t.get("proposer"),
+                   method=dec.get("method"), to=t.get("to"),
+                   target_name=names.get(inner or target) or names.get(target),
+                   value=t.get("value"), executed=done, executed_at=t.get("executionDate"),
+                   tx_hash=t.get("transactionHash"), successful=t.get("isSuccessful"))
+        (recent if done else out).append(row)
+    cut = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=36)).isoformat()
+    recent = [r for r in recent if (r.get("executed_at") or "") >= cut]
+    recent.sort(key=lambda r: r.get("executed_at") or "", reverse=True)
+    out.sort(key=lambda r: (r.get("nonce") or 0))
+    return dict(client=slug, safes=nonces, queued=out, recent=recent[:6])
 
 
 def underlying(symbol: str | None, asset_group: str) -> str:

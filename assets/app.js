@@ -562,7 +562,7 @@
     l.push({ hash, plan_id: plan.plan_id, labels: (plan.transactions || []).map(t => t.label), commands: plan.commands || [], created: Date.now(), status: null });
     localStorage.setItem(pendKey(), JSON.stringify(l)); renderPending(); pollPending();
   }
-  let pendTimer = null, queued = [];
+  let pendTimer = null, queued = [], recentTx = [];
   // the Safe's own queue: proposals from this page and from the bot both land there, and the page should show both
   async function loadQueue() {
     if (!snap || !executorOn) { queued = []; return; }
@@ -570,6 +570,7 @@
       const r = await fetch(EXECUTOR + '/queue/' + snap.client, { cache: 'no-store', headers: authHeaders() });
       const j = await r.json();
       queued = (r.ok && !j.error) ? (j.queued || []) : [];
+      recentTx = (r.ok && !j.error) ? (j.recent || []) : [];
     } catch (e) { queued = []; }
     renderPending();
   }
@@ -612,8 +613,12 @@
       }
     }
     rows.sort((x, y) => (x.nonce ?? 1e9) - (y.nonce ?? 1e9));
-    box.hidden = !rows.length;
-    box.innerHTML = rows.map(r => `<div class="mv"><div class="path"><span class="pill p-pend">queued</span> <span class="pill ${r.source === 'bot' ? 'p-bot' : 'p-ui'}">${esc(r.source)}</span> <b>${esc(r.what)}</b>${r.nonce != null ? ` · nonce ${r.nonce}` : ''}<br><small>${esc(r.sigs)}${r.when ? ` · proposed ${esc(String(r.when).slice(0, 16).replace('T', ' '))} UTC` : ''}${r.mineOnly ? ' · not in the Safe queue any more (replaced at this nonce, or rejected)' : ''} · the live view drops it once the Safe executes it</small></div><div class="amt num">${esc(String(r.hash).slice(0, 10))}…</div>${r.source === 'this page' ? `<button class="btn ghost" data-drop="${esc(r.hash)}" type="button" title="Forget this proposal here (does not cancel it in the Safe)">dismiss</button>` : '<span class="dim" style="font-size:11.5px">from the bot</span>'}</div>`).join('');
+    // proposals that executed in the last day and a half: they leave the queue, and a row that just disappears
+    // reads like a bug rather than a settled transaction
+    const done = recentTx.map(q => { const p = mine.get(String(q.safe_tx_hash).toLowerCase());
+      return `<div class="mv done"><div class="path"><span class="pill p-ok">executed</span> <span class="pill ${p ? 'p-ui' : 'p-bot'}">${p ? 'this page' : 'bot'}</span> <b>${esc(p ? (p.commands || p.labels || []).join(' · ') : [q.method, q.target_name].filter(Boolean).join(' → ') || 'transaction')}</b> · nonce ${q.nonce}<br><small>${esc(String(q.executed_at || '').slice(0, 16).replace('T', ' '))} UTC${q.successful === false ? ' · reverted' : ''} · already in the live view</small></div><div class="amt num">${q.tx_hash ? `<a class="lnk" href="https://etherscan.io/tx/${esc(q.tx_hash)}" target="_blank" rel="noopener">${esc(String(q.tx_hash).slice(0, 10))}…</a>` : ''}</div></div>`; }).join('');
+    box.hidden = !rows.length && !done.length;
+    box.innerHTML = rows.map(r => `<div class="mv"><div class="path"><span class="pill p-pend">queued</span> <span class="pill ${r.source === 'bot' ? 'p-bot' : 'p-ui'}">${esc(r.source)}</span> <b>${esc(r.what)}</b>${r.nonce != null ? ` · nonce ${r.nonce}` : ''}<br><small>${esc(r.sigs)}${r.when ? ` · proposed ${esc(String(r.when).slice(0, 16).replace('T', ' '))} UTC` : ''}${r.mineOnly ? ' · not in the Safe queue any more (replaced at this nonce, or rejected)' : ''} · the live view drops it once the Safe executes it</small></div><div class="amt num">${esc(String(r.hash).slice(0, 10))}…</div>${r.source === 'this page' ? `<button class="btn ghost" data-drop="${esc(r.hash)}" type="button" title="Forget this proposal here (does not cancel it in the Safe)">dismiss</button>` : '<span class="dim" style="font-size:11.5px">from the bot</span>'}</div>`).join('') + done;
     box.querySelectorAll('button[data-drop]').forEach(b => b.onclick = () => { localStorage.setItem(pendKey(), JSON.stringify(pendingList().filter(p => p.hash !== b.dataset.drop))); renderPending(); });
   }
 
