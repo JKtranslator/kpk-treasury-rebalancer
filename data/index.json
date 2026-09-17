@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-17T09:34:55+00:00",
+  "generated": "2026-09-17T09:37:23+00:00",
   "clients": [
     {
       "client": "ens",
@@ -20,9 +20,9 @@
     {
       "client": "cow",
       "display_name": "CoW DAO Treasury",
-      "as_of": "2026-09-16T17:11:09+00:00",
-      "nav_usd": 18327180,
-      "run_folder": "2026-09-16",
+      "as_of": "2026-09-17T09:36:09+00:00",
+      "nav_usd": 18339494,
+      "run_folder": "2026-09-17",
       "file": "data/cow.json"
     },
     {
