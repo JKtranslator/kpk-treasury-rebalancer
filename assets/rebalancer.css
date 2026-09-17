@@ -181,3 +181,7 @@ th.ck,td.ck{width:28px;padding-right:0!important;} td.ck input,th.ck input{curso
 .gate-msg{font-size:12.5px;color:var(--muted);margin-top:12px;min-height:17px;}
 .gate-msg.err{color:var(--bad);}
 .gate-card .fine{margin-top:16px;}
+
+/* .gate and .wrap set their own display, which beats the browser's [hidden] rule: without this the gate stays
+   on screen after a successful unlock, covering a page that has in fact loaded. */
+.gate[hidden],.wrap[hidden]{display:none!important;}
