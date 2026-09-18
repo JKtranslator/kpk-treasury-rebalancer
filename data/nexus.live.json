@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
   "ok": true,
-  "as_of": "2026-09-18T01:18:10+00:00",
+  "as_of": "2026-09-18T02:21:43+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -143,8 +143,8 @@
     {
       "source": "merkl",
       "symbol": "GEAR",
-      "amount": 71738.67271681128,
-      "usd": 23,
+      "amount": 72143.80167871728,
+      "usd": 24,
       "claimable": true
     },
     {
@@ -162,7 +162,7 @@
       "claimable": false
     }
   ],
-  "rewards_usd": 145,
+  "rewards_usd": 147,
   "flags": [
     "NOTE: idle re-based on the live Safe (Syncrone lagging): USDC 0.0000 -> 10.7811"
   ]
