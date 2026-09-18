@@ -1,6 +1,167 @@
 {
   "client": "nexus",
-  "ok": false,
-  "as_of": "2026-09-18T11:15:47+00:00",
-  "error": "ERROR: SYNCRONE_API_KEY is not set. Export it or add it to /home/runner/.kpk/env (names only in .env.example; never commit .env.local)."
+  "display_name": "Nexus Mutual DAO Treasury",
+  "chain_id": 1,
+  "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
+  "ok": true,
+  "as_of": "2026-09-18T11:57:47+00:00",
+  "syncrone_window": {
+    "from": "2026-09-01",
+    "to": "2026-10-01"
+  },
+  "nav_usd": 7375029,
+  "positions_usd": 7241340,
+  "idle_usd": 133689,
+  "in_flight_usd": 0,
+  "onchain_idle_eth": 9.08958728578e-07,
+  "eth_price_usd": 2451.07,
+  "groups": {
+    "REWARDS": 118,
+    "OTHER": 5071155,
+    "USD": 1641974,
+    "ETH": 661748
+  },
+  "sleeves": [
+    {
+      "protocol": "nexusmutual",
+      "asset_group": "OTHER",
+      "usd": 4686343,
+      "in_flight_usd": 0,
+      "positions": [
+        "Nexus Mutual Staked on Ethereum"
+      ]
+    },
+    {
+      "protocol": "morphoVaults",
+      "asset_group": "USD",
+      "usd": 1075834,
+      "in_flight_usd": 0,
+      "positions": [
+        "Morpho v2 Yield on Ethereum"
+      ]
+    },
+    {
+      "protocol": "ether_fi",
+      "asset_group": "ETH",
+      "usd": 279393,
+      "in_flight_usd": 0,
+      "positions": [
+        "Etherfi Staked on Ethereum"
+      ]
+    },
+    {
+      "protocol": "nexusmutual",
+      "asset_group": "USD",
+      "usd": 256238,
+      "in_flight_usd": 0,
+      "positions": [
+        "Nexus Mutual v2 Yield on Ethereum"
+      ]
+    },
+    {
+      "protocol": "uniswap",
+      "asset_group": "OTHER",
+      "usd": 251241,
+      "in_flight_usd": 0,
+      "positions": [
+        "Uniswap v3 Liquidity Pool on Ethereum"
+      ]
+    },
+    {
+      "protocol": "uniswap",
+      "asset_group": "USD",
+      "usd": 250100,
+      "in_flight_usd": 0,
+      "positions": [
+        "Uniswap v3 Liquidity Pool on Ethereum"
+      ]
+    },
+    {
+      "protocol": "stakewise_v3",
+      "asset_group": "ETH",
+      "usd": 197782,
+      "in_flight_usd": 0,
+      "positions": [
+        "Stakewise Staked on Ethereum"
+      ]
+    },
+    {
+      "protocol": "gearbox",
+      "asset_group": "ETH",
+      "usd": 184573,
+      "in_flight_usd": 0,
+      "positions": [
+        "Gearbox v3 Yield on Ethereum"
+      ]
+    },
+    {
+      "protocol": "fluid",
+      "asset_group": "USD",
+      "usd": 59803,
+      "in_flight_usd": 0,
+      "positions": [
+        "Fluid Yield on Ethereum"
+      ]
+    }
+  ],
+  "idle": [
+    {
+      "symbol": "MORPHO",
+      "balance": 28.376777604667712,
+      "usd": 63,
+      "asset_group": "REWARDS"
+    },
+    {
+      "symbol": "GEAR",
+      "balance": 173863.4238356013,
+      "usd": 55,
+      "asset_group": "REWARDS"
+    },
+    {
+      "symbol": "NXM",
+      "balance": 2136.208426773011,
+      "usd": 133571,
+      "asset_group": "OTHER"
+    }
+  ],
+  "in_flight_items": [],
+  "token_check": {
+    "checked": 9,
+    "disagree": 0,
+    "etherscan_source": "etherscan"
+  },
+  "other_wallets": {},
+  "unbooked": [],
+  "rewards": [
+    {
+      "source": "merkl",
+      "symbol": "COMP",
+      "amount": 0.560618,
+      "usd": 11,
+      "claimable": true
+    },
+    {
+      "source": "merkl",
+      "symbol": "GEAR",
+      "amount": 72582.08745130037,
+      "usd": 24,
+      "claimable": true
+    },
+    {
+      "source": "wallet",
+      "symbol": "GEAR",
+      "amount": 173863.4238356013,
+      "usd": 52,
+      "claimable": false
+    },
+    {
+      "source": "wallet",
+      "symbol": "MORPHO",
+      "amount": 28.376777604667712,
+      "usd": 63,
+      "claimable": false
+    }
+  ],
+  "rewards_usd": 150,
+  "flags": []
 }
