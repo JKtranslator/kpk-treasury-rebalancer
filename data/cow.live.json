@@ -4,21 +4,21 @@
   "chain_id": 1,
   "avatar_safe": "0x616dE58c011F8736fa20c7Ae5352F7f6FB9F0669",
   "ok": true,
-  "as_of": "2026-09-18T13:02:09+00:00",
+  "as_of": "2026-09-18T14:05:49+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 18523831,
+  "nav_usd": 18393170,
   "positions_usd": 18004873,
-  "idle_usd": 518958,
+  "idle_usd": 388297,
   "in_flight_usd": 0,
   "onchain_idle_eth": 1e-09,
   "eth_price_usd": 2456.4499,
   "groups": {
     "OTHER": 597748,
     "USD": 12134259,
-    "ETH": 3246306,
+    "ETH": 3115645,
     "EURO": 2545781
   },
   "sleeves": [
@@ -131,8 +131,8 @@
     },
     {
       "symbol": "WETH",
-      "balance": 53.679,
-      "usd": 131098,
+      "balance": 0.179,
+      "usd": 437,
       "asset_group": "ETH"
     },
     {
@@ -144,7 +144,7 @@
   ],
   "in_flight_items": [],
   "token_check": {
-    "checked": 16,
+    "checked": 15,
     "disagree": 0,
     "etherscan_source": "etherscan"
   },
@@ -189,13 +189,13 @@
     {
       "source": "uniswap",
       "symbol": "COW",
-      "amount": 393.96326960657314,
-      "usd": 53,
+      "amount": 467.2527099719177,
+      "usd": 63,
       "claimable": true
     }
   ],
-  "rewards_usd": 142,
+  "rewards_usd": 152,
   "flags": [
-    "NOTE: idle re-based on the live Safe (Syncrone lagging): WETH 0.0000 -> 53.6790"
+    "NOTE: idle re-based on the live Safe (Syncrone lagging): WETH 0.0000 -> 0.1790"
   ]
 }
