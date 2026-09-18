@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
   "ok": true,
-  "as_of": "2026-09-18T11:59:36+00:00",
+  "as_of": "2026-09-18T13:03:08+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -154,14 +154,14 @@
       "source": "merkl",
       "symbol": "COMP",
       "amount": 4.437549981061129,
-      "usd": 90,
+      "usd": 91,
       "claimable": true
     },
     {
       "source": "aave_safety_module",
       "symbol": "AAVE",
-      "amount": 3.3923352088817538,
-      "usd": 439,
+      "amount": 3.4443381585197717,
+      "usd": 446,
       "claimable": true
     },
     {
@@ -200,7 +200,7 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 538,
+  "rewards_usd": 545,
   "flags": [
     "NOTE: idle re-based on the live Safe (Syncrone lagging): BAL 3,327,556.6718 -> 3,435,806.3544; SAFE 839,265.9870 -> 845,093.6484; COW 1,141,738.5472 -> 1,230,444.5036"
   ]
