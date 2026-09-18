@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x8e53D04644E9ab0412a8c6bd228C84da7664cFE3",
   "ok": true,
-  "as_of": "2026-09-18T17:15:52+00:00",
+  "as_of": "2026-09-18T18:19:24+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -143,7 +143,7 @@
     {
       "source": "merkl",
       "symbol": "GEAR",
-      "amount": 72582.08745130037,
+      "amount": 72994.00532390224,
       "usd": 25,
       "claimable": true
     },
@@ -162,6 +162,6 @@
       "claimable": false
     }
   ],
-  "rewards_usd": 151,
+  "rewards_usd": 152,
   "flags": []
 }
