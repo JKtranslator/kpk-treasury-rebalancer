@@ -4,20 +4,20 @@
   "chain_id": 1,
   "avatar_safe": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
   "ok": true,
-  "as_of": "2026-09-18T03:27:32+00:00",
+  "as_of": "2026-09-18T04:31:03+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 7119983,
-  "positions_usd": 6515248,
-  "idle_usd": 604734,
+  "nav_usd": 7120693,
+  "positions_usd": 6515337,
+  "idle_usd": 605357,
   "in_flight_usd": 0,
   "onchain_idle_eth": 0.0,
   "eth_price_usd": 2443.6947,
   "groups": {
-    "OTHER": 3135072,
-    "USD": 2711072,
+    "OTHER": 3135694,
+    "USD": 2711161,
     "ETH": 1273813
   },
   "sleeves": [
@@ -51,7 +51,7 @@
     {
       "protocol": "compound_v3",
       "asset_group": "USD",
-      "usd": 500530,
+      "usd": 500619,
       "in_flight_usd": 0,
       "positions": [
         "Compound v3 Institutional USDC (ciUSDCv3)"
@@ -109,25 +109,25 @@
     {
       "symbol": "HOPR",
       "balance": 617205.1496353952,
-      "usd": 7339,
+      "usd": 7455,
       "asset_group": "OTHER"
     },
     {
       "symbol": "BAL",
       "balance": 3327556.6717589125,
-      "usd": 369389,
+      "usd": 363307,
       "asset_group": "OTHER"
     },
     {
       "symbol": "SAFE",
       "balance": 839265.9869857737,
-      "usd": 77296,
+      "usd": 80232,
       "asset_group": "OTHER"
     },
     {
       "symbol": "COW",
       "balance": 1141738.5472482624,
-      "usd": 150709,
+      "usd": 154363,
       "asset_group": "OTHER"
     }
   ],
@@ -138,7 +138,7 @@
     "etherscan_source": "etherscan"
   },
   "other_wallets": {
-    "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 42161": 2062,
+    "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 42161": 2064,
     "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 100": 2207848
   },
   "unbooked": [],
@@ -160,8 +160,8 @@
     {
       "source": "aave_safety_module",
       "symbol": "AAVE",
-      "amount": 2.9734424784876214,
-      "usd": 385,
+      "amount": 3.025481944816731,
+      "usd": 392,
       "claimable": true
     },
     {
@@ -200,6 +200,6 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 482,
+  "rewards_usd": 489,
   "flags": []
 }

@@ -4,20 +4,20 @@
   "chain_id": 1,
   "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
   "ok": true,
-  "as_of": "2026-09-18T03:24:50+00:00",
+  "as_of": "2026-09-18T04:28:28+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 92709769,
-  "positions_usd": 92709769,
+  "nav_usd": 92709912,
+  "positions_usd": 92709912,
   "idle_usd": 0,
   "in_flight_usd": 2688139,
   "onchain_idle_eth": 2.53404322427e-07,
-  "eth_price_usd": 2413.0538,
+  "eth_price_usd": 2443.6947,
   "groups": {
     "ETH": 53791108,
-    "USD": 38918446,
+    "USD": 38918589,
     "OTHER": 163
   },
   "sleeves": [
@@ -105,7 +105,7 @@
     {
       "protocol": "merkl",
       "asset_group": "USD",
-      "usd": 1723,
+      "usd": 1866,
       "in_flight_usd": 0,
       "positions": [
         "Merkl Merkl Reward on Ethereum"
@@ -150,7 +150,7 @@
       "source": "merkl",
       "symbol": "COMP",
       "amount": 8.382076,
-      "usd": 167,
+      "usd": 168,
       "claimable": true
     },
     {
@@ -168,7 +168,7 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 2097,
+  "rewards_usd": 2098,
   "flags": [
     "NOTE: $2,688,139 is in-flight (withdrawal queues) per Syncrone and invisible to Safe/Etherscan/Strategy API: 1,000.00 ETHx in stader."
   ]

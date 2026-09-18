@@ -4,20 +4,20 @@
   "chain_id": 1,
   "avatar_safe": "0x616dE58c011F8736fa20c7Ae5352F7f6FB9F0669",
   "ok": true,
-  "as_of": "2026-09-18T03:26:30+00:00",
+  "as_of": "2026-09-18T04:30:03+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 18384353,
-  "positions_usd": 18004695,
-  "idle_usd": 379658,
+  "nav_usd": 18392733,
+  "positions_usd": 18004873,
+  "idle_usd": 387860,
   "in_flight_usd": 0,
   "onchain_idle_eth": 0.0,
   "eth_price_usd": 2456.4499,
   "groups": {
-    "OTHER": 589546,
-    "USD": 12134082,
+    "OTHER": 597748,
+    "USD": 12134259,
     "EURO": 2545781,
     "ETH": 3115208
   },
@@ -61,7 +61,7 @@
     {
       "protocol": "compound_v3",
       "asset_group": "USD",
-      "usd": 1001065,
+      "usd": 1001242,
       "in_flight_usd": 0,
       "positions": [
         "Compound v3 Institutional USDC (ciUSDCv3)"
@@ -108,7 +108,7 @@
     {
       "symbol": "BAL",
       "balance": 199999.99999999997,
-      "usd": 22202,
+      "usd": 21836,
       "asset_group": "OTHER"
     },
     {
@@ -132,7 +132,7 @@
     {
       "symbol": "COW",
       "balance": 2677405.0340913157,
-      "usd": 353417,
+      "usd": 361985,
       "asset_group": "OTHER"
     }
   ],
@@ -143,11 +143,11 @@
     "etherscan_source": "etherscan"
   },
   "other_wallets": {
-    "0x616de58c011f8736fa20c7ae5352f7f6fb9f0669 chain 100": 2227117,
+    "0x616de58c011f8736fa20c7ae5352f7f6fb9f0669 chain 100": 2227181,
     "0x616de58c011f8736fa20c7ae5352f7f6fb9f0669 chain 42161": 77766,
     "0x616de58c011f8736fa20c7ae5352f7f6fb9f0669 chain 8453": 79941,
     "0x9009b4411d0e1171cc042b77d7701f46b737fdb9 chain 100": 1427920,
-    "0x523732d31b4432bcdd4baad108f7ebe54ad478b0 chain 1": 4402843,
+    "0x523732d31b4432bcdd4baad108f7ebe54ad478b0 chain 1": 4509132,
     "0x7f8987d6a8bee31bd7be80e877732579e2582a28 chain 100": 5328000
   },
   "unbooked": [],
@@ -176,18 +176,18 @@
     {
       "source": "uniswap",
       "symbol": "WETH",
-      "amount": 0.02201609262073492,
-      "usd": 54,
+      "amount": 0.022580413482229632,
+      "usd": 55,
       "claimable": true
     },
     {
       "source": "uniswap",
       "symbol": "COW",
-      "amount": 347.74647420539367,
+      "amount": 347.9840682422471,
       "usd": 47,
       "claimable": true
     }
   ],
-  "rewards_usd": 120,
+  "rewards_usd": 122,
   "flags": []
 }
