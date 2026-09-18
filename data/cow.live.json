@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x616dE58c011F8736fa20c7Ae5352F7f6FB9F0669",
   "ok": true,
-  "as_of": "2026-09-18T09:51:22+00:00",
+  "as_of": "2026-09-18T10:54:55+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -169,7 +169,7 @@
       "source": "merkl",
       "symbol": "MORPHO",
       "amount": 8.302223982435503,
-      "usd": 19,
+      "usd": 20,
       "claimable": true
     },
     {
@@ -182,19 +182,19 @@
     {
       "source": "uniswap",
       "symbol": "WETH",
-      "amount": 0.027063093301481725,
-      "usd": 66,
+      "amount": 0.02820627568636644,
+      "usd": 69,
       "claimable": true
     },
     {
       "source": "uniswap",
       "symbol": "COW",
-      "amount": 372.26088490841954,
+      "amount": 373.64204473795076,
       "usd": 50,
       "claimable": true
     }
   ],
-  "rewards_usd": 136,
+  "rewards_usd": 139,
   "flags": [
     "NOTE: idle re-based on the live Safe (Syncrone lagging): WETH 0.0000 -> 53.6790"
   ]
