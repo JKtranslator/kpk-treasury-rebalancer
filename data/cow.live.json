@@ -4,22 +4,22 @@
   "chain_id": 1,
   "avatar_safe": "0x616dE58c011F8736fa20c7Ae5352F7f6FB9F0669",
   "ok": true,
-  "as_of": "2026-09-18T07:44:25+00:00",
+  "as_of": "2026-09-18T08:47:51+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 18392733,
+  "nav_usd": 18523831,
   "positions_usd": 18004873,
-  "idle_usd": 387860,
+  "idle_usd": 518958,
   "in_flight_usd": 0,
-  "onchain_idle_eth": 0.0,
+  "onchain_idle_eth": 1e-09,
   "eth_price_usd": 2456.4499,
   "groups": {
     "OTHER": 597748,
     "USD": 12134259,
-    "EURO": 2545781,
-    "ETH": 3115208
+    "ETH": 3246306,
+    "EURO": 2545781
   },
   "sleeves": [
     {
@@ -130,6 +130,12 @@
       "asset_group": "USD"
     },
     {
+      "symbol": "WETH",
+      "balance": 53.679,
+      "usd": 131098,
+      "asset_group": "ETH"
+    },
+    {
       "symbol": "COW",
       "balance": 2677405.0340913157,
       "usd": 361985,
@@ -138,7 +144,7 @@
   ],
   "in_flight_items": [],
   "token_check": {
-    "checked": 14,
+    "checked": 16,
     "disagree": 0,
     "etherscan_source": "etherscan"
   },
@@ -176,8 +182,8 @@
     {
       "source": "uniswap",
       "symbol": "WETH",
-      "amount": 0.024022255910220797,
-      "usd": 59,
+      "amount": 0.025108956341888984,
+      "usd": 61,
       "claimable": true
     },
     {
@@ -188,6 +194,8 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 128,
-  "flags": []
+  "rewards_usd": 131,
+  "flags": [
+    "NOTE: idle re-based on the live Safe (Syncrone lagging): WETH 0.0000 -> 53.6790"
+  ]
 }
