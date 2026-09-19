@@ -4,27 +4,27 @@
   "chain_id": 1,
   "avatar_safe": "0x0EFcCBb9E2C09Ea29551879bd9Da32362b32fc89",
   "ok": true,
-  "as_of": "2026-09-19T02:50:20+00:00",
+  "as_of": "2026-09-19T03:53:55+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
   },
-  "nav_usd": 7144578,
-  "positions_usd": 6515337,
-  "idle_usd": 629241,
+  "nav_usd": 7464977,
+  "positions_usd": 6799456,
+  "idle_usd": 665521,
   "in_flight_usd": 0,
   "onchain_idle_eth": 0.0,
-  "eth_price_usd": 2443.6947,
+  "eth_price_usd": 2617.0871,
   "groups": {
-    "OTHER": 3159578,
-    "USD": 2711161,
-    "ETH": 1273813
+    "OTHER": 3393507,
+    "USD": 2711160,
+    "ETH": 1360283
   },
   "sleeves": [
     {
       "protocol": "aave_v3",
       "asset_group": "OTHER",
-      "usd": 2530251,
+      "usd": 2727892,
       "in_flight_usd": 0,
       "positions": [
         "Aave v2 Staked on Ethereum"
@@ -33,7 +33,7 @@
     {
       "protocol": "morphoVaults",
       "asset_group": "USD",
-      "usd": 2055309,
+      "usd": 2055599,
       "in_flight_usd": 0,
       "positions": [
         "Morpho v2 Yield on Ethereum"
@@ -42,7 +42,7 @@
     {
       "protocol": "ether_fi",
       "asset_group": "ETH",
-      "usd": 946972,
+      "usd": 1011240,
       "in_flight_usd": 0,
       "positions": [
         "Etherfi Staked on Ethereum"
@@ -51,7 +51,7 @@
     {
       "protocol": "compound_v3",
       "asset_group": "USD",
-      "usd": 500619,
+      "usd": 500308,
       "in_flight_usd": 0,
       "positions": [
         "Compound v3 Institutional USDC (ciUSDCv3)"
@@ -60,7 +60,7 @@
     {
       "protocol": "rocket_pool",
       "asset_group": "ETH",
-      "usd": 179962,
+      "usd": 192027,
       "in_flight_usd": 0,
       "positions": [
         "Rocketpool Staked on Ethereum"
@@ -69,7 +69,7 @@
     {
       "protocol": "aave_v3",
       "asset_group": "USD",
-      "usd": 155233,
+      "usd": 155252,
       "in_flight_usd": 0,
       "positions": [
         "Aave v3 Lending on Ethereum",
@@ -80,7 +80,7 @@
     {
       "protocol": "stakewise_v3",
       "asset_group": "ETH",
-      "usd": 131503,
+      "usd": 140843,
       "in_flight_usd": 0,
       "positions": [
         "Stakewise Lending on Ethereum"
@@ -89,7 +89,7 @@
     {
       "protocol": "balancer_v2",
       "asset_group": "ETH",
-      "usd": 15376,
+      "usd": 16172,
       "in_flight_usd": 0,
       "positions": [
         "Balancer v2 Staked on Ethereum"
@@ -98,7 +98,7 @@
     {
       "protocol": "compound_v3",
       "asset_group": "OTHER",
-      "usd": 86,
+      "usd": 94,
       "in_flight_usd": 0,
       "positions": [
         "Compound v3 Lending on Ethereum"
@@ -109,25 +109,25 @@
     {
       "symbol": "HOPR",
       "balance": 617205.1496353952,
-      "usd": 7455,
+      "usd": 7593,
       "asset_group": "OTHER"
     },
     {
       "symbol": "BAL",
       "balance": 3435806.354405005,
-      "usd": 374846,
+      "usd": 393742,
       "asset_group": "OTHER"
     },
     {
       "symbol": "SAFE",
       "balance": 845093.648435581,
-      "usd": 80706,
+      "usd": 84787,
       "asset_group": "OTHER"
     },
     {
       "symbol": "COW",
       "balance": 1230444.5036246672,
-      "usd": 166233,
+      "usd": 179399,
       "asset_group": "OTHER"
     }
   ],
@@ -138,8 +138,8 @@
     "etherscan_source": "etherscan"
   },
   "other_wallets": {
-    "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 42161": 2064,
-    "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 100": 2207848
+    "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 42161": 2187,
+    "0x0efccbb9e2c09ea29551879bd9da32362b32fc89 chain 100": 2207856
   },
   "unbooked": [],
   "rewards": [
@@ -160,8 +160,8 @@
     {
       "source": "aave_safety_module",
       "symbol": "AAVE",
-      "amount": 4.120657337416819,
-      "usd": 533,
+      "amount": 4.1724919932344005,
+      "usd": 582,
       "claimable": true
     },
     {
@@ -200,8 +200,6 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 636,
-  "flags": [
-    "NOTE: idle re-based on the live Safe (Syncrone lagging): BAL 3,327,556.6718 -> 3,435,806.3544; SAFE 839,265.9870 -> 845,093.6484; COW 1,141,738.5472 -> 1,230,444.5036"
-  ]
+  "rewards_usd": 685,
+  "flags": []
 }
