@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x616dE58c011F8736fa20c7Ae5352F7f6FB9F0669",
   "ok": true,
-  "as_of": "2026-09-19T03:52:59+00:00",
+  "as_of": "2026-09-19T04:56:37+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -182,18 +182,18 @@
     {
       "source": "uniswap",
       "symbol": "WETH",
-      "amount": 0.03871545079675691,
-      "usd": 101,
+      "amount": 0.040014732844395086,
+      "usd": 105,
       "claimable": true
     },
     {
       "source": "uniswap",
       "symbol": "COW",
-      "amount": 598.5809718806502,
-      "usd": 87,
+      "amount": 601.7737464182411,
+      "usd": 88,
       "claimable": true
     }
   ],
-  "rewards_usd": 211,
+  "rewards_usd": 215,
   "flags": []
 }
