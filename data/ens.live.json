@@ -4,7 +4,7 @@
   "chain_id": 1,
   "avatar_safe": "0x4F2083f5fBede34C2714aFfb3105539775f7FE64",
   "ok": true,
-  "as_of": "2026-09-19T00:39:58+00:00",
+  "as_of": "2026-09-19T01:43:58+00:00",
   "syncrone_window": {
     "from": "2026-09-01",
     "to": "2026-10-01"
@@ -143,14 +143,14 @@
       "source": "merkl",
       "symbol": "GHO",
       "amount": 2055.50544610149,
-      "usd": 2054,
+      "usd": 2053,
       "claimable": true
     },
     {
       "source": "merkl",
       "symbol": "COMP",
       "amount": 8.382076,
-      "usd": 178,
+      "usd": 175,
       "claimable": true
     },
     {
@@ -168,7 +168,7 @@
       "claimable": true
     }
   ],
-  "rewards_usd": 2236,
+  "rewards_usd": 2233,
   "flags": [
     "NOTE: $2,688,139 is in-flight (withdrawal queues) per Syncrone and invisible to Safe/Etherscan/Strategy API: 1,000.00 ETHx in stader."
   ]
